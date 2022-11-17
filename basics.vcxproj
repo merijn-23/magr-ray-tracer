@@ -123,6 +123,7 @@
   <!-- END Custom section -->
   <ItemGroup>
     <ClCompile Include="renderer.cpp" />
+    <ClCompile Include="scene.cpp" />
     <ClCompile Include="template\template.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -136,6 +137,8 @@
     <ClInclude Include="template\scene.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="kernels\primitives.cl" />
+    <None Include="kernels\trace.cl" />
     <None Include="template\LICENSE" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

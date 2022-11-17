@@ -18,11 +18,23 @@ public:
 	void MouseWheel( float y ) { /* implement if you want to handle the mouse wheel */ }
 	void KeyUp( int key ) { /* implement if you want to handle keys */ }
 	void KeyDown( int key ) { /* implement if you want to handle keys */ }
+
+	void InitKernel();
+	void UpdateBuffers();
+
 	// data members
 	int2 mousePos;
 	float4* accumulator;
 	Scene scene;
 	Camera camera;
+	RayGPU rays[SCRHEIGHT * SCRWIDTH];
+
+	Kernel* kernel;
+
+	// Buffers
+	Buffer* sphereBuffer;
+	Buffer* rayBuffer;
+	Buffer* pixelBuffer;
 };
 
 } // namespace Tmpl8

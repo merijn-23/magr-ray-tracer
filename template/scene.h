@@ -18,7 +18,7 @@
 // if you plan to alter the scene in any way.
 // -----------------------------------------------------------
 
-#define SPEEDTRIX
+// #define SPEEDTRIX
 
 #define PLANE_X(o,i) {if((t=-(ray.O.x+o)*ray.rD.x)<ray.t)ray.t=t,ray.objIdx=i;}
 #define PLANE_Y(o,i) {if((t=-(ray.O.y+o)*ray.rD.y)<ray.t)ray.t=t,ray.objIdx=i;}
@@ -52,6 +52,14 @@ public:
 	int objIdx = -1;
 	bool inside = false; // true when in medium
 };
+
+typedef struct Ray_struct
+{
+	float4 O, D, rD;
+	float t;
+	int objIdx;
+	bool inside;
+} RayGPU;
 
 // -----------------------------------------------------------
 // Sphere primitive
@@ -95,6 +103,7 @@ public:
 	float3 pos = 0;
 	float r2 = 0, invr = 0;
 	int objIdx = -1;
+	int matIdx = -1;
 };
 
 // -----------------------------------------------------------
@@ -143,6 +152,7 @@ public:
 	float3 N;
 	float d;
 	int objIdx = -1;
+	int matIdx = -1;
 };
 
 // -----------------------------------------------------------
@@ -213,6 +223,7 @@ public:
 	float3 b[2];
 	mat4 M, invM;
 	int objIdx = -1;
+	int matIdx = -1;
 };
 
 // -----------------------------------------------------------
@@ -253,6 +264,21 @@ public:
 	float size;
 	mat4 T, invT;
 	int objIdx = -1;
+	int matIdx = -1;
+};
+
+// -----------------------------------------------------------
+// Material class
+// Keeps track of material properties of all primitives. Each 
+// primitive has a matIdx to keep track of its own material.
+// -----------------------------------------------------------
+class Material
+{
+public:
+	Material() = default;
+	float3 color;
+	float reflectivity;
+	float refractivity;
 };
 
 // -----------------------------------------------------------
@@ -268,16 +294,20 @@ public:
 	Scene()
 	{
 		// we store all primitives in one continuous buffer
-		quad = Quad( 0, 1 );									// 0: light source
-		sphere = Sphere( 1, float3( 0 ), 0.5f );				// 1: bouncing ball
-		sphere2 = Sphere( 2, float3( 0, 2.5f, -3.07f ), 8 );	// 2: rounded corners
-		cube = Cube( 3, float3( 0 ), float3( 1.15f ) );			// 3: cube
-		plane[0] = Plane( 4, float3( 1, 0, 0 ), 3 );			// 4: left wall
-		plane[1] = Plane( 5, float3( -1, 0, 0 ), 2.99f );		// 5: right wall
-		plane[2] = Plane( 6, float3( 0, 1, 0 ), 1 );			// 6: floor
-		plane[3] = Plane( 7, float3( 0, -1, 0 ), 2 );			// 7: ceiling
-		plane[4] = Plane( 8, float3( 0, 0, 1 ), 3 );			// 8: front wall
-		plane[5] = Plane( 9, float3( 0, 0, -1 ), 3.99f );		// 9: back wall
+		//quad = Quad( 0, 1 );									// 0: light source
+		//sphere = Sphere( 1, float3( 0 ), 0.5f );				// 1: bouncing ball
+		//sphere2 = Sphere( 2, float3( 0, 2.5f, -3.07f ), 8 );	// 2: rounded corners
+		//cube = Cube( 3, float3( 0 ), float3( 1.15f ) );		// 3: cube
+		//plane[0] = Plane( 4, float3( 1, 0, 0 ), 3 );			// 4: left wall
+		//plane[1] = Plane( 5, float3( -1, 0, 0 ), 2.99f );		// 5: right wall
+		//plane[2] = Plane( 6, float3( 0, 1, 0 ), 1 );			// 6: floor
+		//plane[3] = Plane( 7, float3( 0, -1, 0 ), 2 );			// 7: ceiling
+		//plane[4] = Plane( 8, float3( 0, 0, 1 ), 3 );			// 8: front wall
+		//plane[5] = Plane( 9, float3( 0, 0, -1 ), 3.99f );		// 9: back wall
+		spheres[0] = Sphere(0, float3(0), 0.5f);				// 1: bouncing ball
+		spheres[1] = Sphere(1, float3(1, 0, 0), 0.5f);				// 1: bouncing ball
+
+
 		SetTime( 0 );
 		// Note: once we have triangle support we should get rid of the class
 		// hierarchy: virtuals reduce performance somewhat.
@@ -383,6 +413,9 @@ public:
 	Sphere sphere2;
 	Cube cube;
 	Plane plane[6];
-};
+	
+	Sphere spheres[2];
 
+
+};
 }

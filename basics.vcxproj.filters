@@ -5,6 +5,9 @@
     <ClCompile Include="template\template.cpp">
       <Filter>template</Filter>
     </ClCompile>
+    <ClCompile Include="scene.cpp">
+      <Filter>template</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />
@@ -23,10 +26,19 @@
     <Filter Include="template">
       <UniqueIdentifier>{a7d6e3cb-bfcd-438d-979f-17df241a55b4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="kernels">
+      <UniqueIdentifier>{2b4eaea9-b08a-4873-a892-6a982cd25814}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="template\LICENSE">
       <Filter>template</Filter>
+    </None>
+    <None Include="kernels\trace.cl">
+      <Filter>kernels</Filter>
+    </None>
+    <None Include="kernels\primitives.cl">
+      <Filter>kernels</Filter>
     </None>
   </ItemGroup>
 </Project>

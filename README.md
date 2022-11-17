@@ -1,7 +1,6 @@
-This template is intended for students of Utrecht University.
+GPU-based ray tracer for the course Advanced Graphics (INFOMAGR) at Utrecht University.
+By
+Tariq Bakhtali
+Merijn Schepers (6504477)
 
-**Please refer to "_ getting started.pdf" for instructions.**
-
-Code is fully public domain. Use as you please.
-
-Contact me at bikker.j@gmail.com.
+Original template by bikker.j@gmail.com.
