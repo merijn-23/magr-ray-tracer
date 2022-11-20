@@ -1,48 +1,95 @@
-// 7 bytes
-typedef struct __attribute__ ((packed)) Ray
+typedef struct Primitive
 {
-	float3 O, D, rD;
-	float t;
+	int objType;
+	// Index of object in correct list
 	int objIdx;
-	bool inside;
-};
+	int matIdx;
+} Primitive;
 
-typedef struct __attribute__ ((packed)) Sphere
+typedef struct Material
 {
-	float3 pos = 0;
-	float r2 = 0, invr = 0;
-	int objIdx = -1;
-	int matIdx = -1;
-};
+	float3 colour;
+	float reflect, refract;
+} Material;
 
-void Intersect(Sphere* sphere, Ray* ray)
+typedef struct Sphere
+{
+	float3 pos;
+	float r2, invr;
+} Sphere;
+
+typedef struct Plane
+{
+	float3 N;
+	float d;
+} Plane;
+
+// typedef struct Cube
+// {
+// 	float4 b[2];
+// 	float4x4 M, invM;
+// } Cube;
+
+void intersectSphere( int primIdx, Primitive* prim, Sphere* sphere, Ray* ray )
 {
 	float3 oc = ray->O - sphere->pos;
 	float b = dot(oc, ray->D);
 	float c = dot(oc, oc) - sphere->r2;
 	float t, d = b * b - c;
 	if (d <= 0) return;
-	d = sqrtf(d), t = -b - d;
+	d = sqrt(d), t = -b - d;
 	if (t < ray->t && t > 0)
 	{
-		ray->t = t, ray->objIdx = sphere->objIdx;
+		ray->t = t, ray->objIdx = primIdx;
 		return;
 	}
 	t = d - b;
 	if (t < ray->t && t > 0)
 	{
-		ray->t = t, ray->objIdx = sphere->objIdx;
+		ray->t = t, ray->objIdx = primIdx;
 		return;
 	}
 }
 
-float3 GetNormal( Sphere* sphere, float3 I ) 
+void intersectPlane( int primIdx, Primitive* prim, Plane* plane, Ray* ray )
+{
+		float t = -(dot( ray->O, plane->N ) + plane->d) / (dot( ray->D, plane->N ));
+		if (t < ray->t && t > 0)
+		{
+			ray->t = t, ray->objIdx = primIdx;
+		} 
+}
+
+void intersect( int primIdx, Primitive* prim, Ray* ray, Sphere* spheres, Plane* planes )
+{
+	switch(prim->objType){
+		case 0:
+			intersectSphere(primIdx, prim, spheres + prim->objIdx, ray);
+			break;
+		case 1:
+			intersectPlane(primIdx, prim, planes + prim->objIdx, ray);
+	}
+}
+
+
+float3 getSphereNormal( Sphere* sphere, float3 I ) 
 {
 	return (I - sphere->pos) * sphere->invr;
 }
 
-float3 GetAlbedo( float3 I )
+float3 getPlaneNormal( Plane* plane, float3 I )
 {
-	return float3( 0.93f );
+	return plane->N;
+}
+
+float3 getNormal( Primitive* prim, float3 I, Sphere* spheres, Plane* planes )
+{
+	switch(prim->objType)
+	{
+		case 0:
+			return getSphereNormal(spheres + prim->objIdx, I);
+		case 1:
+			return getPlaneNormal(planes + prim->objIdx, I);
+	}
 }
 

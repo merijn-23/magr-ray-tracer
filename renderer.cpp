@@ -6,8 +6,8 @@
 void Renderer::Init()
 {
 	// create fp32 rgb pixel buffer to render to
-	accumulator = (float4*)MALLOC64( SCRWIDTH * SCRHEIGHT * 16 );
-	memset( accumulator, 0, SCRWIDTH * SCRHEIGHT * 16 );
+	//accumulator = (float4*)MALLOC64( SCRWIDTH * SCRHEIGHT * 16 );
+	//memset( accumulator, 0, SCRWIDTH * SCRHEIGHT * 16 );
 	//std::cout << sizeof(RayGPU);
 	//printf("%i\n", sizeof(RayGPU));
 	InitKernel();
@@ -17,19 +17,18 @@ void Renderer::Init()
 // -----------------------------------------------------------
 // Evaluate light transport
 // -----------------------------------------------------------
-float3 Renderer::Trace( Ray& ray )
-{
-	scene.FindNearest( ray );
-	if (ray.objIdx == -1) return 0; // or a fancy sky color
-	float3 I = ray.O + ray.t * ray.D;
-	float3 N = scene.GetNormal( ray.objIdx, I, ray.D );
-	float3 albedo = scene.GetAlbedo( ray.objIdx, I );
-	/* visualize normal */ return (N + 1) * 0.5f;
-	/* visualize distance */ // return 0.1f * float3( ray.t, ray.t, ray.t );
-	/* visualize albedo */ // return albedo;
-}
+//float3 Renderer::Trace( Ray& ray )
+//{
+//	scene.FindNearest( ray );
+//	if (ray.objIdx == -1) return 0; // or a fancy sky color
+//	float3 I = ray.O + ray.t * ray.D;
+//	float3 N = scene.GetNormal( ray.objIdx, I, ray.D );
+//	float3 albedo = scene.GetAlbedo( ray.objIdx, I );
+//	/* visualize normal */ return (N + 1) * 0.5f;
+//	/* visualize distance */ // return 0.1f * float3( ray.t, ray.t, ray.t );
+//	/* visualize albedo */ // return albedo;
+//}
 
-bool once = true;
 
 // -----------------------------------------------------------
 // Main application tick function - Executed once per frame
@@ -42,31 +41,11 @@ void Renderer::Tick( float deltaTime )
 	// pixel loop
 	Timer t;
 
-	// run kernel
-	for (int y = 0; y < SCRHEIGHT; y++)
-	{
-		for (int x = 0; x < SCRWIDTH; x++)
-		{
-			Ray ray = camera.GetPrimaryRay(x, y);
-			RayGPU rg;
-			rg.O = float4(1,1,1,0);
-			rg.D = ray.D;
-			rg.rD = ray.rD;
-			rg.inside = ray.inside;
-			rg.t = 128;
-			rg.objIdx = ray.objIdx;
-			rays[y * SCRWIDTH + x] = rg;
-		}
-	}
+	//UpdateBuffers();
 
-	if (once)
-	{
-		once = false;
-		UpdateBuffers();
-	}
 	kernel->Run(SCRWIDTH * SCRHEIGHT);
 	pixelBuffer->CopyFromDevice();
-
+	
 
 #if 0
 	// lines are executed as OpenMP parallel tasks (disabled in DEBUG)
@@ -96,14 +75,36 @@ void Renderer::InitKernel()
 	kernel = new Kernel("kernels/trace.cl", "trace");
 
 	//sphereBuffer = new Buffer(sizeof(scene.spheres));
-	rayBuffer = new Buffer(sizeof(RayGPU) * SCRHEIGHT * SCRWIDTH);
+	sphereBuffer = new Buffer(sizeof(scene.spheres));
+	planeBuffer = new Buffer(sizeof(scene.planes));
+	cubeBuffer = new Buffer(sizeof(scene.cubes));
+	matBuffer = new Buffer(sizeof(scene.mats));
+	primBuffer = new Buffer(sizeof(scene.prims));
+	lightBuffer = new Buffer(sizeof(scene.lights));
 	pixelBuffer = new Buffer(4 * SCRHEIGHT * SCRWIDTH);
 
 	//sphereBuffer->hostBuffer = (uint*)scene.spheres;
-	rayBuffer->hostBuffer = (uint*)rays;
+	sphereBuffer->hostBuffer = (uint*)scene.spheres;
+	planeBuffer->hostBuffer = (uint*)scene.planes;
+	cubeBuffer->hostBuffer = (uint*)scene.cubes;
+	matBuffer->hostBuffer = (uint*)scene.mats;
+	primBuffer->hostBuffer = (uint*)scene.prims;
+	lightBuffer->hostBuffer = (uint*)scene.lights;
 	pixelBuffer->hostBuffer = screen->pixels; 
 
-	kernel->SetArguments(pixelBuffer, rayBuffer);
+	kernel->SetArguments(pixelBuffer, sphereBuffer, planeBuffer, matBuffer, primBuffer, lightBuffer);
+	clSetKernelArg(kernel->kernel, 6, sizeof(Camera), &camera.cam);
+	kernel->SetArgument(7, (int)(sizeof(scene.prims) / sizeof(Primitive)));
+	kernel->SetArgument(8, (int)(sizeof(scene.lights)/sizeof(Light)));
+	//clSetKernelArg(kernel->kernel, 5, sizeof(int), sizeof(scene.prims)/sizeof(scene.prims[0]));
+	
+
+	sphereBuffer->CopyToDevice();
+	planeBuffer->CopyToDevice();
+	cubeBuffer->CopyToDevice();
+	matBuffer->CopyToDevice();
+	primBuffer->CopyToDevice();
+	lightBuffer->CopyToDevice();
 }
 
 void Renderer::UpdateBuffers()
@@ -113,5 +114,5 @@ void Renderer::UpdateBuffers()
 
 	//std::cout << sizeof(RayGPU);
 	
-	rayBuffer->CopyToDevice();
+	//rayBuffer->CopyToDevice();
 }

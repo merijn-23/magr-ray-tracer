@@ -40,5 +40,11 @@
     <None Include="kernels\primitives.cl">
       <Filter>kernels</Filter>
     </None>
+    <None Include="kernels\ray.cl">
+      <Filter>kernels</Filter>
+    </None>
+    <None Include="kernels\camera.cl">
+      <Filter>kernels</Filter>
+    </None>
   </ItemGroup>
 </Project>

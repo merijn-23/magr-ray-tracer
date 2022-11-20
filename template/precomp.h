@@ -1481,7 +1481,6 @@ public:
 	template<T_ T> void S( uint i, T t ) { SetArgument( i, t ); }
 	void InitArgs() { acqBuffer = 0; /* nothing to acquire until told otherwise */ }
 #undef T_
-private:
 	void SetArgument( int idx, cl_mem* buffer );
 	void SetArgument( int idx, Buffer* buffer );
 	void SetArgument( int idx, Buffer& buffer );
@@ -1495,10 +1494,10 @@ public:
 	static bool InitCL();
 	static void CheckCLStarted();
 	static void KillCL();
+	cl_kernel kernel;
 private:
 	// data members
 	Buffer* acqBuffer = 0;
-	cl_kernel kernel;
 	cl_mem vbo_cl;
 	cl_program program;
 	inline static cl_device_id device;

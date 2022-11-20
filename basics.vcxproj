@@ -21,7 +21,7 @@
   <PropertyGroup Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>NotSet</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -137,7 +137,9 @@
     <ClInclude Include="template\scene.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="kernels\camera.cl" />
     <None Include="kernels\primitives.cl" />
+    <None Include="kernels\ray.cl" />
     <None Include="kernels\trace.cl" />
     <None Include="template\LICENSE" />
   </ItemGroup>

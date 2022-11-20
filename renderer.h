@@ -8,7 +8,7 @@ class Renderer : public TheApp
 public:
 	// game flow methods
 	void Init();
-	float3 Trace( Ray& ray );
+	//float3 Trace( Ray& ray );
 	void Tick( float deltaTime );
 	void Shutdown() { /* implement if you want to do something on exit */ }
 	// input handling
@@ -26,15 +26,19 @@ public:
 	int2 mousePos;
 	float4* accumulator;
 	Scene scene;
-	Camera camera;
-	RayGPU rays[SCRHEIGHT * SCRWIDTH];
+	CameraManager camera;
 
 	Kernel* kernel;
 
 	// Buffers
 	Buffer* sphereBuffer;
-	Buffer* rayBuffer;
+	Buffer* planeBuffer;
+	Buffer* cubeBuffer;
+	Buffer* matBuffer;
+	Buffer* primBuffer;
 	Buffer* pixelBuffer;
+	Buffer* camBuffer;
+	Buffer* lightBuffer;
 };
 
 } // namespace Tmpl8
