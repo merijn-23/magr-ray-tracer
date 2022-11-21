@@ -5,17 +5,19 @@ typedef struct Light
     // primIdx is only used in path tracing
     int primIdx;
 } Light;
+__global read_only Light* lights;
 
-float3 getDiffuseShading(Light* light, float dot, float r)
+
+float3 getDiffuseShading( Light* light, float dot, float r )
 {
     return dot * (1 / (r * r)) * light->strength * light->colour;
 }
 
-bool shootShadowRay(Ray* ray, float d, Primitive* primitives, Sphere* spheres, Plane* planes)
+bool shootShadowRay( Ray* ray, float d )
 {
     for(int i = 0; i < nPrimitives; i++)
     {
-        intersect(i, primitives + i, ray, spheres, planes);
+        intersect(i, primitives + i, ray);
         if(ray->t < d - epsilon)
             return false;
     }
@@ -23,7 +25,7 @@ bool shootShadowRay(Ray* ray, float d, Primitive* primitives, Sphere* spheres, P
     return true;
 }
 
-float3 handleShadowRay(Ray* ray, Light* light, Primitive* primitives, Sphere* spheres, Plane* planes)
+float3 handleShadowRay( Ray* ray, Light* light )
 {
     float3 dir = intersectionPoint(ray) - light->pos;
     float dotP = dot(ray->N, -dir);
@@ -33,7 +35,7 @@ float3 handleShadowRay(Ray* ray, Light* light, Primitive* primitives, Sphere* sp
         // Shoot a shadow ray into the scene and check if anything obstructs it
         Ray shadowRay = initRay(light->pos, dir);
         float dist = length(dir);
-        if(shootShadowRay(&shadowRay, dist, primitives, spheres, planes))
+        if(shootShadowRay(&shadowRay, dist))
         {
             return getDiffuseShading(light, dotP, dist);
         }

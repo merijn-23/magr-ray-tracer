@@ -5,24 +5,32 @@ typedef struct Primitive
 	int objIdx;
 	int matIdx;
 } Primitive;
+__global read_only Primitive* primitives;
+
 
 typedef struct Material
 {
 	float3 colour;
 	float reflect, refract;
 } Material;
+__global read_only Material* materials;
+
 
 typedef struct Sphere
 {
 	float3 pos;
 	float r2, invr;
 } Sphere;
+__global read_only Sphere* spheres;
+
 
 typedef struct Plane
 {
 	float3 N;
 	float d;
 } Plane;
+__global read_only Plane* planes;
+
 
 // typedef struct Cube
 // {
@@ -60,7 +68,7 @@ void intersectPlane( int primIdx, Primitive* prim, Plane* plane, Ray* ray )
 		} 
 }
 
-void intersect( int primIdx, Primitive* prim, Ray* ray, Sphere* spheres, Plane* planes )
+void intersect( int primIdx, Primitive* prim, Ray* ray )
 {
 	switch(prim->objType){
 		case 0:
@@ -82,7 +90,7 @@ float3 getPlaneNormal( Plane* plane, float3 I )
 	return plane->N;
 }
 
-float3 getNormal( Primitive* prim, float3 I, Sphere* spheres, Plane* planes )
+float3 getNormal( Primitive* prim, float3 I )
 {
 	switch(prim->objType)
 	{
