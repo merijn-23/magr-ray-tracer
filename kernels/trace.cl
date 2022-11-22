@@ -1,7 +1,7 @@
 #define SCRWIDTH 1280
 #define SCRHEIGHT 720
 
-#define MAX_BOUNCE 3
+#define MAX_BOUNCE 0
 
 int nPrimitives = 0;
 int nLights = 0;
@@ -12,7 +12,46 @@ float epsilon = 0.001f;
 #include "kernels/light.cl"
 #include "kernels/camera.cl"
 
-Ray stack[1024];
+float3 shoot2(Ray* primaryRay)
+{
+	float3 color = (float3)(0);
+
+	Ray stack[1024];
+	stack[0] = *primaryRay;
+	int n = 1;
+	while(n > 0)
+	{
+		Ray ray = stack[--n];
+		for(int i = 0; i < nPrimitives; i++)
+			intersect(i, primitives + i, &ray);
+		
+		if(ray.objIdx != -1)
+		{
+			float3 I = intersectionPoint(&ray);
+			ray.N = getNormal(primitives + ray.objIdx, I);
+
+			// we hit an object
+			Material mat = materials[primitives[ray.objIdx].matIdx];
+			if(mat.reflect < 1)
+			{
+				// find the diffuse of this object
+				for(int i = 0; i < nLights; i++)
+				{
+					color += handleShadowRay(&ray, lights + i) * mat.colour * ray.energy;// * (1 - mat.reflect);
+				}
+			}
+			if(mat.reflect > 0 && ray.bounces < MAX_BOUNCE)
+			{
+				// shoot another ray into the scene from the point of impact
+				Ray* reflectRay = reflect(&ray, I);
+				reflectRay->energy *= mat.reflect;
+				stack[n++] = *reflectRay;
+			}
+		}
+	}
+
+	return color;
+}
 
 float3 shoot(Ray* ray)
 {
@@ -47,13 +86,13 @@ float3 shoot(Ray* ray)
 }
 
 __kernel void trace(__global uint* pixels,
-					__global read_only Sphere* _spheres,
-					__global read_only Plane* _planes,
+					__global Sphere* _spheres,
+					__global Plane* _planes,
 					//__global read_only Cube* cubes,
-					__global read_only Material* _materials,
-					__global read_only Primitive* _primitives,
-					__global read_only Light* _lights,
-					read_only Camera cam,
+					__global Material* _materials,
+					__global Primitive* _primitives,
+					__global Light* _lights,
+					Camera cam,
 					int numPrimitives,
 					int numLights)
 {

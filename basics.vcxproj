@@ -138,6 +138,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="kernels\camera.cl" />
+    <None Include="kernels\light.cl" />
     <None Include="kernels\primitives.cl" />
     <None Include="kernels\ray.cl" />
     <None Include="kernels\trace.cl" />

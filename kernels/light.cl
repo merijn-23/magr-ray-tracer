@@ -5,7 +5,7 @@ typedef struct Light
     // primIdx is only used in path tracing
     int primIdx;
 } Light;
-__global read_only Light* lights;
+__global Light* lights;
 
 
 float3 getDiffuseShading( Light* light, float dot, float r )

@@ -8,6 +8,11 @@ void Renderer::Init()
 	InitKernel();
 }
 
+void Renderer::Shutdown( )
+{
+
+}
+
 
 // -----------------------------------------------------------
 // Main application tick function - Executed once per frame

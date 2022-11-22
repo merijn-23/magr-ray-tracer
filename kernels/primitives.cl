@@ -5,7 +5,7 @@ typedef struct Primitive
 	int objIdx;
 	int matIdx;
 } Primitive;
-__global read_only Primitive* primitives;
+__global Primitive* primitives;
 
 
 typedef struct Material
@@ -13,7 +13,7 @@ typedef struct Material
 	float3 colour;
 	float reflect, refract;
 } Material;
-__global read_only Material* materials;
+__global Material* materials;
 
 
 typedef struct Sphere
@@ -21,7 +21,7 @@ typedef struct Sphere
 	float3 pos;
 	float r2, invr;
 } Sphere;
-__global read_only Sphere* spheres;
+__global Sphere* spheres;
 
 
 typedef struct Plane
@@ -29,7 +29,7 @@ typedef struct Plane
 	float3 N;
 	float d;
 } Plane;
-__global read_only Plane* planes;
+__global Plane* planes;
 
 
 // typedef struct Cube

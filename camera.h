@@ -36,5 +36,4 @@ public:
 	float aspect = (float)SCRWIDTH / (float)SCRHEIGHT;
 	Camera cam;
 };
-
 }
