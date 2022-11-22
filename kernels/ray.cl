@@ -25,8 +25,19 @@ Ray* reflect(Ray* ray, float3 I)
 	float3 reflected = ray->D - 2.f * ray->N * dot(ray->N, ray->D);
 	float3 origin = I + reflected * epsilon;
 	Ray reflectRay = initRayNoNorm(origin, reflected);
+	reflectRay.energy = ray->energy;
 	reflectRay.bounces = ray->bounces + 1;
 	return &reflectRay;
+}
+
+Ray* transmission(Ray* ray, float3 I, float3 T)
+{
+	float3 origin = I + T * epsilon;
+	Ray tRay = initRay(origin, T);
+	tRay.energy = ray->energy;
+	tRay.bounces = ray->bounces + 1;
+	tRay.inside = ray->inside;
+	return &tRay;
 }
 
 void recycleRay(Ray* ray, float3 O, float3 D)

@@ -11,7 +11,8 @@ __global Primitive* primitives;
 typedef struct Material
 {
 	float3 colour;
-	float reflect, refract;
+	float specular, n1, n2;
+	bool isDieletric;
 } Material;
 __global Material* materials;
 
@@ -54,18 +55,18 @@ void intersectSphere( int primIdx, Primitive* prim, Sphere* sphere, Ray* ray )
 	t = d - b;
 	if (t < ray->t && t > 0)
 	{
-		ray->t = t, ray->objIdx = primIdx;
+		ray->t = t, ray->objIdx = primIdx, ray->inside = true;
 		return;
 	}
 }
 
 void intersectPlane( int primIdx, Primitive* prim, Plane* plane, Ray* ray )
 {
-		float t = -(dot( ray->O, plane->N ) + plane->d) / (dot( ray->D, plane->N ));
-		if (t < ray->t && t > 0)
-		{
-			ray->t = t, ray->objIdx = primIdx;
-		} 
+	float t = -(dot( ray->O, plane->N ) + plane->d) / (dot( ray->D, plane->N ));
+	if (t < ray->t && t > 0)
+	{
+		ray->t = t, ray->objIdx = primIdx;
+	} 
 }
 
 void intersect( int primIdx, Primitive* prim, Ray* ray )

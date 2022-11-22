@@ -77,7 +77,8 @@ typedef struct Primitive_struct
 typedef struct Material_struct
 {
 	float4 colour;
-	float reflect, refract;
+	float specular, n1, n2;
+	bool isDieletric;
 } Material;
 
 typedef struct Sphere_struct
@@ -225,9 +226,6 @@ typedef struct Light_struct
 //	int matIdx = -1;
 //};
 
-
-
-
 // -----------------------------------------------------------
 // Scene class
 // We intersect this. The query is internally forwarded to the
@@ -252,25 +250,29 @@ public:
 		//plane[5] = Plane( 9, float3( 0, 0, -1 ), 3.99f );		// 9: back wall
 		//plane[4] = Plane( 8, float3( 0, 0, 1 ), 3 );			// 8: front wall
 
-		spheres[0] = Sphere{ float4(-.8f, 0.f, 0.f, 0), .25f, 2.f };			// 1: bouncing ball
-		spheres[1] = Sphere{ float4(.3f, 0.f, 0.f, 0), .25f, 2.f };			// 1: bouncing ball
-		mats[0] = Material{ float4(1, 0, 0, 0), .2f, 0 };
-		mats[1] = Material{ float4(0, 1, 0, 0), .2f, 0 };
-		mats[2] = Material{ float4(1, 1, 1, 0), 0, 0 };
+		mats[0] = Material{ float4(1, 0, 0, 0), 0, 0, 0, false };
+		mats[1] = Material{ float4(0, 1, 0, 0), .2f, 0, 0, false };
+		mats[2] = Material{ float4(1, 1, 1, 0), 0, 0, 0, false };
+		mats[3] = Material{ float4(1, 1, 1, 0), .5f, 0, 0, false };
+		mats[4] = Material{ float4(1, 1, 1, 0), 0, 1, 1.125f, true };
+
+		spheres[0] = Sphere{ float4(.8f, 0.f, -1.5f, 0.f), .25f, 2.f };			// 1: bouncing ball
+		spheres[1] = Sphere{ float4(.8f, 0.f, 0.f, 0), .25f, 2.f };			// 1: bouncing ball
 		prims[0] = Primitive{ 0, 0, 0 };
-		prims[1] = Primitive{ 0, 1, 1 };
+		prims[1] = Primitive{ 0, 1, 4 };
 
 		planes[0] = Plane{ float4(1, 0, 0, 0), 5.f };
 		planes[1] = Plane{ float4(-1, 0, 0, 0), 2.99f };
 		planes[2] = Plane{ float4(0, 1, 0, 0), 1.f };
 		planes[3] = Plane{ float4(0, -1, 0, 0), 2.f };
 		planes[4] = Plane{ float4(0, 0, 1, 0), 9.f };
-		//planes[4] = Plane{ float4(0, 0, -1, 0), 3.99f };
+		planes[5] = Plane{ float4(0, 0, -1, 0), 3.99f };
 		prims[2] = Primitive{ 1, 0, 2 };
 		prims[3] = Primitive{ 1, 1, 2 };
 		prims[4] = Primitive{ 1, 2, 2 };
 		prims[5] = Primitive{ 1, 3, 2 };
 		prims[6] = Primitive{ 1, 4, 2 };
+		prims[7] = Primitive{ 1, 5, 2 };
 
 		lights[0] = Light{ float4(2, 0, 3, 0), float4(1,1,.8f,0), 3, -1 };
 		//prims[6] = Primitive{ 1, 4, 0 };
@@ -285,28 +287,21 @@ public:
 		// default time for the scene is simply 0. Updating/ the time per frame 
 		// enables animation. Updating it per ray can be used for motion blur.
 		animTime = t;
-		lights[0].pos.x = sin(animTime) + 1;
-		lights[0].pos.y = sin(animTime + PI * 0.5) * 0.5f;
-		// light source animation: swing
-		//mat4 M1base = mat4::Translate( float3( 0, 2.6f, 2 ) );
-		//mat4 M1 = M1base * mat4::RotateZ( sinf( animTime * 0.6f ) * 0.1f ) * mat4::Translate( float3( 0, -0.9, 0 ) );
-		//quad.T = M1, quad.invT = M1.FastInvertedTransformNoScale();
-		//// cube animation: spin
-		//mat4 M2base = mat4::RotateX( PI / 4 ) * mat4::RotateZ( PI / 4 );
-		//mat4 M2 = mat4::Translate( float3( 1.4f, 0, 2 ) ) * mat4::RotateY( animTime * 0.5f ) * M2base;
-		//cube.M = M2, cube.invM = M2.FastInvertedTransformNoScale();
+		//lights[0].pos.x = sin(animTime) + 1;
+		//lights[0].pos.y = sin(animTime + PI * 0.5) * 0.5f;
+		
 		// sphere animation: bounce
 		float tm = 1 - sqrf( fmodf( animTime, 2.0f ) - 1 );
-		spheres[0].pos = float4( -0.75f, -0.5f + tm, 0, 0 );
+		spheres[0].pos.y = -0.5f + tm;
 	}
 
 	__declspec(align(64)) // start a new cacheline here
 	float animTime = 0;
-	Primitive prims[7];
+	Primitive prims[8];
 	Sphere spheres[2];
 	Plane planes[6];
 	Cube cubes[1];
-	Material mats[3];
+	Material mats[5];
 	Light lights[1];
 	//Quad quad;
 	//Sphere sphere;
