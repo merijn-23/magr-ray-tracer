@@ -1,7 +1,7 @@
 #define SCRWIDTH 1280
 #define SCRHEIGHT 720
 
-#define MAX_BOUNCE 2
+#define MAX_BOUNCE 3
 
 int nPrimitives = 0;
 int nLights = 0;
@@ -11,6 +11,8 @@ float epsilon = 0.001f;
 #include "kernels/primitives.cl"
 #include "kernels/light.cl"
 #include "kernels/camera.cl"
+
+Ray stack[1024];
 
 float3 shoot(Ray* ray)
 {
@@ -37,12 +39,8 @@ float3 shoot(Ray* ray)
 		if(mat.reflect > 0 && ray->bounces < MAX_BOUNCE)
 		{
 			// shoot another ray into the scene from the point of impact
-			float3 reflected = ray->D - 2.f * ray->N * dot(ray->N, ray->D);
-			float3 origin = I + reflected * epsilon;
-			int bounces = ray->bounces;
-			recycleRay(ray, origin, reflected);
-			ray->bounces = bounces + 1;
-			color += shoot(ray) * mat.reflect;
+			Ray* reflectRay = reflect(ray, I);
+			color += shoot(reflectRay) * mat.reflect;
 		}
 	}
 	return color;

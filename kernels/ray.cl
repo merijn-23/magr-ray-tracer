@@ -14,6 +14,21 @@ Ray initRay(float3 O, float3 D)
 	return r; 
 }
 
+Ray initRayNoNorm(float3 O, float3 D)
+{
+	Ray r = {O, D, -D, (float3)(0), 1e34f, -1, 0, false};
+	return r; 
+}
+
+Ray* reflect(Ray* ray, float3 I)
+{
+	float3 reflected = ray->D - 2.f * ray->N * dot(ray->N, ray->D);
+	float3 origin = I + reflected * epsilon;
+	Ray reflectRay = initRayNoNorm(origin, reflected);
+	reflectRay.bounces = ray->bounces + 1;
+	return &reflectRay;
+}
+
 void recycleRay(Ray* ray, float3 O, float3 D)
 {
 	float3 norm = normalize(D);
