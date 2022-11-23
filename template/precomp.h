@@ -80,6 +80,11 @@ using namespace std;
 #include "cl/cl.h"
 #include <cl/cl_gl_ext.h>
 
+// ImGui
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 // GLFW
 #define GLFW_USE_CHDIR 0
 #define GLFW_EXPOSE_NATIVE_WIN32
@@ -1643,6 +1648,7 @@ public:
 	virtual void MouseWheel( float y ) = 0;
 	virtual void KeyUp( int key ) = 0;
 	virtual void KeyDown( int key ) = 0;
+	virtual void Gui( ) = 0;
 	Surface* screen = 0;
 };
 

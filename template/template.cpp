@@ -135,6 +135,14 @@ void main()
 	app = new Renderer();
 	app->screen = screen;
 	app->Init();
+	// initialize imgui
+	IMGUI_CHECKVERSION( );
+	ImGui::CreateContext( );
+	ImGui::StyleColorsClassic( );
+	ImGui_ImplGlfw_InitForOpenGL( window, true );
+	ImGui_ImplOpenGL3_Init( "#version 130" );
+
+
 	// done, enter main loop
 #if 1
 	// basic shader: apply gamma correction
@@ -266,6 +274,10 @@ void main()
 	static Timer timer;
 	while (!glfwWindowShouldClose(window))
 	{
+		ImGui_ImplOpenGL3_NewFrame( );
+		ImGui_ImplGlfw_NewFrame( );
+		ImGui::NewFrame( );
+
 		deltaTime = min(500.0f, 1000.0f * timer.elapsed());
 		timer.reset();
 		app->Tick(deltaTime);
@@ -277,12 +289,19 @@ void main()
 			shader->SetInputTexture(0, "c", renderTarget);
 			DrawQuad();
 			shader->Unbind();
+			app->Gui( );
+			ImGui::Render( );
+			ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
+
 			glfwSwapBuffers(window);
 			glfwPollEvents();
 		}
 		if (!running) break;
 	}
 	// close down
+	ImGui_ImplOpenGL3_Shutdown( );
+	ImGui_ImplGlfw_Shutdown( );
+	ImGui::DestroyContext( );
 	app->Shutdown();
 	Kernel::KillCL();
 	glfwDestroyWindow(window);
