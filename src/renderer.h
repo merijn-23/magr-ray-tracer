@@ -18,6 +18,7 @@ public:
 	void MouseWheel( float y ) { /* implement if you want to handle the mouse wheel */ }
 	void KeyUp( int key ) { /* implement if you want to handle keys */ }
 	void KeyDown( int key ) { /* implement if you want to handle keys */ }
+	void Gui( );
 
 	void InitKernel();
 	void UpdateBuffers();

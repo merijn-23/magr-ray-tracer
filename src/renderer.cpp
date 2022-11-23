@@ -87,3 +87,8 @@ void Renderer::UpdateBuffers()
 	sphereBuffer->CopyToDevice();
 	//clSetKernelArg(kernel->kernel, 6, sizeof(Camera), &camera.cam);
 }
+
+void Renderer::Gui( )
+{
+	ImGui::ShowDemoWindow( );
+}

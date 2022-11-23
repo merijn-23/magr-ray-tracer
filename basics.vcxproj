@@ -47,7 +47,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>template;.;lib\glad;lib\glfw\include;lib\OpenCL\inc;lib\zlib;lib\imgui;src\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>template;.;lib\glad;lib\glfw\include;lib\OpenCL\inc;lib\zlib;src\imgui;src\</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>precomp.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
@@ -122,6 +122,27 @@
   </ItemDefinitionGroup>
   <!-- END Custom section -->
   <ItemGroup>
+    <ClCompile Include="src\imgui\imgui.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\imgui\imgui_demo.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\imgui\imgui_draw.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\imgui\imgui_impl_glfw.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\imgui\imgui_impl_opengl3.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\imgui\imgui_tables.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\imgui\imgui_widgets.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="src\renderer.cpp" />
     <ClCompile Include="src\scene.cpp" />
     <ClCompile Include="template\template.cpp">
@@ -131,6 +152,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\camera.h" />
+    <ClInclude Include="src\imgui\imconfig.h" />
+    <ClInclude Include="src\imgui\imgui.h" />
+    <ClInclude Include="src\imgui\imgui_impl_glfw.h" />
+    <ClInclude Include="src\imgui\imgui_impl_opengl3.h" />
+    <ClInclude Include="src\imgui\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="src\imgui\imgui_internal.h" />
+    <ClInclude Include="src\imgui\imstb_rectpack.h" />
+    <ClInclude Include="src\imgui\imstb_textedit.h" />
+    <ClInclude Include="src\imgui\imstb_truetype.h" />
     <ClInclude Include="src\renderer.h" />
     <ClInclude Include="src\scene.h" />
     <ClInclude Include="template\common.h" />
