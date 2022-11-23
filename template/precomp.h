@@ -1648,6 +1648,7 @@ public:
 	virtual void MouseWheel( float y ) = 0;
 	virtual void KeyUp( int key ) = 0;
 	virtual void KeyDown( int key ) = 0;
+	virtual void KeyRepeat( int key ) = 0;
 	virtual void Gui( ) = 0;
 	Surface* screen = 0;
 };
