@@ -151,8 +151,8 @@ __kernel void trace(__global uint* pixels,
 					int numLights)
 {
 	int idx = get_global_id(0);
-	int x = idx % SCRWIDTH;
-	int y = idx / SCRWIDTH;
+	int i = idx % SCRWIDTH;
+	int j = idx / SCRWIDTH;
 
 	nPrimitives = numPrimitives;
 	nLights = numLights;
@@ -164,7 +164,7 @@ __kernel void trace(__global uint* pixels,
 	lights = _lights;
 
 	// create and shoot a ray into the scene
-	Ray ray = initPrimaryRay(x, y, &cam);
+	Ray ray = initPrimaryRay(i, j, &cam);
 	float3 color = shoot2(&ray);
 
 	// prevent overflow of the colors

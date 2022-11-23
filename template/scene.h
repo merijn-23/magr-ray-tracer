@@ -256,8 +256,8 @@ public:
 		mats[3] = Material{ float4(1, 1, 1, 0), .5f, 0, 0, false };
 		mats[4] = Material{ float4(1, 1, 1, 0), 0, 1, 1.125f, true };
 
-		spheres[0] = Sphere{ float4(.8f, 0.f, -1.5f, 0.f), .25f, 2.f };			// 1: bouncing ball
-		spheres[1] = Sphere{ float4(.8f, 0.f, 0.f, 0), .25f, 2.f };			// 1: bouncing ball
+		spheres[0] = Sphere{ float4(0, 0.f, -1.5f, 0.f), .25f, 2.f };			// 1: bouncing ball
+		spheres[1] = Sphere{ float4(3, 0.f, 0.f, 0), .25f, 2.f };			// 1: bouncing ball
 		prims[0] = Primitive{ 0, 0, 0 };
 		prims[1] = Primitive{ 0, 1, 4 };
 
