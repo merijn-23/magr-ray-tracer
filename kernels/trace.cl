@@ -139,7 +139,7 @@ float3 shoot2(Ray* primaryRay)
 // 	return color;
 // }
 
-__kernel void trace(__global uint* pixels,
+__kernel void trace(write_only image2d_t target,
 					__global Sphere* _spheres,
 					__global Plane* _planes,
 					//__global read_only Cube* cubes,
@@ -169,7 +169,8 @@ __kernel void trace(__global uint* pixels,
 
 	// prevent overflow of the colors
 	color = min(color, (float3)(1));
-	color *= 255;
-	pixels[idx] = ((uint)color.x << 16) + ((uint)color.y << 8) + ((uint)color.z);
+	//color *= 255;
+	write_imagef( target, ( int2 )( i, j ), ( float4 )( color, 1 ) );
+	//pixels[idx] = ((uint)color.x << 16) + ((uint)color.y << 8) + ((uint)color.z);
 
 }

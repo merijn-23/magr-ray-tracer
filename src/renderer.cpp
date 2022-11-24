@@ -30,14 +30,13 @@ void Renderer::Tick( float _deltaTime )
 	CamToDevice( );
 
 	kernel->Run( SCRWIDTH * SCRHEIGHT );
-	pixelBuffer->CopyFromDevice( );
+	//pixelBuffer->CopyFromDevice( );
 
-	return;
 	// performance report - running average - ms, MRays/s
 	static float avg = 10, alpha = 1;
-	avg = (1 - alpha) * avg + alpha * t.elapsed( ) * 1000;
+	avg = ( 1 - alpha ) * avg + alpha * t.elapsed( ) * 1000;
 	if ( alpha > 0.05f ) alpha *= 0.5f;
-	float fps = 1000 / avg, rps = (SCRWIDTH * SCRHEIGHT) * fps;
+	float fps = 1000 / avg, rps = ( SCRWIDTH * SCRHEIGHT ) * fps;
 	printf( "%5.2fms (%.1f fps) - %.1fMrays/s\n", avg, fps, rps / 1000000 );
 }
 
@@ -52,7 +51,10 @@ void Renderer::InitKernel( )
 	matBuffer = new Buffer( sizeof( scene.mats ) );
 	primBuffer = new Buffer( sizeof( scene.prims ) );
 	lightBuffer = new Buffer( sizeof( scene.lights ) );
-	pixelBuffer = new Buffer( 4 * SCRHEIGHT * SCRWIDTH );
+	
+	// screen
+	pixelBuffer = new Buffer( GetRenderTarget()->ID, 0, Buffer::TARGET );
+	screen = 0;
 
 	//sphereBuffer->hostBuffer = (uint*)scene.spheres;
 	sphereBuffer->hostBuffer = (uint*)scene.spheres;
@@ -61,12 +63,12 @@ void Renderer::InitKernel( )
 	matBuffer->hostBuffer = (uint*)scene.mats;
 	primBuffer->hostBuffer = (uint*)scene.prims;
 	lightBuffer->hostBuffer = (uint*)scene.lights;
-	pixelBuffer->hostBuffer = screen->pixels;
+	//pixelBuffer->hostBuffer = screen->pixels;
 
 	kernel->SetArguments( pixelBuffer, sphereBuffer, planeBuffer, matBuffer, primBuffer, lightBuffer );
 	CamToDevice( );
-	kernel->SetArgument( 7, (int)(sizeof( scene.prims ) / sizeof( Primitive )) );
-	kernel->SetArgument( 8, (int)(sizeof( scene.lights ) / sizeof( Light )) );
+	kernel->SetArgument( 7, (int)( sizeof( scene.prims ) / sizeof( Primitive ) ) );
+	kernel->SetArgument( 8, (int)( sizeof( scene.lights ) / sizeof( Light ) ) );
 	//clSetKernelArg(kernel->kernel, 5, sizeof(int), sizeof(scene.prims)/sizeof(scene.prims[0]));
 
 
@@ -96,28 +98,35 @@ void Tmpl8::Renderer::CamToDevice( )
 	clSetKernelArg( kernel->kernel, 6, sizeof( Camera ), &camera.cam );
 }
 
-void Renderer::MouseMove( int x, int y ) {
+void Renderer::MouseMove( int x, int y )
+{
 	camera.MouseMove( x - mousePos.x, y - mousePos.y );
-	mousePos.x = x, mousePos.y = y; 
+	mousePos.x = x, mousePos.y = y;
 }
-void Renderer::MouseWheel( float y ) {
+void Renderer::MouseWheel( float y )
+{
 	camera.Fov( -y );
 }
-void Renderer::KeyRepeat( int key ) {
+void Renderer::KeyRepeat( int key )
+{
 	switch ( key )
 	{
-	case GLFW_KEY_W: {
-		camera.Move( CamDir::Forward, deltaTime);
-	}break;
-	case GLFW_KEY_A: {
-		camera.Move( CamDir::Left, deltaTime );
-	}break;
-	case GLFW_KEY_S: {
-		camera.Move( CamDir::Backwards, deltaTime );
-	}break;
-	case GLFW_KEY_D: {
-		camera.Move( CamDir::Right, deltaTime );
-	}break;
+		case GLFW_KEY_W:
+		{
+			camera.Move( CamDir::Forward, deltaTime );
+		}break;
+		case GLFW_KEY_A:
+		{
+			camera.Move( CamDir::Left, deltaTime );
+		}break;
+		case GLFW_KEY_S:
+		{
+			camera.Move( CamDir::Backwards, deltaTime );
+		}break;
+		case GLFW_KEY_D:
+		{
+			camera.Move( CamDir::Right, deltaTime );
+		}break;
 	}
 }
 
@@ -127,5 +136,5 @@ void Renderer::KeyDown( int key )
 
 void Renderer::Gui( )
 {
-	//ImGui::ShowDemoWindow( );
+	ImGui::ShowDemoWindow( );
 }
