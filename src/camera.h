@@ -23,8 +23,10 @@ namespace Tmpl8
 		float m_yaw;
 		float m_pitch;
 		float m_fov;
-		float3 m_forward = float3( 0, 0, -1 );
+		float4 m_forward = float3( 0, 0, -1 );
 		float3 m_right = float3( 1, 0, 0 );
+		float3 m_up = float3( 0, 1, 0 );
+		float4 m_screen_offset = float4(0, 0, focalLength, 0 );
 		float m_speed = .5f;
 
 	public:
@@ -49,22 +51,19 @@ namespace Tmpl8
 			switch ( camdir )
 			{
 			case CamDir::Forward: {
-				cam.origin += m_forward * velocity;
-				cam.topLeft += m_forward * velocity;
+				cam.origin -= m_forward * velocity;
 			}break;
 			case CamDir::Backwards: {
-				cam.origin -= m_forward * velocity;
-				cam.topLeft -= m_forward * velocity;
+				cam.origin += m_forward * velocity;
 			}break; 
 			case CamDir::Left: {
 				cam.origin -= m_right * velocity;
-				cam.topLeft -= m_right * velocity;
 			}break; 
 			case CamDir::Right: {
 				cam.origin += m_right * velocity;
-				cam.topLeft += m_right * velocity;
 			}break;
 			}
+			UpdateCamVec( );
 		}
 
 		void MouseMove( float xOffset, float yOffset )
@@ -83,14 +82,7 @@ namespace Tmpl8
 			forward.y = sin( pitch );
 			forward.z = sin( yaw ) * cos( pitch );
 			m_forward = normalize( forward );
-
-			float4 w = normalize( cam.origin - forward * focalLength );
-			m_right = normalize( cross( worldUp, w ) );
-			float3 v = normalize( cross( w, m_right ) );
-
-			cam.horizontal = viewportWidth * m_right;
-			cam.vertical = viewportHeight * v;
-			cam.topLeft = cam.origin - cam.horizontal / 2 - cam.vertical / 2 - w;
+			UpdateCamVec( );
 		}
 
 		void Fov( float offset )
@@ -102,9 +94,17 @@ namespace Tmpl8
 			viewportHeight = 2 * h;
 			viewportWidth = aspect * viewportHeight;
 
-			cam.horizontal = float3( viewportWidth, 0, 0 );
-			cam.vertical = float3( 0, -viewportHeight, 0 );
-			cam.topLeft = cam.origin - cam.horizontal / 2 - cam.vertical / 2 - float4( 0, 0, focalLength, 0 );
+			UpdateCamVec( );
+		}
+
+		void UpdateCamVec( )
+		{
+			m_right = normalize( cross( worldUp, m_forward ) );
+			m_up = normalize( cross( m_right, m_forward ) );
+
+			cam.horizontal = viewportWidth * m_right;
+			cam.vertical = viewportHeight * m_up;
+			cam.topLeft = cam.origin - cam.horizontal / 2 - cam.vertical / 2 - m_forward * focalLength;
 		}
 	};
 }

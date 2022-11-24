@@ -41,6 +41,7 @@ namespace Tmpl8
 		Buffer* matBuffer;
 		Buffer* primBuffer;
 		Buffer* pixelBuffer;
+
 		Buffer* camBuffer;
 		Buffer* lightBuffer;
 	};

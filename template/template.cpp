@@ -53,7 +53,15 @@ void ReshapeWindowCallback( GLFWwindow* window, int w, int h )
 }
 void KeyEventCallback( GLFWwindow* window, int key, int scancode, int action, int mods )
 {
+	static bool toggle_cursor = false;
 	if ( key == GLFW_KEY_ESCAPE ) running = false;
+	if ( key == GLFW_KEY_C && action == GLFW_PRESS)
+	{
+		toggle_cursor = !toggle_cursor;
+		if ( toggle_cursor ) glfwSetInputMode( window, GLFW_CURSOR, GLFW_CURSOR_NORMAL );
+		else glfwSetInputMode( window, GLFW_CURSOR, GLFW_CURSOR_DISABLED );
+	}
+
 	if ( action == GLFW_PRESS )
 	{
 		if ( app ) if ( key >= 0 )
@@ -115,6 +123,8 @@ void main( )
 	glfwSetScrollCallback( window, MouseScrollCallback );
 	glfwSetCursorPosCallback( window, MousePosCallback );
 	glfwSetCharCallback( window, CharEventCallback );
+	glfwSetInputMode( window, GLFW_CURSOR, GLFW_CURSOR_DISABLED );
+
 	// initialize GLAD
 	if ( !gladLoadGLLoader( (GLADloadproc)glfwGetProcAddress ) ) FatalError( "gladLoadGLLoader failed." );
 	glfwSwapInterval( 0 );
@@ -282,9 +292,9 @@ void main( )
 	static Timer timer;
 	while ( !glfwWindowShouldClose( window ) )
 	{
-		ImGui_ImplOpenGL3_NewFrame( );
+		/*ImGui_ImplOpenGL3_NewFrame( );
 		ImGui_ImplGlfw_NewFrame( );
-		ImGui::NewFrame( );
+		ImGui::NewFrame( );*/
 
 		deltaTime = min( 500.0f, 1000.0f * timer.elapsed( ) );
 		timer.reset( );
@@ -297,9 +307,9 @@ void main( )
 			shader->SetInputTexture( 0, "c", renderTarget );
 			DrawQuad( );
 			shader->Unbind( );
-			app->Gui( );
-			ImGui::Render( );
-			ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData( ) );
+			//app->Gui( );
+			//ImGui::Render( );
+			//ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData( ) );
 
 			glfwSwapBuffers( window );
 			glfwPollEvents( );
