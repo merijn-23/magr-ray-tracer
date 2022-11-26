@@ -113,6 +113,12 @@ typedef struct Light_struct
 	int primIdx;
 } Light;	
 
+typedef struct Triangle_struct
+{
+	float4 v1, v2, v3;
+	float4 normal;
+};
+
 
 //// -----------------------------------------------------------
 //// Cube primitive
