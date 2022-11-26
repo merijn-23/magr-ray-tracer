@@ -47,7 +47,7 @@ void Renderer::InitKernel( )
 	//sphereBuffer = new Buffer(sizeof(scene.spheres));
 	sphereBuffer = new Buffer( sizeof( scene.spheres ) );
 	planeBuffer = new Buffer( sizeof( scene.planes ) );
-	cubeBuffer = new Buffer( sizeof( scene.cubes ) );
+	triangleBuffer = new Buffer( sizeof( scene.triangles ) );
 	matBuffer = new Buffer( sizeof( scene.mats ) );
 	primBuffer = new Buffer( sizeof( scene.prims ) );
 	lightBuffer = new Buffer( sizeof( scene.lights ) );
@@ -59,22 +59,22 @@ void Renderer::InitKernel( )
 	//sphereBuffer->hostBuffer = (uint*)scene.spheres;
 	sphereBuffer->hostBuffer = (uint*)scene.spheres;
 	planeBuffer->hostBuffer = (uint*)scene.planes;
-	cubeBuffer->hostBuffer = (uint*)scene.cubes;
+	triangleBuffer->hostBuffer = (uint*)scene.triangles;
 	matBuffer->hostBuffer = (uint*)scene.mats;
 	primBuffer->hostBuffer = (uint*)scene.prims;
 	lightBuffer->hostBuffer = (uint*)scene.lights;
 	//pixelBuffer->hostBuffer = screen->pixels;
 
-	kernel->SetArguments( pixelBuffer, sphereBuffer, planeBuffer, matBuffer, primBuffer, lightBuffer );
+	kernel->SetArguments( pixelBuffer, sphereBuffer, planeBuffer, triangleBuffer, matBuffer, primBuffer, lightBuffer );
 	CamToDevice( );
-	kernel->SetArgument( 7, (int)( sizeof( scene.prims ) / sizeof( Primitive ) ) );
-	kernel->SetArgument( 8, (int)( sizeof( scene.lights ) / sizeof( Light ) ) );
+	kernel->SetArgument( 8, (int)( sizeof( scene.prims ) / sizeof( Primitive ) ) );
+	kernel->SetArgument( 9, (int)( sizeof( scene.lights ) / sizeof( Light ) ) );
 	//clSetKernelArg(kernel->kernel, 5, sizeof(int), sizeof(scene.prims)/sizeof(scene.prims[0]));
 
 
 	sphereBuffer->CopyToDevice( );
 	planeBuffer->CopyToDevice( );
-	cubeBuffer->CopyToDevice( );
+	triangleBuffer->CopyToDevice( );
 	matBuffer->CopyToDevice( );
 	primBuffer->CopyToDevice( );
 	lightBuffer->CopyToDevice( );
@@ -95,7 +95,7 @@ void Renderer::UpdateBuffers( )
 
 void Tmpl8::Renderer::CamToDevice( )
 {
-	clSetKernelArg( kernel->kernel, 6, sizeof( Camera ), &camera.cam );
+	clSetKernelArg( kernel->kernel, 7, sizeof( Camera ), &camera.cam );
 }
 
 void Renderer::MouseMove( int x, int y )
@@ -103,6 +103,7 @@ void Renderer::MouseMove( int x, int y )
 	camera.MouseMove( x - mousePos.x, y - mousePos.y );
 	mousePos.x = x, mousePos.y = y;
 }
+
 void Renderer::MouseWheel( float y )
 {
 	camera.Fov( -y );

@@ -144,7 +144,7 @@ float3 shoot2(Ray* primaryRay)
 __kernel void trace(write_only image2d_t target,
 					__global Sphere* _spheres,
 					__global Plane* _planes,
-					//__global read_only Cube* cubes,
+					__global Triangle* _triangles,
 					__global Material* _materials,
 					__global Primitive* _primitives,
 					__global Light* _lights,
@@ -153,26 +153,27 @@ __kernel void trace(write_only image2d_t target,
 					int numLights)
 {
 	int idx = get_global_id(0);
-	int i = idx % SCRWIDTH;
-	int j = idx / SCRWIDTH;
+	int x = idx % SCRWIDTH;
+	int y = idx / SCRWIDTH;
 
 	nPrimitives = numPrimitives;
 	nLights = numLights;
 
 	spheres = _spheres;
 	planes = _planes;
+	triangles = _triangles;
 	materials = _materials;
 	primitives = _primitives;
 	lights = _lights;
 
 	// create and shoot a ray into the scene
-	Ray ray = initPrimaryRay(i, j, &cam);
+	Ray ray = initPrimaryRay(x, y, &cam);
 	float3 color = shoot2(&ray);
 
 	// prevent overflow of the colors
 	color = min(color, (float3)(1));
 	//color *= 255;
-	write_imagef( target, ( int2 )( i, j ), ( float4 )( color, 1 ) );
+	write_imagef( target, ( int2 )( x, y ), ( float4 )( color, 1 ) );
 	//pixels[idx] = ((uint)color.x << 16) + ((uint)color.y << 8) + ((uint)color.z);
 
 }

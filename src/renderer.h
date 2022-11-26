@@ -37,7 +37,7 @@ namespace Tmpl8
 		// Buffers
 		Buffer* sphereBuffer;
 		Buffer* planeBuffer;
-		Buffer* cubeBuffer;
+		Buffer* triangleBuffer;
 		Buffer* matBuffer;
 		Buffer* primBuffer;
 		Buffer* pixelBuffer;
