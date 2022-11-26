@@ -36,7 +36,7 @@ Ray* transmission(Ray* ray, float3 I, float3 T)
 	Ray tRay = initRay(origin, T);
 	tRay.energy = ray->energy;
 	tRay.bounces = ray->bounces + 1;
-	tRay.inside = ray->inside;
+	//tRay.inside = ray->inside;
 	return &tRay;
 }
 
