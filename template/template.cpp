@@ -292,9 +292,11 @@ void main( )
 	static Timer timer;
 	while ( !glfwWindowShouldClose( window ) )
 	{
-		/*ImGui_ImplOpenGL3_NewFrame( );
+#ifdef NDEBUG
+		ImGui_ImplOpenGL3_NewFrame( );
 		ImGui_ImplGlfw_NewFrame( );
-		ImGui::NewFrame( );*/
+		ImGui::NewFrame( );
+#endif // NDEBUG
 
 		deltaTime = min( 500.0f, 1000.0f * timer.elapsed( ) );
 		timer.reset( );
@@ -307,9 +309,11 @@ void main( )
 			shader->SetInputTexture( 0, "c", renderTarget );
 			DrawQuad( );
 			shader->Unbind( );
-			//app->Gui( );
-			//ImGui::Render( );
-			//ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData( ) );
+#ifdef NDEBUG
+			app->Gui( );
+			ImGui::Render( );
+			ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData( ) );
+#endif // NDEBUG
 
 			glfwSwapBuffers( window );
 			glfwPollEvents( );
