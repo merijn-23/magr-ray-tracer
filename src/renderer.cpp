@@ -5,6 +5,7 @@
 // -----------------------------------------------------------
 void Renderer::Init( )
 {
+	Scene scene = Scene( );
 	InitKernel( );
 }
 
@@ -44,12 +45,11 @@ void Renderer::InitKernel( )
 {
 	kernel = new Kernel( "kernels/trace.cl", "trace" );
 
-	//sphereBuffer = new Buffer(sizeof(scene.spheres));
 	sphereBuffer = new Buffer( sizeof( scene.spheres ) );
 	planeBuffer = new Buffer( sizeof( scene.planes ) );
 	triangleBuffer = new Buffer( sizeof( scene.triangles ) );
-	matBuffer = new Buffer( sizeof( scene.mats ) );
-	primBuffer = new Buffer( sizeof( scene.prims ) );
+	matBuffer = new Buffer( sizeof( scene.materials ) );
+	primBuffer = new Buffer( sizeof( scene.primitives ) );
 	lightBuffer = new Buffer( sizeof( scene.lights ) );
 	
 	// screen
@@ -60,14 +60,14 @@ void Renderer::InitKernel( )
 	sphereBuffer->hostBuffer = (uint*)scene.spheres;
 	planeBuffer->hostBuffer = (uint*)scene.planes;
 	triangleBuffer->hostBuffer = (uint*)scene.triangles;
-	matBuffer->hostBuffer = (uint*)scene.mats;
-	primBuffer->hostBuffer = (uint*)scene.prims;
+	matBuffer->hostBuffer = (uint*)scene.materials;
+	primBuffer->hostBuffer = (uint*)scene.primitives;
 	lightBuffer->hostBuffer = (uint*)scene.lights;
 	//pixelBuffer->hostBuffer = screen->pixels;
 
 	kernel->SetArguments( pixelBuffer, sphereBuffer, planeBuffer, triangleBuffer, matBuffer, primBuffer, lightBuffer );
 	CamToDevice( );
-	kernel->SetArgument( 8, (int)( sizeof( scene.prims ) / sizeof( Primitive ) ) );
+	kernel->SetArgument( 8, (int)( sizeof( scene.primitives ) / sizeof( Primitive ) ) );
 	kernel->SetArgument( 9, (int)( sizeof( scene.lights ) / sizeof( Light ) ) );
 	//clSetKernelArg(kernel->kernel, 5, sizeof(int), sizeof(scene.prims)/sizeof(scene.prims[0]));
 
