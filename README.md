@@ -13,15 +13,15 @@ you go for the ray tracing template).
 means: adjustable from code, or at runtime using some interface.
 - [x] A basic user interface, or keys / mouse input handling to control the camera position and
 orientation at run-time.
+- [x] Support for (at least) planes, spheres and triangles.
+- [x] A basic scene, consisting of a small set of these primitives. Use each primitive type at least
+once.
 
 ### Doing:
 - [ ] A Whitted-style ray tracing renderer, supporting shadows, reflections and refraction with
 absorption (Beer’s law).
-- [ ] Support for (at least) planes, spheres and triangles.
 
 ### ToDo:
-- [ ] A basic scene, consisting of a small set of these primitives. Use each primitive type at least
-once.
 - [ ] A Kajiya-style path tracing renderer, supporting diffuse interreflections and area lights.
 
 ### Bonus
