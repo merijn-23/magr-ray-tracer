@@ -32,6 +32,11 @@ typedef struct Plane
 } Plane;
 __global Plane* planes;
 
+typedef struct Triangle
+{
+	float3 v1, v2, v3;
+	float4 normal;
+} Triangle;
 
 // typedef struct Cube
 // {
