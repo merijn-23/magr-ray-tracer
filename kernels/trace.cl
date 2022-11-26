@@ -29,6 +29,8 @@ float3 shoot2(Ray* primaryRay)
 		{
 			float3 I = intersectionPoint(&ray);
 			ray.N = getNormal(primitives + ray.objIdx, I);
+			if(ray.inside)
+				ray.N = -ray.N;
 
 			// we hit an object
 			Material mat = materials[primitives[ray.objIdx].matIdx];
@@ -52,7 +54,7 @@ float3 shoot2(Ray* primaryRay)
 			}
 			else if (ray.bounces < MAX_BOUNCE)
 			{
-				float costhetai = dot(ray.N, ray.rD);
+				float costhetai = dot(-ray.N, ray.rD);
 
 				float n1 = mat.n1;
 				float n2 = mat.n2;
@@ -76,7 +78,7 @@ float3 shoot2(Ray* primaryRay)
 					// use fresnel's law to find reflection and refraction factors
 					float3 T = frac * ray.D + ray.N * (frac * costhetai - sqrt(k));
 					T = normalize(T);
-					float costhetat = dot( -ray.N, T );
+					float costhetat = dot( ray.N, T );
 					// precompute
 					float n1costhetai = n1 * costhetai;
 					float n2costhetai = n2 * costhetai;
@@ -88,7 +90,7 @@ float3 shoot2(Ray* primaryRay)
 
 					// calculate fresnel
 					float Fr = 0.5f * (frac1 * frac1 + frac2 * frac2);
-
+					
 					// create reflection ray
 					Ray* reflectRay = reflect(&ray, I);
 					reflectRay->energy *= Fr;
