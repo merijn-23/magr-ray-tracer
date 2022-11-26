@@ -34,9 +34,16 @@ __global Plane* planes;
 
 typedef struct Triangle
 {
-	float3 v1, v2, v3;
-	float4 normal;
+	float3 v0, v1, v2;
+	float3 N;
 } Triangle;
+__global Triangle* triangles;
+
+#define SPHERE		0
+#define PLANE		1
+#define CUBE		2
+#define QUAD		3
+#define TRIANGLE	4
 
 // typedef struct Cube
 // {
@@ -47,18 +54,18 @@ typedef struct Triangle
 void intersectSphere( int primIdx, Primitive* prim, Sphere* sphere, Ray* ray )
 {
 	float3 oc = ray->O - sphere->pos;
-	float b = dot(oc, ray->D);
-	float c = dot(oc, oc) - sphere->r2;
+	float b = dot( oc, ray->D );
+	float c = dot( oc, oc ) - sphere->r2;
 	float t, d = b * b - c;
-	if (d <= 0) return;
-	d = sqrt(d), t = -b - d;
-	if (t < ray->t && t > 0)
+	if ( d <= 0 ) return;
+	d = sqrt( d ), t = -b - d;
+	if ( t < ray->t && t > 0 )
 	{
 		ray->t = t, ray->objIdx = primIdx;
 		return;
 	}
 	t = d - b;
-	if (t < ray->t && t > 0)
+	if ( t < ray->t && t > 0 )
 	{
 		ray->t = t, ray->objIdx = primIdx, ray->inside = true;
 		return;
@@ -68,25 +75,57 @@ void intersectSphere( int primIdx, Primitive* prim, Sphere* sphere, Ray* ray )
 void intersectPlane( int primIdx, Primitive* prim, Plane* plane, Ray* ray )
 {
 	float t = -(dot( ray->O, plane->N ) + plane->d) / (dot( ray->D, plane->N ));
-	if (t < ray->t && t > 0)
-	{
-		ray->t = t, ray->objIdx = primIdx;
-	} 
+	if ( t > ray->t || t < 0 ) return;
+
+	ray->t = t, ray->objIdx = primIdx;
+}
+
+// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
+float dotEpsilon = 0.001;
+void intersectTriangle( int primIdx, Primitive* prim, Triangle* tri, Ray* ray )
+{
+	float3 v0v1 = tri->v1 - tri->v0;
+	float3 v0v2 = tri->v2 - tri->v0;
+	float3 pvec = cross( ray->D, v0v2 );
+	float det = dot( v0v1, pvec );
+	// ray and triangle are parallel if det is close to 0
+#ifdef CULLING
+	if ( det < dotEpsilon ) return;
+#else
+	if ( fabs( det ) < dotEpsilon ) return;
+#endif
+	float invDet = 1 / det;
+	float3 tvec = ray->O - tri->v0;
+	float u = dot( tvec, pvec ) * invDet;
+	if ( u < 0 || u > 1 ) return;
+
+	float3 qvec = cross( tvec, v0v1 );
+	float v = dot( ray->D, qvec ) * invDet;
+	if ( v < 0 || u + v > 1 ) return;
+
+	float t = dot( v0v2, qvec ) * invDet;
+	if ( t > ray->t || t < 0 ) return;
+
+	ray->t = t;
+	ray->objIdx = primIdx;
 }
 
 void intersect( int primIdx, Primitive* prim, Ray* ray )
 {
-	switch(prim->objType){
-		case 0:
-			intersectSphere(primIdx, prim, spheres + prim->objIdx, ray);
-			break;
-		case 1:
-			intersectPlane(primIdx, prim, planes + prim->objIdx, ray);
+	switch ( prim->objType )
+	{
+	case SPHERE:
+		intersectSphere( primIdx, prim, spheres + prim->objIdx, ray );
+		break;
+	case PLANE:
+		intersectPlane( primIdx, prim, planes + prim->objIdx, ray );
+	case TRIANGLE:
+		intersectTriangle( primIdx, prim, triangles + prim->objIdx, ray );
 	}
 }
 
 
-float3 getSphereNormal( Sphere* sphere, float3 I ) 
+float3 getSphereNormal( Sphere* sphere, float3 I )
 {
 	return (I - sphere->pos) * sphere->invr;
 }
@@ -98,12 +137,12 @@ float3 getPlaneNormal( Plane* plane, float3 I )
 
 float3 getNormal( Primitive* prim, float3 I )
 {
-	switch(prim->objType)
+	switch ( prim->objType )
 	{
-		case 0:
-			return getSphereNormal(spheres + prim->objIdx, I);
-		case 1:
-			return getPlaneNormal(planes + prim->objIdx, I);
+	case 0:
+		return getSphereNormal( spheres + prim->objIdx, I );
+	case 1:
+		return getPlaneNormal( planes + prim->objIdx, I );
 	}
 }
 

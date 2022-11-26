@@ -58,11 +58,11 @@ namespace Tmpl8 {
 // Keeps track of both the Material of a primitive as well as
 // it's type and index in the correct array.
 // Primitive types:
-// 0 - Sphere
-// 1 - Plane
-// 2 - Cube
-// 3 - Quad
-// 4 - Triangle
+#define SPHERE		0
+#define PLANE		1
+#define CUBE		2
+#define QUAD		3
+#define TRIANGLE	4
 // -----------------------------------------------------------
 typedef struct Primitive_struct
 {
@@ -115,9 +115,9 @@ typedef struct Light_struct
 
 typedef struct Triangle_struct
 {
-	float4 v1, v2, v3;
-	float4 normal;
-};
+	float4 v0, v1, v2;
+	float4 N;
+} Triangle;
 
 
 //// -----------------------------------------------------------
@@ -268,8 +268,8 @@ public:
 
 		spheres[0] = Sphere{ float4(0, 0.f, -1.5f, 0.f), .25f, 2.f };			// 1: bouncing ball
 		spheres[1] = Sphere{ float4(1.5f, -0.49f, 0.f, 0), .25f, 2.f };			// 1: bouncing ball
-		prims[0] = Primitive{ 0, 0, 0 };
-		prims[1] = Primitive{ 0, 1, 4 };
+		prims[0] = Primitive{ SPHERE, 0, 0 };
+		prims[1] = Primitive{ SPHERE, 1, 4 };
 
 		planes[0] = Plane{ float4(1, 0, 0, 0), 5.f };
 		planes[1] = Plane{ float4(-1, 0, 0, 0), 2.99f };
@@ -277,12 +277,20 @@ public:
 		planes[3] = Plane{ float4(0, -1, 0, 0), 2.f };
 		planes[4] = Plane{ float4(0, 0, 1, 0), 9.f };
 		planes[5] = Plane{ float4(0, 0, -1, 0), 3.99f };
-		prims[2] = Primitive{ 1, 0, 5 };
-		prims[3] = Primitive{ 1, 1, 6 };
-		prims[4] = Primitive{ 1, 2, 7 };
-		prims[5] = Primitive{ 1, 3, 0 };
-		prims[6] = Primitive{ 1, 4, 2 };
-		prims[7] = Primitive{ 1, 5, 2 };
+		prims[2] = Primitive{ PLANE, 0, 5 };
+		prims[3] = Primitive{ PLANE, 1, 6 };
+		prims[4] = Primitive{ PLANE, 2, 7 };
+		prims[5] = Primitive{ PLANE, 3, 0 };
+		prims[6] = Primitive{ PLANE, 4, 2 };
+		prims[7] = Primitive{ PLANE, 5, 2 };
+
+		triangles[0] = Triangle{
+			float4( 0, 0.f, -1.5f, 0.f ),
+			float4( 1, 0.f, -1.5f, 0.f ),
+			float4( 0, 1.f, -1.f, 0.f ),
+			float4( 0, 0.0, 1, 0 )
+		};
+		prims[8] = Primitive{ TRIANGLE, 0, 0 };
 
 		lights[0] = Light{ float4(2, 0, 3, 0), float4(1,1,.8f,0), 2, -1 };
 		lights[1] = Light{ float4(1, 0, -5, 0), float4(1,1,.8f,0), 2, -1 };
@@ -312,16 +320,9 @@ public:
 	Primitive prims[8];
 	Sphere spheres[2];
 	Plane planes[6];
-	Cube cubes[1];
 	Material mats[8];
 	Light lights[3];
-	//Quad quad;
-	//Sphere sphere;
-	//Sphere sphere2;
-	//Cube cube;
-	//Plane plane[6];
-	//
-	//Sphere spheres[2];
+	Triangle triangles[1];
 
 
 };
