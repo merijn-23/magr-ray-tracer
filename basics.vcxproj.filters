@@ -36,7 +36,7 @@
     <ClInclude Include="template\common.h">
       <Filter>template</Filter>
     </ClInclude>
-    <ClInclude Include="template\scene.h">
+    <ClInclude Include="src\scene.h">
       <Filter>template</Filter>
     </ClInclude>
     <ClInclude Include="template\precomp.h">
@@ -46,9 +46,6 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\renderer.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\scene.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\imgui\imconfig.h">
@@ -78,6 +75,7 @@
     <ClInclude Include="src\imgui\imstb_truetype.h">
       <Filter>imgui</Filter>
     </ClInclude>
+    <ClInclude Include="src\tiny_obj_loader.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="template">

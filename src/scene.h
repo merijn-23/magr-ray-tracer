@@ -38,8 +38,6 @@
 
 #include <map>
 
-#define TINYOBJLOADER_IMPLEMENTATION
-#include "tiny_obj_loader.h"
 
 namespace Tmpl8 {
 
@@ -276,6 +274,7 @@ public:
     void AddSphere(float3 pos, float radius, std::string material);
     void AddPlane(float3 N, float d, std::string material);
     void AddTriangle(float3 v0, float3 v1, float3 v2, std::string material);
+    void LoadModel(std::string filename);
 
 public:
     __declspec(align(64)) // start a new cacheline here

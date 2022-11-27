@@ -89,7 +89,7 @@ void intersectTriangle( int primIdx, Primitive* prim, Triangle* tri, Ray* ray )
 	float3 pvec = cross( ray->D, v0v2 );
 	float det = dot( v0v1, pvec );
 	// ray and triangle are parallel if det is close to 0
-#ifdef CULLING
+#ifdef ONE_SIDED
 	if ( det < dotEpsilon ) return;
 #else
 	if ( fabs( det ) < dotEpsilon ) return;
