@@ -34,7 +34,7 @@ private:
     float speed_ = .5f;
 
 public:
-    CameraManager(float vfov)
+    CameraManager(float vfov = 110)
     {
         cam.origin = float3(0, 0, 0);
         Fov(vfov);
@@ -51,31 +51,22 @@ public:
 
     void Move(CamDir camdir, float deltaTime)
     {
-        float velocity = speed_;
+        float velocity = speed_ * deltaTime;
         switch (camdir)
         {
             case CamDir::Forward:
-            {
                 cam.origin -= forward_ * velocity;
-            }
             break;
             case CamDir::Backwards:
-            {
                 cam.origin += forward_ * velocity;
-            }
             break;
             case CamDir::Left:
-            {
                 cam.origin -= right_ * velocity;
-            }
             break;
             case CamDir::Right:
-            {
                 cam.origin += right_ * velocity;
-            }
             break;
         }
-        UpdateCamVec();
     }
 
     void MouseMove(float xOffset, float yOffset)
@@ -94,7 +85,6 @@ public:
         forward.y = sin(pitch);
         forward.z = sin(yaw) * cos(pitch);
         forward_ = normalize(forward);
-        UpdateCamVec();
     }
 
     void Fov(float offset)
@@ -105,8 +95,6 @@ public:
 
         viewportHeight = 2 * h;
         viewportWidth = aspect * viewportHeight;
-
-        UpdateCamVec();
     }
 
     void UpdateCamVec()

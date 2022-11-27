@@ -304,7 +304,7 @@ void main( )
 		// send the rendering result to the screen using OpenGL
 		if ( frameNr++ > 1 )
 		{
-			if ( app->screen ) renderTarget->CopyFrom( app->screen );
+			//if ( app->screen ) renderTarget->CopyFrom( app->screen );
 			shader->Bind( );
 			shader->SetInputTexture( 0, "c", renderTarget );
 			DrawQuad( );
