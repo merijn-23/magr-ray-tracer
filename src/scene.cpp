@@ -207,7 +207,7 @@ void Scene::LoadModel( std::string filename )
 			}
 
 			for ( size_t v = 0; v < vertices.size(); )
-				AddTriangle( vertices[v++], vertices[v++], vertices[v++], "white" );
+				AddTriangle( vertices[v++], vertices[v++], vertices[v++], "glass" );
 
 			index_offset += fv;
 		}

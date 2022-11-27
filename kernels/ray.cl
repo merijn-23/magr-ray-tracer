@@ -3,7 +3,7 @@ typedef struct Ray
 	float3 O, D, rD, N;
 	float t, energy;
 	// Index of primitive
-	int objIdx, bounces;
+	int primIdx, bounces;
 	bool inside;
 } Ray;
 
@@ -49,7 +49,7 @@ void recycleRay(Ray* ray, float3 O, float3 D)
 	ray->N = (float3)(0);
 	ray->t = 1e34f;
 	ray->energy = 1;
-	ray->objIdx = -1;
+	ray->primIdx = -1;
 	ray->bounces = 0;
 	ray->inside = false;
 }

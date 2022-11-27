@@ -1,44 +1,42 @@
 typedef struct Primitive
 {
 	int objType;
-	// Index of object in correct list
+	// Index of object in respective list
 	int objIdx;
 	int matIdx;
 } Primitive;
-__global Primitive* primitives;
-
 
 typedef struct Material
 {
-	float3 colour;
+	float3 color;
 	float specular, n1, n2;
 	bool isDieletric;
 } Material;
-__global Material* materials;
-
 
 typedef struct Sphere
 {
 	float3 pos;
 	float r2, invr;
 } Sphere;
-__global Sphere* spheres;
-
 
 typedef struct Plane
 {
 	float3 N;
 	float d;
 } Plane;
-__global Plane* planes;
 
 typedef struct Triangle
 {
 	float3 v0, v1, v2;
 	float3 N;
 } Triangle;
-__global Triangle* triangles;
 
+
+__global Primitive* primitives;
+__global Material* materials;
+__global Sphere* spheres;
+__global Plane* planes;
+__global Triangle* triangles;
 #define SPHERE		0
 #define PLANE		1
 #define CUBE		2
@@ -61,13 +59,13 @@ void intersectSphere( int primIdx, Primitive* prim, Sphere* sphere, Ray* ray )
 	d = sqrt( d ), t = -b - d;
 	if ( t < ray->t && t > 0 )
 	{
-		ray->t = t, ray->objIdx = primIdx;
+		ray->t = t, ray->primIdx = primIdx;
 		return;
 	}
 	t = d - b;
 	if ( t < ray->t && t > 0 )
 	{
-		ray->t = t, ray->objIdx = primIdx, ray->inside = true;
+		ray->t = t, ray->primIdx = primIdx, ray->inside = true;
 		return;
 	}
 }
@@ -77,7 +75,7 @@ void intersectPlane( int primIdx, Primitive* prim, Plane* plane, Ray* ray )
 	float t = -(dot( ray->O, plane->N ) + plane->d) / (dot( ray->D, plane->N ));
 	if ( t > ray->t || t < 0 ) return;
 
-	ray->t = t, ray->objIdx = primIdx;
+	ray->t = t, ray->primIdx = primIdx;
 }
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
@@ -107,7 +105,7 @@ void intersectTriangle( int primIdx, Primitive* prim, Triangle* tri, Ray* ray )
 	if ( t > ray->t || t < 0 ) return;
 
 	ray->t = t;
-	ray->objIdx = primIdx;
+	ray->primIdx = primIdx;
 }
 
 void intersect( int primIdx, Primitive* prim, Ray* ray )
@@ -119,11 +117,12 @@ void intersect( int primIdx, Primitive* prim, Ray* ray )
 		break;
 	case PLANE:
 		intersectPlane( primIdx, prim, planes + prim->objIdx, ray );
+		break;
 	case TRIANGLE:
 		intersectTriangle( primIdx, prim, triangles + prim->objIdx, ray );
+		break;
 	}
 }
-
 
 float3 getSphereNormal( Sphere* sphere, float3 I )
 {
@@ -139,10 +138,30 @@ float3 getNormal( Primitive* prim, float3 I )
 {
 	switch ( prim->objType )
 	{
-	case 0:
+	case SPHERE:
 		return getSphereNormal( spheres + prim->objIdx, I );
-	case 1:
+	case PLANE:
 		return getPlaneNormal( planes + prim->objIdx, I );
 	}
 }
 
+float2 getSphereUV( Sphere* sphere, float3 N )
+{
+	float2 tex;
+	tex.x = (1 + atan2pi( N.z, N.x )) * 0.5;
+	tex.y = acospi( N.y );
+	return tex;
+}
+
+float3 getAlbedo( Primitive* prim, float3 I )
+{
+	/*switch ( prim->objType )
+	{
+	case SPHERE:
+
+		return 
+	case PLANE:
+		float3 color = 
+		return 
+	}*/
+}
