@@ -1,6 +1,6 @@
 typedef struct Light
 {
-	float3 pos, colour;
+	float3 pos, color;
 	float strength;
     // primIdx is only used in path tracing
     int primIdx;
@@ -10,7 +10,7 @@ __global Light* lights;
 
 float3 getDiffuseShading( Light* light, float dot, float r )
 {
-    return dot * (1 / (r * r)) * light->strength * light->colour;
+    return dot * (1 / (r * r)) * light->strength * light->color;
 }
 
 bool shootShadowRay( Ray* ray, float d )

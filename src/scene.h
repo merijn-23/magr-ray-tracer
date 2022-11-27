@@ -23,23 +23,24 @@
 #define PLANE_X(o, i)                                \
     {                                                \
         if ((t = -(ray.O.x + o) * ray.rD.x) < ray.t) \
-            ray.t = t, ray.objIdx = i;               \
+            ray.t = t, ray.primIdx = i;               \
     }
 #define PLANE_Y(o, i)                                \
     {                                                \
         if ((t = -(ray.O.y + o) * ray.rD.y) < ray.t) \
-            ray.t = t, ray.objIdx = i;               \
+            ray.t = t, ray.primIdx = i;               \
     }
 #define PLANE_Z(o, i)                                \
     {                                                \
         if ((t = -(ray.O.z + o) * ray.rD.z) < ray.t) \
-            ray.t = t, ray.objIdx = i;               \
+            ray.t = t, ray.primIdx = i;               \
     }
 
 #include <map>
 
 
-namespace Tmpl8 {
+namespace Tmpl8
+{
 
 //__declspec(align(64)) class Ray
 //{
@@ -81,7 +82,7 @@ namespace Tmpl8 {
 // -----------------------------------------------------------
 typedef struct Primitive
 {
-    int objType, objIdx, matIdx;
+	int objType, objIdx, matIdx;
 };
 
 // -----------------------------------------------------------
@@ -91,47 +92,47 @@ typedef struct Primitive
 // -----------------------------------------------------------
 typedef struct Material
 {
-    float4 colour;
-    float specular, n1, n2;
-    bool isDieletric;
+	float4 color;
+	float specular, n1, n2;
+	bool isDieletric;
 };
 
 typedef struct Sphere
 {
-    float4 pos;
-    float r2, invr; // r * r, 1 / r
+	float4 pos;
+	float r2, invr; // r * r, 1 / r
 };
 
 typedef struct Plane
 {
-    float4 N;
-    float d;
+	float4 N;
+	float d;
 };
 
 typedef struct Cube
 {
-    float4 b[2];
-    mat4 M, invM;
+	float4 b[2];
+	mat4 M, invM;
 };
 
 typedef struct Quad
 {
-    float size;
-    mat4 T, invT;
+	float size;
+	mat4 T, invT;
 };
 
 typedef struct Light
 {
-    float4 pos, color;
-    float strength;
-    // Not used for point lights
-    int primIdx;
+	float4 pos, color;
+	float strength;
+	// Not used for point lights
+	int primIdx;
 };
 
 typedef struct Triangle
 {
-    float4 v0, v1, v2;
-    float4 N;
+	float4 v0, v1, v2;
+	float4 N;
 };
 
 //// -----------------------------------------------------------
@@ -256,51 +257,51 @@ typedef struct Triangle
 class Scene
 {
 private:
-    template <class T>
-    void Resize(T* arr, int currSize, int newSize)
-    {
-        T* newArray = new T[newSize];
-        memcpy(newArray, arr, currSize * sizeof(T));
-        currSize = newSize;
-        delete[] arr;
-        arr = newArray;
-    }
+	template <class T>
+	void Resize( T* arr, int currSize, int newSize )
+	{
+		T* newArray = new T[newSize];
+		memcpy( newArray, arr, currSize * sizeof( T ) );
+		currSize = newSize;
+		delete[] arr;
+		arr = newArray;
+	}
 
 public:
-    Scene();
-    ~Scene();
-    void SetTime(float t);
-    void AddMaterial(Material material, std::string name);
-    void AddSphere(float3 pos, float radius, std::string material);
-    void AddPlane(float3 N, float d, std::string material);
-    void AddTriangle(float3 v0, float3 v1, float3 v2, std::string material);
-    void LoadModel(std::string filename);
+	Scene( );
+	~Scene( );
+	void SetTime( float t );
+	void AddMaterial( Material material, std::string name );
+	void AddSphere( float3 pos, float radius, std::string material );
+	void AddPlane( float3 N, float d, std::string material );
+	void AddTriangle( float3 v0, float3 v1, float3 v2, std::string material );
+	void LoadModel( std::string filename );
 
 public:
-    __declspec(align(64)) // start a new cacheline here
-        float animTime = 0;
+	__declspec(align(64)) // start a new cacheline here
+		float animTime = 0;
 
-    Primitive primitives[9];
-    Sphere spheres[2];
-    Plane planes[6];
-    Material materials[8];
-    Light lights[3];
-    Triangle triangles[1];
+	Primitive primitives[9];
+	Sphere spheres[2];
+	Plane planes[6];
+	Material materials[8];
+	Light lights[3];
+	Triangle triangles[1];
 
 private:
-    std::map<std::string, int> matMap_;
-    int primIdx_ = 0;
-    int sphereIdx_ = 0;
-    int planeIdx_ = 0;
-    int matIdx_ = 0;
-    int lightIdx_ = 0;
-    int triIdx_ = 0;
+	std::map<std::string, int> matMap_;
+	int primIdx_ = 0;
+	int sphereIdx_ = 0;
+	int planeIdx_ = 0;
+	int matIdx_ = 0;
+	int lightIdx_ = 0;
+	int triIdx_ = 0;
 
-    int sizePrimitives_;
-    int sizeSpheres_;
-    int sizePlanes_;
-    int sizeMaterials_;
-    int sizeLights_;
-    int sizeTriangles_;
+	int sizePrimitives_;
+	int sizeSpheres_;
+	int sizePlanes_;
+	int sizeMaterials_;
+	int sizeLights_;
+	int sizeTriangles_;
 };
 } // namespace Tmpl8
