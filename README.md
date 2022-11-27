@@ -5,7 +5,7 @@ Merijn Schepers (6504477)
 
 Original template by bikker.j@gmail.com.
 
-### Done:
+### Tasks:
 - [x] An extendible material class.
 - [x] Implementing a generic and extendible architecture for a ray tracer (mostly already there if
 you go for the ray tracing template).
@@ -16,15 +16,11 @@ orientation at run-time.
 - [x] Support for (at least) planes, spheres and triangles.
 - [x] A basic scene, consisting of a small set of these primitives. Use each primitive type at least
 once.
-
-### Doing:
 - [ ] A Whitted-style ray tracing renderer, supporting shadows, reflections and refraction with
 absorption (Beer’s law).
-
-### ToDo:
 - [ ] A Kajiya-style path tracing renderer, supporting diffuse interreflections and area lights.
 
-### Bonus
+### Bonus:
 - [ ] Support for triangle meshes of arbitrary size, using ‘obj’, ‘gltf’ or ‘fbx’ files to import scenes
 (max 1pt). The .obj file format is highly recommended for this assignment.
 - [ ] Support for complex primitives - complex being a torus or better (max 1pt).
