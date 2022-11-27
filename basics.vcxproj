@@ -169,10 +169,10 @@
     <ClInclude Include="src\imgui\imstb_textedit.h" />
     <ClInclude Include="src\imgui\imstb_truetype.h" />
     <ClInclude Include="src\renderer.h" />
-    <ClInclude Include="src\scene.h" />
+    <ClInclude Include="src\tiny_obj_loader.h" />
     <ClInclude Include="template\common.h" />
     <ClInclude Include="template\precomp.h" />
-    <ClInclude Include="template\scene.h" />
+    <ClInclude Include="src\scene.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="kernels\camera.cl" />
