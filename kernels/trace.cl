@@ -12,6 +12,8 @@ float epsilon = 0.001f;
 #include "kernels/light.cl"
 #include "kernels/camera.cl"
 
+const sampler_t SAMPLER = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_CLAMP_TO_EDGE | CLK_FILTER_LINEAR;
+
 float3 shoot2( Ray* primaryRay )
 {
 	float3 color = (float3)(0);
@@ -39,7 +41,8 @@ float3 shoot2( Ray* primaryRay )
 			if ( prim.objType == SPHERE )
 			{
 				float2 uv = getSphereUV( spheres + prim.objIdx, ray.N );
-				albedo = (float3)(uv, 1);
+				//albedo = read_imagef(textures, SAMPLER, uv);
+				albedo = (float3)(uv.x, uv.y, 1);
 			}
 			
 			/*switch ( prim.objType )
@@ -166,7 +169,8 @@ __kernel void trace( write_only image2d_t target,
 	__global Light* _lights,
 	Camera cam,
 	int numPrimitives,
-	int numLights )
+	int numLights)
+//	read_only image2d_t _texture)
 {
 	int idx = get_global_id( 0 );
 	int x = idx % SCRWIDTH;
@@ -181,6 +185,7 @@ __kernel void trace( write_only image2d_t target,
 	materials = _materials;
 	primitives = _primitives;
 	lights = _lights;
+	//textures = _texture;
 
 	// create and shoot a ray into the scene
 	Ray ray = initPrimaryRay( x, y, &cam );

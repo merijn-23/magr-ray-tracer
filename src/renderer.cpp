@@ -24,6 +24,7 @@ void Renderer::Tick(float _deltaTime)
     Timer t;
 
     UpdateBuffers();
+    camera.UpdateCamVec( );
     CamToDevice();
 
     kernel->Run(SCRWIDTH * SCRHEIGHT);
@@ -51,6 +52,9 @@ void Renderer::InitKernel()
 
     // screen
     pixelBuffer = new Buffer(GetRenderTarget()->ID, 0, Buffer::TARGET);
+
+    /*int id = scene.LoadTexture( "cash_money.png", "cash_money" );
+    texBuffer = new Buffer( id, 0, Buffer::TEXTURE );*/
     screen = 0;
 
     //sphereBuffer->hostBuffer = (uint*)scene.spheres;
@@ -67,7 +71,7 @@ void Renderer::InitKernel()
     CamToDevice();
     kernel->SetArgument(8, (int)(sizeof(scene.primitives) / sizeof(Primitive)));
     kernel->SetArgument(9, (int)(sizeof(scene.lights) / sizeof(Light)));
-    //clSetKernelArg(kernel->kernel, 5, sizeof(int), sizeof(scene.prims)/sizeof(scene.prims[0]));
+    //clSetKernelArg( kernel->GetKernel(), 10, sizeof( cl_mem ), texBuffer );
 
     sphereBuffer->CopyToDevice();
     planeBuffer->CopyToDevice();

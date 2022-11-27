@@ -31,12 +31,13 @@ typedef struct Triangle
 	float3 N;
 } Triangle;
 
-
 __global Primitive* primitives;
 __global Material* materials;
 __global Sphere* spheres;
 __global Plane* planes;
 __global Triangle* triangles;
+//__global image2d_t textures;
+
 #define SPHERE		0
 #define PLANE		1
 #define CUBE		2

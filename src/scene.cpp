@@ -31,7 +31,7 @@ Scene::Scene( )
 	AddMaterial( Material{ float3( 0, 1, 1 ), 0, 0, 0, false }, "cyan" );
 	AddMaterial( Material{ float3( 1, 1, 1 ), 0, 1, 1.1f, true }, "glass" );
 
-	AddSphere( float4( 0, 0.f, -1.5f, 0.f ), 0.5f, "red" );
+	AddSphere( float4( 0, 0.f, -1.5f, 0.f ), 0.5f, "cash_money" );
 	AddSphere( float4( 1.5f, -0.49f, 0.f, 0 ), 0.5f, "glass" );
 
 	AddPlane( float3( 1, 0, 0 ), 5.f, "yellow" );
@@ -47,7 +47,7 @@ Scene::Scene( )
 
 	lights[0] = Light{ float4( 2, 0, 3, 0 ), float4( 1, 1, .8f, 0 ), 2, -1 };
 	lights[1] = Light{ float4( 1, 0, -5, 0 ), float4( 1, 1, .8f, 0 ), 2, -1 };
-	lights[2] = Light{ float4( -2, 0, 3, 0 ), float4( 1, 1, .8f, 0 ), 1, -1 };
+	lights[2] = Light{ float4( -2, 0, 0, 0 ), float4( 1, 1, .8f, 0 ), 1, -1 };
 
 	SetTime( 0 );
 	// Note: once we have triangle support we should get rid of the class
@@ -202,15 +202,22 @@ void Scene::LoadModel( std::string filename )
 				tinyobj::real_t vx = attrib.vertices[3 * size_t( idx.vertex_index ) + 0];
 				tinyobj::real_t vy = attrib.vertices[3 * size_t( idx.vertex_index ) + 1];
 				tinyobj::real_t vz = attrib.vertices[3 * size_t( idx.vertex_index ) + 2];
-				
-				vertices.push_back( float3( vx, vy, vz) );
+
+				vertices.push_back( float3( vx, vy, vz ) );
 			}
 
-			for ( size_t v = 0; v < vertices.size(); )
+			for ( size_t v = 0; v < vertices.size( ); )
 				AddTriangle( vertices[v++], vertices[v++], vertices[v++], "glass" );
 
 			index_offset += fv;
 		}
 	}
+}
+int Scene::LoadTexture( std::string filename, std::string name )
+{
+	Surface img = Surface( filename.c_str( ) );
+	GLTexture tex = GLTexture( img.width, img.height, GLTexture::INTTARGET );
+	tex.CopyFrom( &img );
+	return tex.ID;
 }
 } // namespace Tmpl8

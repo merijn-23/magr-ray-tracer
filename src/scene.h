@@ -276,6 +276,7 @@ public:
 	void AddPlane( float3 N, float d, std::string material );
 	void AddTriangle( float3 v0, float3 v1, float3 v2, std::string material );
 	void LoadModel( std::string filename );
+	int LoadTexture( std::string filename, std::string name );
 
 public:
 	__declspec(align(64)) // start a new cacheline here
@@ -284,7 +285,7 @@ public:
 	Primitive primitives[9];
 	Sphere spheres[2];
 	Plane planes[6];
-	Material materials[8];
+	Material materials[9];
 	Light lights[3];
 	Triangle triangles[1];
 
