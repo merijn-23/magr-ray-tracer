@@ -27,8 +27,9 @@ void Renderer::Tick(float _deltaTime)
     camera.UpdateCamVec( );
     CamToDevice();
 
-    kernel->Run(SCRWIDTH * SCRHEIGHT);
-    //pixelBuffer->CopyFromDevice( );
+    traceKernel->Run(SCRWIDTH * SCRHEIGHT);
+    vignetKernel->Run( SCRWIDTH * SCRHEIGHT );
+    displayKernel->Run( SCRWIDTH * SCRHEIGHT );
 
     // performance report - running average - ms, MRays/s
     static float avg = 10, alpha = 1;
@@ -41,7 +42,9 @@ void Renderer::Tick(float _deltaTime)
 
 void Renderer::InitKernel()
 {
-    kernel = new Kernel("kernels/trace.cl", "trace");
+    traceKernel = new Kernel( "kernels/trace.cl", "trace" );
+    displayKernel = new Kernel("kernels/postproc.cl", "display");
+    vignetKernel = new Kernel( "kernels/postproc.cl", "vignetting" );
 
     sphereBuffer = new Buffer(sizeof(scene.spheres));
     planeBuffer = new Buffer(sizeof(scene.planes));
@@ -50,8 +53,9 @@ void Renderer::InitKernel()
     primBuffer = new Buffer(sizeof(scene.primitives));
     lightBuffer = new Buffer(sizeof(scene.lights));
 
-    // screen
-    pixelBuffer = new Buffer(GetRenderTarget()->ID, 0, Buffer::TARGET);
+    // screen and temp buffer
+    pixelBuffer = new Buffer( 4 * 4 * SCRHEIGHT * SCRWIDTH );
+    screenBuffer = new Buffer(GetRenderTarget()->ID, 0, Buffer::TARGET);
 
     /*int id = scene.LoadTexture( "cash_money.png", "cash_money" );
     texBuffer = new Buffer( id, 0, Buffer::TEXTURE );*/
@@ -64,14 +68,18 @@ void Renderer::InitKernel()
     matBuffer->hostBuffer = (uint*)scene.materials;
     primBuffer->hostBuffer = (uint*)scene.primitives;
     lightBuffer->hostBuffer = (uint*)scene.lights;
-    //pixelBuffer->hostBuffer = screen->pixels;
 
-    kernel->SetArguments(pixelBuffer, sphereBuffer, planeBuffer, triangleBuffer,
+
+    // Set trace kernel arguments
+    traceKernel->SetArguments(pixelBuffer, sphereBuffer, planeBuffer, triangleBuffer,
                          matBuffer, primBuffer, lightBuffer);
     CamToDevice();
-    kernel->SetArgument(8, (int)(sizeof(scene.primitives) / sizeof(Primitive)));
-    kernel->SetArgument(9, (int)(sizeof(scene.lights) / sizeof(Light)));
-    //clSetKernelArg( kernel->GetKernel(), 10, sizeof( cl_mem ), texBuffer );
+    traceKernel->SetArgument(8, (int)(sizeof(scene.primitives) / sizeof(Primitive)));
+    traceKernel->SetArgument(9, (int)(sizeof(scene.lights) / sizeof(Light)));
+
+    // Set post processing kernels arguments
+    displayKernel->SetArguments( pixelBuffer, screenBuffer );
+    vignetKernel->SetArguments( pixelBuffer, .9f );
 
     sphereBuffer->CopyToDevice();
     planeBuffer->CopyToDevice();
@@ -83,20 +91,13 @@ void Renderer::InitKernel()
 
 void Renderer::UpdateBuffers()
 {
-    // todo: if buffer changed, update data
-    //sphereBuffer->CopyToDevice();
-
-    //std::cout << sizeof(RayGPU);
-
-    //rayBuffer->CopyToDevice();
     lightBuffer->CopyToDevice();
     sphereBuffer->CopyToDevice();
-    //clSetKernelArg(kernel->kernel, 6, sizeof(Camera), &camera.cam);
 }
 
 void Tmpl8::Renderer::CamToDevice()
 {
-    clSetKernelArg(kernel->kernel, 7, sizeof(Camera), &camera.cam);
+    clSetKernelArg( traceKernel->kernel, 7, sizeof(Camera), &camera.cam);
 }
 
 void Renderer::MouseMove(int x, int y)

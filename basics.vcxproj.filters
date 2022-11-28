@@ -111,5 +111,11 @@
     <None Include="kernels\light.cl">
       <Filter>kernels</Filter>
     </None>
+    <None Include="kernels\postproc.cl">
+      <Filter>kernels</Filter>
+    </None>
+    <None Include="kernels\constants.cl">
+      <Filter>kernels</Filter>
+    </None>
   </ItemGroup>
 </Project>

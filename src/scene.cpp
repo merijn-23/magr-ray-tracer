@@ -43,7 +43,7 @@ Scene::Scene( )
 
 	/*AddTriangle( float4( 0, 0.f, -1.5f, 0.f ), float4( 1, 0.f, -1.5f, 0.f ),
 		float4( 0, 1.f, -1.5f, 0.f ), "white" );*/
-	LoadModel( "triangle.obj" );
+	//LoadModel( "triangle.obj" );
 
 	lights[0] = Light{ float4( 2, 0, 3, 0 ), float4( 1, 1, .8f, 0 ), 2, -1 };
 	lights[1] = Light{ float4( 1, 0, -5, 0 ), float4( 1, 1, .8f, 0 ), 2, -1 };
