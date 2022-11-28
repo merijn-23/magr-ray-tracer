@@ -38,11 +38,7 @@ __global Plane* planes;
 __global Triangle* triangles;
 //__global image2d_t textures;
 
-#define SPHERE		0
-#define PLANE		1
-#define CUBE		2
-#define QUAD		3
-#define TRIANGLE	4
+
 
 // typedef struct Cube
 // {

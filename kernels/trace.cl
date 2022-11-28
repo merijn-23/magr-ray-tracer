@@ -1,12 +1,10 @@
-#define SCRWIDTH 1280
-#define SCRHEIGHT 720
 
-#define MAX_BOUNCE 5
 
 int nPrimitives = 0;
 int nLights = 0;
 float epsilon = 0.001f;
 
+#include "kernels/constants.cl""
 #include "kernels/ray.cl"
 #include "kernels/primitives.cl"
 #include "kernels/light.cl"
@@ -128,39 +126,7 @@ float3 shoot2( Ray* primaryRay )
 	return color;
 }
 
-// float3 shoot(Ray* ray)
-// {
-// 	float3 color = (float3)(0);
-
-// 	for(int i = 0; i < nPrimitives; i++)
-// 		intersect(i, primitives + i, ray);
-
-// 	if(ray->objIdx != -1)
-// 	{
-// 		float3 I = intersectionPoint(ray);
-// 		ray->N = getNormal(primitives + ray->objIdx, I);
-
-// 		// we hit an object
-// 		Material mat = materials[primitives[ray->objIdx].matIdx];
-// 		if(mat.reflect < 1)
-// 		{
-// 			// find the diffuse of this object
-// 			for(int i = 0; i < nLights; i++)
-// 			{
-// 				color += handleShadowRay(ray, lights + i) * mat.colour;// * (1 - mat.reflect);
-// 			}
-// 		}
-// 		if(mat.reflect > 0 && ray->bounces < MAX_BOUNCE)
-// 		{
-// 			// shoot another ray into the scene from the point of impact
-// 			Ray* reflectRay = reflect(ray, I);
-// 			color += shoot(reflectRay) * mat.reflect;
-// 		}
-// 	}
-// 	return color;
-// }
-
-__kernel void trace( write_only image2d_t target,
+__kernel void trace( __global write_only float3* pixels,
 	__global Sphere* _spheres,
 	__global Plane* _planes,
 	__global Triangle* _triangles,
@@ -190,11 +156,11 @@ __kernel void trace( write_only image2d_t target,
 	// create and shoot a ray into the scene
 	Ray ray = initPrimaryRay( x, y, &cam );
 	float3 color = shoot2( &ray );
-
-	// prevent overflow of the colors
+	// prevent color overflow
 	color = min( color, (float3)(1) );
+	pixels[idx] = color;
+
 	//color *= 255;
-	write_imagef( target, (int2)(x, y), (float4)(color, 1) );
-	//pixels[idx] = ((uint)color.x << 16) + ((uint)color.y << 8) + ((uint)color.z);
+	//write_imagef( target, (int2)(x, y), (float4)(color, 1) );
 
 }

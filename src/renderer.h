@@ -30,7 +30,9 @@ public:
 	Scene scene;
 	CameraManager camera;
 
-	Kernel* kernel;
+	Kernel* traceKernel;
+	Kernel* vignetKernel;
+	Kernel* displayKernel;
 
 	// Buffers
 	Buffer* sphereBuffer;
@@ -40,6 +42,7 @@ public:
 	Buffer* primBuffer;
 
 	Buffer* pixelBuffer;
+	Buffer* screenBuffer;
 	Buffer* texBuffer;
 
 	Buffer* camBuffer;
