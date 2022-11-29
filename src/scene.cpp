@@ -23,16 +23,16 @@ Scene::Scene( )
 			//Resize( primitives, 0, 9 );
 
 	AddMaterial( Material{ float3( 1, 0, 0 ), 0, 0, 0, false }, "red" );
-	AddMaterial( Material{ float3( 0, 1, 0 ), 0, 0, 0, false }, "green" );
+	AddMaterial( Material{ float3( 1, 0, 0 ), 0, 0, 0, false }, "green" );
 	AddMaterial( Material{ float3( 0, 0, 1 ), 0, 0, 0, false }, "blue" );
 	AddMaterial( Material{ float3( 1, 1, 1 ), 0, 0, 0, false }, "white" );
 	AddMaterial( Material{ float3( 1, 1, 0 ), 0, 0, 0, false }, "yellow" );
 	AddMaterial( Material{ float3( 1, 0, 1 ), 0, 0, 0, false }, "magenta" );
 	AddMaterial( Material{ float3( 0, 1, 1 ), 0, 0, 0, false }, "cyan" );
-	AddMaterial( Material{ float3( 1, 1, 1 ), 0, 1, 1.1f, true }, "glass" );
+	AddMaterial( Material{ float3( 1, 1, 1 ), 0, 1, 1.5f, true }, "glass" );
 
-	AddSphere( float4( 0, 0.f, -1.5f, 0.f ), 0.5f, "cash_money" );
-	AddSphere( float4( 1.5f, -0.49f, 0.f, 0 ), 0.5f, "glass" );
+	AddSphere( float4( 0, 0.f, -1.5f, 0.f ), 0.5f, "glass" );
+	AddSphere( float4( 1.5f, -0.49f, 0.f, 0 ), 0.5f, "red" );
 
 	AddPlane( float3( 1, 0, 0 ), 5.f, "yellow" );
 	AddPlane( float3( -1, 0, 0 ), 2.99f, "green" );
@@ -68,13 +68,13 @@ void Scene::SetTime( float t )
 {
 	// default time for the scene is simply 0. Updating/ the time per frame
 	// enables animation. Updating it per ray can be used for motion blur.
-	animTime = t;
+	animTime = t * .1f;
 	//lights[0].pos.x = sin(animTime) + 1;
 	//lights[0].pos.y = sin(animTime + PI * 0.5) * 0.5f;
 
 	// sphere animation: bounce
 	float tm = 1 - sqrf( fmodf( animTime, 2.0f ) - 1 );
-	spheres[0].pos.y = -0.5f + tm;
+	//spheres[0].pos.y = -0.5f + tm;
 }
 
 void Scene::AddMaterial( Material material, std::string name )
