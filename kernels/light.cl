@@ -18,7 +18,7 @@ bool shootShadowRay( Ray* ray, float d )
     for(int i = 0; i < nPrimitives; i++)
     {
         intersect(i, primitives + i, ray);
-        if(ray->t < d - epsilon)
+        if(ray->t < d - EPSILON)
             return false;
     }
     //printf("shoot");
@@ -34,7 +34,7 @@ float3 handleShadowRay( Ray* ray, Light* light )
         //printf("handle");
         // Shoot a shadow ray into the scene and check if anything obstructs it
         Ray shadowRay = initRay(light->pos, dir);
-        float dist = length(dir);
+        float dist = length(dir) - EPSILON;
         if(shootShadowRay(&shadowRay, dist))
         {
             return getDiffuseShading(light, dotP, dist);

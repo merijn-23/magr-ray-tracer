@@ -1,8 +1,5 @@
-
-
 int nPrimitives = 0;
 int nLights = 0;
-float epsilon = 0.001f;
 
 #include "kernels/constants.cl""
 #include "kernels/ray.cl"
@@ -40,6 +37,8 @@ float3 shoot2( Ray* primaryRay )
 			{
 				float2 uv = getSphereUV( spheres + prim.objIdx, ray.N );
 				//albedo = read_imagef(textures, SAMPLER, uv);
+				if(uv.y < 0 || uv.y > 1 && !mat.isDieletric)
+					printf("%f\n", uv.y);
 				albedo = (float3)(uv.x, uv.y, 1);
 			}
 			
@@ -47,7 +46,7 @@ float3 shoot2( Ray* primaryRay )
 			{
 			case SPHERE:
 				float2 uv = getSphereUV( spheres + prim.objIdx, ray.N );
-				albedo = (float3)(uv, 1);
+				albedo = (float3)(1,1, 1);
 				break;
 			}*/
 
@@ -58,20 +57,20 @@ float3 shoot2( Ray* primaryRay )
 					// find the diffuse of this object
 					for ( int i = 0; i < nLights; i++ )
 					{
-						color += handleShadowRay( &ray, lights + i ) * albedo * ray.energy;// * (1 - mat.reflect);
+						color += handleShadowRay( &ray, lights + i ) * mat.color * ray.intensity;
 					}
 				}
 				if ( mat.specular > 0 && ray.bounces < MAX_BOUNCE )
 				{
 					// shoot another ray into the scene from the point of impact
 					Ray* reflectRay = reflect( &ray, I );
-					reflectRay->energy *= mat.specular;
+					reflectRay->intensity *= mat.specular;
 					stack[n++] = *reflectRay;
 				}
 			}
 			else if ( ray.bounces < MAX_BOUNCE )
 			{
-				float costhetai = dot( -ray.N, ray.rD );
+				float costhetai = dot( ray.N, ray.rD );
 
 				float n1 = mat.n1;
 				float n2 = mat.n2;
@@ -79,8 +78,14 @@ float3 shoot2( Ray* primaryRay )
 				{
 					n1 = mat.n2;
 					n2 = mat.n1;
+
+					// give material absorption
+					float3 a = (float3)(1.f, 1.f, 1.f);
+					ray.intensity.x *= exp(-a.x * ray.t);
+					ray.intensity.y *= exp(-a.y * ray.t);
+					ray.intensity.z *= exp(-a.z * ray.t);
 				}
-				float frac = n1 / n2;
+				float frac = n1 * (1 / n2);
 				float k = 1 - frac * frac * (1 - costhetai * costhetai);
 
 				if ( k < 0 )
@@ -95,7 +100,7 @@ float3 shoot2( Ray* primaryRay )
 					// use fresnel's law to find reflection and refraction factors
 					float3 T = frac * ray.D + ray.N * (frac * costhetai - sqrt( k ));
 					T = normalize( T );
-					float costhetat = dot( ray.N, T );
+					float costhetat = dot( -ray.N, T );
 					// precompute
 					float n1costhetai = n1 * costhetai;
 					float n2costhetai = n2 * costhetai;
@@ -107,15 +112,16 @@ float3 shoot2( Ray* primaryRay )
 
 					// calculate fresnel
 					float Fr = 0.5f * (frac1 * frac1 + frac2 * frac2);
-
+					if(Fr < 0 || Fr > 1)
+						printf("%f\n", Fr);
 					// create reflection ray
 					Ray* reflectRay = reflect( &ray, I );
-					reflectRay->energy *= Fr;
+					reflectRay->intensity *= Fr;
 					stack[n++] = *reflectRay;
 
 					// create transmission ray
 					Ray* transmissionRay = transmission( &ray, I, T );
-					transmissionRay->energy *= (1 - Fr);
+					transmissionRay->intensity *= (1 - Fr);
 					stack[n++] = *transmissionRay;
 				}
 

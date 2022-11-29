@@ -31,7 +31,7 @@ private:
     float4 forward_ = float3(0, 0, -1);
     float3 right_ = float3(1, 0, 0);
     float3 up_ = float3(0, 1, 0);
-    float speed_ = .5f;
+    float speed_ = .1f;
 
 public:
     CameraManager(float vfov = 110)
