@@ -95,8 +95,8 @@ typedef struct Material
 	float4 color;
 	float specular, n1, n2;
 	bool isDieletric;
-	int texIdx;
-	int texSize;
+	int texIdx = -1;
+	int texW, texH;
 };
 
 typedef struct Sphere
@@ -290,7 +290,7 @@ public:
 	std::vector<Plane> planes;
 	std::vector<Light> lights;
 	std::vector<Triangle> triangles;
-	std::vector<float3> textures;
+	std::vector<float4> textures;
 
 private:
 	std::map<std::string, int> matMap_;

@@ -30,10 +30,10 @@ Scene::Scene( )
 	AddMaterial( Material{ float3( 1, 0, 1 ), 0, 0, 0, false }, "magenta" );
 	AddMaterial( Material{ float3( 0, 1, 1 ), 0, 0, 0, false }, "cyan" );
 	AddMaterial( Material{ float3( 1, 1, 1 ), 0, 1, 1.5f, true }, "glass" );
-	//LoadTexture( "cash_money.png", "cash" );
+	LoadTexture( "cash_money.png", "cash" );
 
 	AddSphere( float4( 0, 0.f, -1.5f, 0.f ), 0.5f, "glass" );
-	AddSphere( float4( 1.5f, -0.49f, 0.f, 0 ), 0.5f, "red" );
+	AddSphere( float4( 1.5f, -0.49f, 0.f, 0 ), 0.5f, "cash" );
 
 	AddPlane( float3( 1, 0, 0 ), 5.f, "yellow" );
 	AddPlane( float3( -1, 0, 0 ), 2.99f, "green" );
@@ -199,11 +199,14 @@ void Scene::LoadTexture( std::string filename, std::string name )
 	float3* data = LoadImageF( filename.c_str( ), width, height, n );
 	int size = width * height;
 
+	Material mat;
+	mat.texIdx = textures.size();
+
 	textures.insert( textures.end( ), &data[0], &data[size] );
 
-	Material mat;
-	mat.texIdx = 0;
-	mat.texSize = size;
+	mat.isDieletric = false;
+	mat.texW = width;
+	mat.texH = height;
 	AddMaterial( mat, name );
 }
-} // namespace Tmpl8
+}; // namespace Tmpl8

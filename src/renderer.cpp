@@ -52,7 +52,7 @@ void Renderer::InitKernel( )
 	planeBuffer = new Buffer( sizeof( Plane ) * scene.planes.size( ) );
 	triangleBuffer = new Buffer( sizeof( Triangle ) * scene.triangles.size( ) );
 	lightBuffer = new Buffer( sizeof( Light ) * scene.lights.size( ) );
-	texBuffer = new Buffer( sizeof( float3 ) * scene.textures.size( ) );
+	texBuffer = new Buffer( sizeof( float4 ) * scene.textures.size( ) );
 
 	// screen and temp buffer
 	pixelBuffer = new Buffer( 4 * 4 * SCRHEIGHT * SCRWIDTH );
@@ -87,6 +87,7 @@ void Renderer::InitKernel( )
 	matBuffer->CopyToDevice( );
 	primBuffer->CopyToDevice( );
 	lightBuffer->CopyToDevice( );
+	texBuffer->CopyToDevice( );
 }
 
 void Renderer::UpdateBuffers( )
