@@ -9,7 +9,7 @@ int nLights = 0;
 
 const sampler_t SAMPLER = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_CLAMP_TO_EDGE | CLK_FILTER_LINEAR;
 
-float3 shoot2( Ray* primaryRay )
+float3 shoot_whitted( Ray* primaryRay )
 {
 	float3 color = (float3)(0);
 
@@ -32,21 +32,6 @@ float3 shoot2( Ray* primaryRay )
 			// we hit an object
 			Primitive prim = primitives[ray.primIdx];
 			Material mat = materials[prim.matIdx];
-			float3 albedo = mat.color;
-			if ( prim.objType == SPHERE )
-			{
-				float2 uv = getSphereUV( spheres + prim.objIdx, ray.N );
-				//albedo = read_imagef(textures, SAMPLER, uv);
-				albedo = (float3)(uv.x, uv.y, 1);
-			}
-			
-			/*switch ( prim.objType )
-			{
-			case SPHERE:
-				float2 uv = getSphereUV( spheres + prim.objIdx, ray.N );
-				albedo = (float3)(1,1, 1);
-				break;
-			}*/
 
 			if ( !mat.isDieletric )
 			{
@@ -55,7 +40,7 @@ float3 shoot2( Ray* primaryRay )
 					// find the diffuse of this object
 					for ( int i = 0; i < nLights; i++ )
 					{
-						color += handleShadowRay( &ray, lights + i ) * mat.color * ray.intensity;
+						color += handleShadowRay( &ray, lights + i ) * getAlbedo( &ray, I ) * ray.intensity;
 					}
 				}
 				if ( mat.specular > 0 && ray.bounces < MAX_BOUNCE )
@@ -79,9 +64,9 @@ float3 shoot2( Ray* primaryRay )
 
 					// give material absorption
 					float3 a = (float3)(1.f, 1.f, 1.f);
-					ray.intensity.x *= exp(-a.x * ray.t);
-					ray.intensity.y *= exp(-a.y * ray.t);
-					ray.intensity.z *= exp(-a.z * ray.t);
+					ray.intensity.x *= exp( -a.x * ray.t );
+					ray.intensity.y *= exp( -a.y * ray.t );
+					ray.intensity.z *= exp( -a.z * ray.t );
 				}
 				float frac = n1 * (1 / n2);
 				float k = 1 - frac * frac * (1 - costhetai * costhetai);
@@ -110,8 +95,8 @@ float3 shoot2( Ray* primaryRay )
 
 					// calculate fresnel
 					float Fr = 0.5f * (frac1 * frac1 + frac2 * frac2);
-					if(Fr < 0 || Fr > 1)
-						printf("%f\n", Fr);
+					if ( Fr < 0 || Fr > 1 )
+						printf( "%f\n", Fr );
 					// create reflection ray
 					Ray* reflectRay = reflect( &ray, I );
 					reflectRay->intensity *= Fr;
@@ -140,7 +125,7 @@ __kernel void trace( __global float3* pixels,
 	__global Light* _lights,
 	Camera cam,
 	int numPrimitives,
-	int numLights)
+	int numLights )
 {
 	int idx = get_global_id( 0 );
 	int x = idx % SCRWIDTH;
@@ -159,7 +144,7 @@ __kernel void trace( __global float3* pixels,
 
 	// create and shoot a ray into the scene
 	Ray ray = initPrimaryRay( x, y, &cam );
-	float3 color = shoot2( &ray );
+	float3 color = shoot_whitted( &ray );
 	// prevent color overflow
 	color = min( color, (float3)(1) );
 	pixels[idx] = color;

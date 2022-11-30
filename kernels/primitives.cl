@@ -12,7 +12,7 @@ typedef struct Material
 	float specular, n1, n2;
 	bool isDieletric;
 	int texIdx;
-	int texSize;
+	int texW, texH;
 } Material;
 
 typedef struct Sphere
@@ -101,8 +101,8 @@ void intersectTriangle( int primIdx, Primitive* prim, Triangle* tri, Ray* ray )
 	float t = dot( v0v2, qvec ) * invDet;
 	if ( t > ray->t || t < 0 ) return;
 	ray->t = t;
-	ray->primIdx = primIdx; 
-	ray->inside = false;		
+	ray->primIdx = primIdx;
+	ray->inside = false;
 }
 
 void intersect( int primIdx, Primitive* prim, Ray* ray )
@@ -150,15 +150,22 @@ float2 getSphereUV( Sphere* sphere, float3 N )
 	return tex;
 }
 
-float3 getAlbedo( Primitive* prim, float3 I )
+float3 getAlbedo( Ray* ray, float3 I )
 {
-	/*switch ( prim->objType )
-	{
-	case SPHERE:
+	Primitive prim = primitives[ray->primIdx];
+	Material mat = materials[prim.matIdx];
+	float3 albedo = mat.color;
 
-		return 
-	case PLANE:
-		float3 color = 
-		return 
-	}*/
+	if ( mat.texIdx != -1 )
+		switch ( prim.objType )
+		{
+		case SPHERE: {
+			float2 uv = getSphereUV( spheres + prim.objIdx, ray->N );
+			int x = (int)(uv.x * mat.texW);
+			int y = (int)(uv.y * mat.texH);
+			albedo = textures[x + y * mat.texW];
+		}break;
+		}
+
+	return albedo;
 }
