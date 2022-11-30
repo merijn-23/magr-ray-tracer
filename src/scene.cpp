@@ -23,13 +23,14 @@ Scene::Scene( )
 			//Resize( primitives, 0, 9 );
 
 	AddMaterial( Material{ float3( 1, 0, 0 ), 0, 0, 0, false }, "red" );
-	AddMaterial( Material{ float3( 1, 0, 0 ), 0, 0, 0, false }, "green" );
+	AddMaterial( Material{ float3( 0, 1, 0 ), 0, 0, 0, false }, "green" );
 	AddMaterial( Material{ float3( 0, 0, 1 ), 0, 0, 0, false }, "blue" );
 	AddMaterial( Material{ float3( 1, 1, 1 ), 0, 0, 0, false }, "white" );
 	AddMaterial( Material{ float3( 1, 1, 0 ), 0, 0, 0, false }, "yellow" );
 	AddMaterial( Material{ float3( 1, 0, 1 ), 0, 0, 0, false }, "magenta" );
 	AddMaterial( Material{ float3( 0, 1, 1 ), 0, 0, 0, false }, "cyan" );
 	AddMaterial( Material{ float3( 1, 1, 1 ), 0, 1, 1.5f, true }, "glass" );
+	//LoadTexture( "cash_money.png", "cash" );
 
 	AddSphere( float4( 0, 0.f, -1.5f, 0.f ), 0.5f, "glass" );
 	AddSphere( float4( 1.5f, -0.49f, 0.f, 0 ), 0.5f, "red" );
@@ -41,10 +42,11 @@ Scene::Scene( )
 	AddPlane( float3( 0, 0, 1 ), 9.f, "magenta" );
 	AddPlane( float3( 0, 0, -1 ), 3.99f, "cyan" );
 
-	/*AddTriangle( float4( 0, 0.f, -1.5f, 0.f ), float4( 1, 0.f, -1.5f, 0.f ),
-		float4( 0, 1.f, -1.5f, 0.f ), "white" );*/
-	//LoadModel( "triangle.obj" );
+	AddTriangle( float4( 0, 0.f, -1.5f, 0.f ), float4( 1, 0.f, -1.5f, 0.f ),
+		float4( 0, 1.f, -1.5f, 0.f ), "cyan" );
+	//LoadModel( "triangle.obj", "green" );
 
+	lights.resize( 3 );
 	lights[0] = Light{ float4( 2, 0, 3, 0 ), float4( 1, 1, .8f, 0 ), 2, -1 };
 	lights[1] = Light{ float4( 1, 0, -5, 0 ), float4( 1, 1, .8f, 0 ), 2, -1 };
 	lights[2] = Light{ float4( -2, 0, 0, 0 ), float4( 1, 1, .8f, 0 ), 1, -1 };
@@ -56,12 +58,7 @@ Scene::Scene( )
 
 Scene::~Scene( )
 {
-	/*delete[] primitives;
-			delete[] spheres;
-			delete[] planes;
-			delete[] materials;
-			delete[] lights;
-			delete[] triangles;*/
+
 }
 
 void Scene::SetTime( float t )
@@ -79,21 +76,13 @@ void Scene::SetTime( float t )
 
 void Scene::AddMaterial( Material material, std::string name )
 {
-	/*if ( _matIdx >= _sizeMaterials )
-				Resize( materials, _sizeMaterials );*/
-
-	materials[matIdx_] = material;
+	materials.push_back( material );
 	matMap_[name] = matIdx_;
 	matIdx_++;
 }
 
 void Scene::AddSphere( float3 pos, float radius, std::string material )
 {
-	/*if ( _sphereIdx >= _sizeSpheres || _primIdx >= _sizePrimitives )
-			{
-				Resize( spheres, _sizeSpheres );
-				Resize( primitives, _sizePrimitives );
-			}*/
 	float r2 = radius * radius;
 	float invr = 1 / radius;
 
@@ -102,39 +91,29 @@ void Scene::AddSphere( float3 pos, float radius, std::string material )
 	sphere.pos = pos;
 	sphere.r2 = r2;
 	sphere.invr = invr;
-	spheres[sphereIdx_] = sphere;
+	spheres.push_back( sphere );
 
 	// create primitive
 	Primitive prim;
 	prim.objType = SPHERE;
-	prim.objIdx = sphereIdx_;
+	prim.objIdx = spheres.size() - 1;
 	prim.matIdx = matMap_[material];
-	primitives[primIdx_] = prim;
-
-	sphereIdx_++, primIdx_++;
+	primitives.push_back( prim );
 }
 
 void Scene::AddPlane( float3 N, float d, std::string material )
 {
-	/*if ( _planeIdx >= _sizePlanes || _primIdx >= _sizePrimitives )
-			{
-				Resize( spheres, _sizeSpheres );
-				Resize( primitives, _sizePrimitives );
-			}*/
 	Plane plane;
 	plane.N = N;
 	plane.d = d;
-	planes[planeIdx_] = plane;
-	//planes.push_back(plane);
+	planes.push_back(plane);
 
 	// create primitive
 	Primitive prim;
 	prim.objType = PLANE;
-	prim.objIdx = planeIdx_;
+	prim.objIdx = planes.size() - 1;
 	prim.matIdx = matMap_[material];
-	primitives[primIdx_] = prim;
-
-	planeIdx_++, primIdx_++;
+	primitives.push_back( prim );
 }
 
 void Scene::AddTriangle( float3 v0, float3 v1, float3 v2, std::string material )
@@ -153,18 +132,18 @@ void Scene::AddTriangle( float3 v0, float3 v1, float3 v2, std::string material )
 	tri.v1 = v1;
 	tri.v2 = v2;
 	tri.N = N;
-	triangles[triIdx_] = tri;
+	//triangles[triIdx_] = tri;
+	triangles.push_back( tri );
 
 	// create primitive
 	Primitive prim;
 	prim.objType = TRIANGLE;
-	prim.objIdx = triIdx_;
+	prim.objIdx = triangles.size() - 1;
 	prim.matIdx = matMap_[material];
-	primitives[primIdx_] = prim;
-
-	triIdx_++, primIdx_++;
+	primitives.push_back( prim );
 }
-void Scene::LoadModel( std::string filename )
+
+void Scene::LoadModel( std::string filename, std::string material )
 {
 	tinyobj::ObjReaderConfig readerConfig;
 	tinyobj::ObjReader reader;
@@ -207,17 +186,24 @@ void Scene::LoadModel( std::string filename )
 			}
 
 			for ( size_t v = 0; v < vertices.size( ); )
-				AddTriangle( vertices[v++], vertices[v++], vertices[v++], "glass" );
+				AddTriangle( vertices[v++], vertices[v++], vertices[v++], material );
 
 			index_offset += fv;
 		}
 	}
 }
-int Scene::LoadTexture( std::string filename, std::string name )
+
+void Scene::LoadTexture( std::string filename, std::string name )
 {
-	Surface img = Surface( filename.c_str( ) );
-	GLTexture tex = GLTexture( img.width, img.height, GLTexture::INTTARGET );
-	tex.CopyFrom( &img );
-	return tex.ID;
+	int width, height, n;
+	float3* data = LoadImageF( filename.c_str( ), width, height, n );
+	int size = width * height;
+
+	textures.insert( textures.end( ), &data[0], &data[size] );
+
+	Material mat;
+	mat.texIdx = 0;
+	mat.texSize = size;
+	AddMaterial( mat, name );
 }
 } // namespace Tmpl8

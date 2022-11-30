@@ -138,6 +138,7 @@ public:
 	bool ownBuffer = false;
 };
 
+
 // basic sprite class
 class Sprite
 {
@@ -1652,6 +1653,9 @@ public:
 	virtual void Gui( ) = 0;
 	Surface* screen = 0;
 };
+
+
+float3* LoadImageF( const char* file, int& width, int& height, int& channels );
 
 #include "scene.h"
 #include "camera.h"
