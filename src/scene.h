@@ -134,7 +134,9 @@ typedef struct Light
 typedef struct Triangle
 {
 	float4 v0, v1, v2;
+	float2 uv0, uv1, uv2;
 	float4 N;
+	float u, v, w; // barycenter, is calculated upon intersection
 };
 
 //// -----------------------------------------------------------
@@ -276,7 +278,7 @@ public:
 	void AddMaterial( Material material, std::string name );
 	void AddSphere( float3 pos, float radius, std::string material );
 	void AddPlane( float3 N, float d, std::string material );
-	void AddTriangle( float3 v0, float3 v1, float3 v2, std::string material );
+	void AddTriangle( float3 v0, float3 v1, float3 v2, float2 uv0, float2 uv1, float2 uv2, std::string material );
 	void LoadModel( std::string filename, std::string material );
 	void LoadTexture( std::string filename, std::string name );
 

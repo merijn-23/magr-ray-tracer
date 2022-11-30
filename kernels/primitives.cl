@@ -30,7 +30,9 @@ typedef struct Plane
 typedef struct Triangle
 {
 	float3 v0, v1, v2;
+	float2 uv0, uv1, uv2;
 	float3 N;
+	float u, v, w; // barycenter, is calculated upon intersection
 } Triangle;
 
 __global Primitive* primitives;
@@ -46,7 +48,7 @@ __global float3* textures;
 // 	float4x4 M, invM;
 // } Cube;
 
-void intersectSphere( int primIdx, Primitive* prim, Sphere* sphere, Ray* ray )
+void intersectSphere( int primIdx, Sphere* sphere, Ray* ray )
 {
 	float3 oc = ray->O - sphere->pos;
 	float b = dot( oc, ray->D );
@@ -67,7 +69,7 @@ void intersectSphere( int primIdx, Primitive* prim, Sphere* sphere, Ray* ray )
 	}
 }
 
-void intersectPlane( int primIdx, Primitive* prim, Plane* plane, Ray* ray )
+void intersectPlane( int primIdx, Plane* plane, Ray* ray )
 {
 	float t = -(dot( ray->O, plane->N ) + plane->d) / (dot( ray->D, plane->N ));
 	if ( t > ray->t || t < 0 ) return;
@@ -76,8 +78,8 @@ void intersectPlane( int primIdx, Primitive* prim, Plane* plane, Ray* ray )
 }
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
-float dotEpsilon = 0.01;
-void intersectTriangle( int primIdx, Primitive* prim, Triangle* tri, Ray* ray )
+float dotEpsilon = 1e-8;
+void intersectTriangle( int primIdx, Triangle* tri, Ray* ray )
 {
 	float3 v0v1 = tri->v1 - tri->v0;
 	float3 v0v2 = tri->v2 - tri->v0;
@@ -103,6 +105,10 @@ void intersectTriangle( int primIdx, Primitive* prim, Triangle* tri, Ray* ray )
 	ray->t = t;
 	ray->primIdx = primIdx;
 	ray->inside = false;
+	// set barycenter
+	tri->u = u;
+	tri->v = v;
+	tri->w = 1 - u - v;
 }
 
 void intersect( int primIdx, Primitive* prim, Ray* ray )
@@ -110,13 +116,13 @@ void intersect( int primIdx, Primitive* prim, Ray* ray )
 	switch ( prim->objType )
 	{
 	case SPHERE:
-		intersectSphere( primIdx, prim, spheres + prim->objIdx, ray );
+		intersectSphere( primIdx, spheres + prim->objIdx, ray );
 		break;
 	case PLANE:
-		intersectPlane( primIdx, prim, planes + prim->objIdx, ray );
+		intersectPlane( primIdx, planes + prim->objIdx, ray );
 		break;
 	case TRIANGLE:
-		intersectTriangle( primIdx, prim, triangles + prim->objIdx, ray );
+		intersectTriangle( primIdx, triangles + prim->objIdx, ray );
 		break;
 	}
 }
@@ -165,7 +171,22 @@ float3 getAlbedo( Ray* ray, float3 I )
 			int y = (int)(uv.y * mat.texH);
 			albedo = textures[x + y * mat.texW];
 		}break;
-		}
+		case TRIANGLE: {
+			Triangle t = triangles[prim.objIdx];
+			float2 uv0 = (float2)(t.uv0.x * mat.texW, t.uv0.y * mat.texH);
+			float2 uv1 = (float2)(t.uv1.x * mat.texW, t.uv1.y * mat.texH);
+			float2 uv2 = (float2)(t.uv2.x * mat.texW, t.uv2.y * mat.texH);
 
+			float2 p = t.u * uv0 + t.v * uv1 + t.w * uv2;
+			//albedo = textures[(int)p.x + (int)p.y * mat.texW];
+
+			float3 c0 = (float3)(1, 0, 0);
+			float3 c1 = (float3)(0, 1, 0);
+			float3 c2 = (float3)(0, 0, 1);
+
+			//albedo = t.u * c0 + t.v * c1 + t.w * c2;
+			albedo = (float3)(t.u, t.v, t.w);
+		}break;
+		}
 	return albedo;
 }
