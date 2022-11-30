@@ -37,8 +37,6 @@ float3 shoot2( Ray* primaryRay )
 			{
 				float2 uv = getSphereUV( spheres + prim.objIdx, ray.N );
 				//albedo = read_imagef(textures, SAMPLER, uv);
-				if(uv.y < 0 || uv.y > 1 && !mat.isDieletric)
-					printf("%f\n", uv.y);
 				albedo = (float3)(uv.x, uv.y, 1);
 			}
 			
@@ -132,17 +130,17 @@ float3 shoot2( Ray* primaryRay )
 	return color;
 }
 
-__kernel void trace( __global write_only float3* pixels,
+__kernel void trace( __global float3* pixels,
+	__global float3* _textures,
 	__global Sphere* _spheres,
-	__global Plane* _planes,
 	__global Triangle* _triangles,
+	__global Plane* _planes,
 	__global Material* _materials,
 	__global Primitive* _primitives,
 	__global Light* _lights,
 	Camera cam,
 	int numPrimitives,
 	int numLights)
-//	read_only image2d_t _texture)
 {
 	int idx = get_global_id( 0 );
 	int x = idx % SCRWIDTH;
@@ -157,7 +155,7 @@ __kernel void trace( __global write_only float3* pixels,
 	materials = _materials;
 	primitives = _primitives;
 	lights = _lights;
-	//textures = _texture;
+	textures = _textures;
 
 	// create and shoot a ray into the scene
 	Ray ray = initPrimaryRay( x, y, &cam );

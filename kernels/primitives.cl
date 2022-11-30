@@ -11,6 +11,8 @@ typedef struct Material
 	float3 color;
 	float specular, n1, n2;
 	bool isDieletric;
+	int texIdx;
+	int texSize;
 } Material;
 
 typedef struct Sphere
@@ -36,9 +38,7 @@ __global Material* materials;
 __global Sphere* spheres;
 __global Plane* planes;
 __global Triangle* triangles;
-//__global image2d_t textures;
-
-
+__global float3* textures;
 
 // typedef struct Cube
 // {
@@ -76,7 +76,7 @@ void intersectPlane( int primIdx, Primitive* prim, Plane* plane, Ray* ray )
 }
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
-float dotEpsilon = 0.001;
+float dotEpsilon = 0.01;
 void intersectTriangle( int primIdx, Primitive* prim, Triangle* tri, Ray* ray )
 {
 	float3 v0v1 = tri->v1 - tri->v0;
@@ -100,9 +100,9 @@ void intersectTriangle( int primIdx, Primitive* prim, Triangle* tri, Ray* ray )
 
 	float t = dot( v0v2, qvec ) * invDet;
 	if ( t > ray->t || t < 0 ) return;
-
 	ray->t = t;
-	ray->primIdx = primIdx;
+	ray->primIdx = primIdx; 
+	ray->inside = false;		
 }
 
 void intersect( int primIdx, Primitive* prim, Ray* ray )

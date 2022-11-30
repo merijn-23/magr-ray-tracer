@@ -9,6 +9,7 @@
 #define STBI_NO_PNM
 #include "../lib/stb_image.h"
 
+
 #pragma comment( linker, "/subsystem:windows /ENTRY:mainCRTStartup" )
 
 using namespace Tmpl8;
@@ -1596,6 +1597,22 @@ void Kernel::Run2D( const int2 count, const int2 lsize, cl_event* eventToWaitFor
 
 // surface implementation
 // ----------------------------------------------------------------------------
+
+float3* LoadImageF( const char* file, int& w, int& h, int& c )
+{
+	unsigned char* data = stbi_load( file, &w, &h, &c, 0 );
+	int s = w * h;
+	float3* result = new float3[s];
+
+	for ( int i = 0; i < s; i++ )
+	{
+		result[i].x = data[i * c + 0] / 255.f;
+		result[i].y = data[i * c + 1] / 255.f;
+		result[i].z = data[i * c + 2] / 255.f;
+	}
+	stbi_image_free( data );
+	return result;
+}
 
 static char s_Font[51][5][6];
 static bool fontInitialized = false;

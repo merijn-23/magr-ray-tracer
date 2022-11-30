@@ -95,6 +95,8 @@ typedef struct Material
 	float4 color;
 	float specular, n1, n2;
 	bool isDieletric;
+	int texIdx;
+	int texSize;
 };
 
 typedef struct Sphere
@@ -275,34 +277,23 @@ public:
 	void AddSphere( float3 pos, float radius, std::string material );
 	void AddPlane( float3 N, float d, std::string material );
 	void AddTriangle( float3 v0, float3 v1, float3 v2, std::string material );
-	void LoadModel( std::string filename );
-	int LoadTexture( std::string filename, std::string name );
+	void LoadModel( std::string filename, std::string material );
+	void LoadTexture( std::string filename, std::string name );
 
 public:
 	__declspec(align(64)) // start a new cacheline here
-		float animTime = 0;
+	float animTime = 0;
 
-	Primitive primitives[9];
-	Sphere spheres[2];
-	Plane planes[6];
-	Material materials[9];
-	Light lights[3];
-	Triangle triangles[1];
+	std::vector<Primitive> primitives;
+	std::vector<Material> materials;
+	std::vector<Sphere> spheres;
+	std::vector<Plane> planes;
+	std::vector<Light> lights;
+	std::vector<Triangle> triangles;
+	std::vector<float3> textures;
 
 private:
 	std::map<std::string, int> matMap_;
-	int primIdx_ = 0;
-	int sphereIdx_ = 0;
-	int planeIdx_ = 0;
 	int matIdx_ = 0;
-	int lightIdx_ = 0;
-	int triIdx_ = 0;
-
-	int sizePrimitives_;
-	int sizeSpheres_;
-	int sizePlanes_;
-	int sizeMaterials_;
-	int sizeLights_;
-	int sizeTriangles_;
 };
 } // namespace Tmpl8

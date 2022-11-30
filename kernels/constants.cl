@@ -1,4 +1,4 @@
-#define SCRWIDTH 1280
+#define SCRWIDTH 2000 //1280
 #define SCRHEIGHT 720
 
 #define MAX_BOUNCE 10
