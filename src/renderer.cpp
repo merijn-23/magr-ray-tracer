@@ -69,7 +69,6 @@ void Renderer::InitKernel( )
 	lightBuffer->hostBuffer = (uint*)scene.lights.data( );
 	texBuffer->hostBuffer = (uint*)scene.textures.data( );
 
-
 	// Set trace kernel arguments
 	traceKernel->SetArguments( pixelBuffer, texBuffer, sphereBuffer, triangleBuffer, planeBuffer,
 		matBuffer, primBuffer, lightBuffer );
@@ -116,25 +115,23 @@ void Renderer::KeyRepeat( int key )
 	switch ( key )
 	{
 	case GLFW_KEY_W:
-	{
 		camera.Move( CamDir::Forward, deltaTime );
-	}
-	break;
+		break;
 	case GLFW_KEY_A:
-	{
 		camera.Move( CamDir::Left, deltaTime );
-	}
-	break;
+		break;
 	case GLFW_KEY_S:
-	{
 		camera.Move( CamDir::Backwards, deltaTime );
-	}
-	break;
+		break;
 	case GLFW_KEY_D:
-	{
 		camera.Move( CamDir::Right, deltaTime );
-	}
-	break;
+		break;
+	case GLFW_KEY_Q:
+		camera.Move( CamDir::Up, deltaTime );
+		break;
+	case GLFW_KEY_E:
+		camera.Move( CamDir::Down, deltaTime );
+		break;
 	}
 }
 

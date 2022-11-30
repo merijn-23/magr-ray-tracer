@@ -31,9 +31,10 @@ Scene::Scene( )
 	AddMaterial( Material{ float3( 0, 1, 1 ), 0, 0, 0, false }, "cyan" );
 	AddMaterial( Material{ float3( 1, 1, 1 ), 0, 1, 1.5f, true }, "glass" );
 	LoadTexture( "cash_money.png", "cash" );
+	LoadTexture( "suprised_pikachu.png", "pika" );
 
 	AddSphere( float4( 0, 0.f, -1.5f, 0.f ), 0.5f, "glass" );
-	AddSphere( float4( 1.5f, -0.49f, 0.f, 0 ), 0.5f, "cash" );
+	AddSphere( float4( 1.5f, -0.49f, 0.f, 0 ), 0.5f, "pika" );
 
 	AddPlane( float3( 1, 0, 0 ), 5.f, "yellow" );
 	AddPlane( float3( -1, 0, 0 ), 2.99f, "green" );
@@ -42,8 +43,10 @@ Scene::Scene( )
 	AddPlane( float3( 0, 0, 1 ), 9.f, "magenta" );
 	AddPlane( float3( 0, 0, -1 ), 3.99f, "cyan" );
 
-	AddTriangle( float4( 0, 0.f, -1.5f, 0.f ), float4( 1, 0.f, -1.5f, 0.f ),
-		float4( 0, 1.f, -1.5f, 0.f ), "cyan" );
+	float z = 1.5f;
+	AddTriangle(
+		float3( -1, -1, z ), float3( 1, -1, z ), float3( 0, 1, z ),
+		float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "pika" );
 	//LoadModel( "triangle.obj", "green" );
 
 	lights.resize( 3 );
@@ -116,7 +119,7 @@ void Scene::AddPlane( float3 N, float d, std::string material )
 	primitives.push_back( prim );
 }
 
-void Scene::AddTriangle( float3 v0, float3 v1, float3 v2, std::string material )
+void Scene::AddTriangle( float3 v0, float3 v1, float3 v2, float2 uv0, float2 uv1, float2 uv2, std::string material )
 {
 	/*if ( _triIdx >= _sizeTriangles || _primIdx >= _sizePrimitives )
 			{
@@ -173,6 +176,7 @@ void Scene::LoadModel( std::string filename, std::string material )
 
 			// loop over vertices in the face.
 			std::vector<float3> vertices;
+			std::vector<float2> texcoords;
 			for ( size_t v = 0; v < fv; v++ )
 			{
 				// access to vertex
@@ -183,10 +187,20 @@ void Scene::LoadModel( std::string filename, std::string material )
 				tinyobj::real_t vz = attrib.vertices[3 * size_t( idx.vertex_index ) + 2];
 
 				vertices.push_back( float3( vx, vy, vz ) );
+
+				tinyobj::real_t tx = 0, ty = 0;
+				if ( idx.texcoord_index >= 0 )
+				{
+					tx = attrib.texcoords[2 * size_t( idx.texcoord_index ) + 0];
+					ty = attrib.texcoords[2 * size_t( idx.texcoord_index ) + 1];
+				}
+				texcoords.push_back( float2( tx, ty ) );
 			}
 
-			for ( size_t v = 0; v < vertices.size( ); )
-				AddTriangle( vertices[v++], vertices[v++], vertices[v++], material );
+			for ( size_t v = 0, t = 0; v < vertices.size( ); )
+				AddTriangle( 
+					vertices[v++], vertices[v++], vertices[v++], 
+					texcoords[t++], texcoords[t++], texcoords[t++], material );
 
 			index_offset += fv;
 		}
