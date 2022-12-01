@@ -42,9 +42,9 @@ void Renderer::Tick( float _deltaTime )
 
 void Renderer::InitKernel( )
 {
-	traceKernel = new Kernel( "kernels/trace.cl", "trace" );
-	displayKernel = new Kernel( "kernels/postproc.cl", "display" );
-	vignetKernel = new Kernel( "kernels/postproc.cl", "vignetting" );
+	traceKernel = new Kernel( "src/cl/trace.cl", "trace" );
+	displayKernel = new Kernel( "src/cl/postproc.cl", "display" );
+	vignetKernel = new Kernel( "src/cl/postproc.cl", "vignetting" );
 
 	primBuffer = new Buffer( sizeof( Primitive ) * scene.primitives.size( ) );
 	matBuffer = new Buffer( sizeof( Material ) * scene.materials.size( ) );

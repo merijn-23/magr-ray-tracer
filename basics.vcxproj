@@ -159,6 +159,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\camera.h" />
+    <ClInclude Include="src\common.h" />
     <ClInclude Include="src\imgui\imconfig.h" />
     <ClInclude Include="src\imgui\imgui.h" />
     <ClInclude Include="src\imgui\imgui_impl_glfw.h" />
@@ -176,13 +177,12 @@
     <ClInclude Include="src\scene.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="kernels\camera.cl" />
-    <None Include="kernels\constants.cl" />
-    <None Include="kernels\light.cl" />
-    <None Include="kernels\postproc.cl" />
-    <None Include="kernels\primitives.cl" />
-    <None Include="kernels\ray.cl" />
-    <None Include="kernels\trace.cl" />
+    <None Include="src\cl\camera.cl" />
+    <None Include="src\cl\light.cl" />
+    <None Include="src\cl\postproc.cl" />
+    <None Include="src\cl\primitives.cl" />
+    <None Include="src\cl\ray.cl" />
+    <None Include="src\cl\trace.cl" />
     <None Include="template\LICENSE" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
