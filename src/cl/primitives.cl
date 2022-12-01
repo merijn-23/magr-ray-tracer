@@ -8,13 +8,6 @@ __global Triangle* triangles;
 __global Light* lights;
 __global float4* textures;
 
-
-// typedef struct Cube
-// {
-// 	float4 b[2];
-// 	float4x4 M, invM;
-// } Cube;
-
 void intersectSphere( int primIdx, Sphere* sphere, Ray* ray )
 {
 	float4 oc = ray->O - sphere->pos;
@@ -71,11 +64,11 @@ void intersectTriangle( int primIdx, Triangle* tri, Ray* ray )
 	if ( t > ray->t || t < 0 ) return;
 	ray->t = t;
 	ray->primIdx = primIdx;
-	ray->inside = true;
+	ray->inside = false;
 	// set barycenter
-	tri->u = u;
-	tri->v = v;
-	tri->w = 1 - u - v;
+	ray->u = u;
+	ray->v = v;
+	ray->w = 1 - u - v;
 }
 
 void intersect( int primIdx, Primitive* prim, Ray* ray )
@@ -132,20 +125,15 @@ float4 getAlbedo( Ray* ray, float4 I )
 				float2 uv = getSphereUV( spheres + prim.objIdx, ray->N );
 				int x = (int)( uv.x * mat.texW );
 				int y = (int)( uv.y * mat.texH );
-				albedo = textures[x + y * mat.texW];
+				albedo = textures[mat.texIdx + x + y * mat.texW];
 			}break;
 			case TRIANGLE:
 			{
 				Triangle t = triangles[prim.objIdx];
-				float2 uv0 = ( float2 )( t.uv0.x * mat.texW, t.uv0.y * mat.texH );
-				float2 uv1 = ( float2 )( t.uv1.x * mat.texW, t.uv1.y * mat.texH );
-				float2 uv2 = ( float2 )( t.uv2.x * mat.texW, t.uv2.y * mat.texH );
-
-				float2 p = t.u * uv0 + t.v * uv1 + t.w * uv2;
-				//albedo = textures[(int)p.x + (int)p.y * mat.texW];
-
-				//albedo = t.u * c0 + t.v * c1 + t.w * c2;
-				albedo = ( float4 )( t.u, t.v, t.w, 1 );
+				float2 uv = ray->u * t.uv0 + ray->v * t.uv1 + ray->w * t.uv2;
+				int x = (int)( uv.x * mat.texW );
+				int y = (int)( uv.y * mat.texH );
+				albedo = textures[mat.texIdx + x + y * mat.texW];
 			}break;
 		}
 	return albedo;

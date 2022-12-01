@@ -34,7 +34,7 @@ Scene::Scene( )
 	LoadTexture( "suprised_pikachu.png", "pika" );
 
 	AddSphere( float4( 0, 0.f, -1.5f, 0.f ), 0.5f, "glass" );
-	AddSphere( float4( 1.5f, -0.49f, 0.f, 0 ), 0.5f, "pika" );
+	AddSphere( float4( 1.5f, -0.49f, 0.f, 0 ), 0.5f, "cash" );
 
 	AddPlane( float3( 1, 0, 0 ), 5.f, "yellow" );
 	AddPlane( float3( -1, 0, 0 ), 2.99f, "green" );
@@ -45,8 +45,9 @@ Scene::Scene( )
 
 	float z = 1.5f;
 	AddTriangle(
-		float3( -1, -1, z ), float3( 1, -1, z ), float3( 0, 1, z ),
-		float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "pika" );
+		// right,				left,				top
+		float3( -1, -1, z ),	float3( 1, -1, z ), float3( 0, 1, z ),
+		float2( 1, 0 ),			float2( 0, 0 ),		float2( 0.5, 1 ), "pika" );
 	//LoadModel( "triangle.obj", "green" );
 
 	lights.resize( 3 );
@@ -134,6 +135,10 @@ void Scene::AddTriangle( float3 v0, float3 v1, float3 v2, float2 uv0, float2 uv1
 	tri.v0 = v0;
 	tri.v1 = v1;
 	tri.v2 = v2;
+	tri.uv0 = uv0;
+	tri.uv1 = uv1;
+	tri.uv2 = uv2;
+
 	tri.N = N;
 	//triangles[triIdx_] = tri;
 	triangles.push_back( tri );
