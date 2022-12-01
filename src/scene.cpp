@@ -21,6 +21,8 @@ Scene::Scene( )
 			_sizeTriangles = 1;
 			lights = new Light[3];*/
 			//Resize( primitives, 0, 9 );
+	Material default;
+
 
 	AddMaterial( Material{ float3( 1, 0, 0 ), 0, 0, 0, false }, "red" );
 	AddMaterial( Material{ float3( 0, 1, 0 ), 0, 0, 0, false }, "green" );
@@ -36,7 +38,7 @@ Scene::Scene( )
 	AddSphere( float4( 0, 0.f, -1.5f, 0.f ), 0.5f, "glass" );
 	AddSphere( float4( 1.5f, -0.49f, 0.f, 0 ), 0.5f, "cash" );
 
-	AddPlane( float3( 1, 0, 0 ), 5.f, "yellow" );
+	AddPlane( float3( 1, 0, 0 ), 5.f, "red" );
 	AddPlane( float3( -1, 0, 0 ), 2.99f, "green" );
 	AddPlane( float3( 0, 1, 0 ), 1.f, "blue" );
 	AddPlane( float3( 0, -1, 0 ), 2.f, "white" );
