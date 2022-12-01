@@ -2,14 +2,13 @@ int nPrimitives = 0;
 int nLights = 0;
 
 #include "src/constants.h"
+#include "src/common.h"
 #include "src/cl/primitives.cl"
 #include "src/cl/ray.cl"
 #include "src/cl/light.cl"
 #include "src/cl/camera.cl"
 
-const sampler_t SAMPLER = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_CLAMP_TO_EDGE | CLK_FILTER_LINEAR;
-
-float4 shoot_whitted( Ray* primaryRay )
+float4 shootWhitted( Ray* primaryRay )
 {
 	float4 color = (float4)(0);
 
@@ -116,7 +115,7 @@ float4 shoot_whitted( Ray* primaryRay )
 }
 
 __kernel void trace( __global float4* pixels,
-	__global float3* _textures,
+	__global float4* _textures,
 	__global Sphere* _spheres,
 	__global Triangle* _triangles,
 	__global Plane* _planes,
@@ -144,7 +143,7 @@ __kernel void trace( __global float4* pixels,
 
 	// create and shoot a ray into the scene
 	Ray ray = initPrimaryRay( x, y, &cam );
-	float4 color = shoot_whitted( &ray );
+	float4 color = shootWhitted( &ray );
 	// prevent color overflow
 	color = min( color, (float4)(1) );
 	pixels[idx] = color;

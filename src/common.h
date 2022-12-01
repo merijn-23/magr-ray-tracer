@@ -1,3 +1,4 @@
+#pragma once
 
 typedef struct Ray
 {
@@ -6,6 +7,7 @@ typedef struct Ray
 	// Index of primitive
 	int primIdx, bounces;
 	bool inside;
+	float u, v, w; // barycenter, is calculated upon intersection
 } Ray;
 
 typedef struct Primitive
@@ -42,7 +44,6 @@ typedef struct Triangle
 	float4 v0, v1, v2;
 	float2 uv0, uv1, uv2;
 	float4 N;
-	float u, v, w; // barycenter, is calculated upon intersection
 } Triangle;
 
 typedef struct Light
@@ -52,3 +53,9 @@ typedef struct Light
 	// Not used for point lights
 	int primIdx;
 } Light;
+
+// typedef struct Cube
+// {
+// 	float4 b[2];
+// 	float4x4 M, invM;
+// } Cube;
