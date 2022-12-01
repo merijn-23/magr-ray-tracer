@@ -77,13 +77,13 @@
     </ClInclude>
     <ClInclude Include="src\tiny_obj_loader.h" />
     <ClInclude Include="src\stb_image.h" />
+    <ClInclude Include="src\common.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="template">
       <UniqueIdentifier>{a7d6e3cb-bfcd-438d-979f-17df241a55b4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="kernels">
-      <UniqueIdentifier>{2b4eaea9-b08a-4873-a892-6a982cd25814}</UniqueIdentifier>
     </Filter>
     <Filter Include="src">
       <UniqueIdentifier>{49d6a83c-0830-4fed-b7f9-63eb1153a0b6}</UniqueIdentifier>
@@ -91,31 +91,31 @@
     <Filter Include="imgui">
       <UniqueIdentifier>{c5b2b0e0-edc9-44aa-adfe-788ead72d2d1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="cl">
+      <UniqueIdentifier>{117d6c8f-091f-4f74-a2bb-00ee6b9b4ec7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="template\LICENSE">
       <Filter>template</Filter>
     </None>
-    <None Include="kernels\trace.cl">
-      <Filter>kernels</Filter>
+    <None Include="src\cl\camera.cl">
+      <Filter>cl</Filter>
     </None>
-    <None Include="kernels\primitives.cl">
-      <Filter>kernels</Filter>
+    <None Include="src\cl\light.cl">
+      <Filter>cl</Filter>
     </None>
-    <None Include="kernels\ray.cl">
-      <Filter>kernels</Filter>
+    <None Include="src\cl\postproc.cl">
+      <Filter>cl</Filter>
     </None>
-    <None Include="kernels\camera.cl">
-      <Filter>kernels</Filter>
+    <None Include="src\cl\primitives.cl">
+      <Filter>cl</Filter>
     </None>
-    <None Include="kernels\light.cl">
-      <Filter>kernels</Filter>
+    <None Include="src\cl\ray.cl">
+      <Filter>cl</Filter>
     </None>
-    <None Include="kernels\postproc.cl">
-      <Filter>kernels</Filter>
-    </None>
-    <None Include="kernels\constants.cl">
-      <Filter>kernels</Filter>
+    <None Include="src\cl\trace.cl">
+      <Filter>cl</Filter>
     </None>
   </ItemGroup>
 </Project>

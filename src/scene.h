@@ -37,7 +37,7 @@
     }
 
 #include <map>
-
+#include "common.h"
 
 namespace Tmpl8
 {
@@ -74,70 +74,70 @@ namespace Tmpl8
 // Keeps track of both the Material of a primitive as well as
 // it's type and index in the correct array.
 // Primitive types:
-#define SPHERE 0
-#define PLANE 1
-#define CUBE 2
-#define QUAD 3
-#define TRIANGLE 4
-// -----------------------------------------------------------
-typedef struct Primitive
-{
-	int objType, objIdx, matIdx;
-};
-
-// -----------------------------------------------------------
-// Material struct
-// Keeps track of material properties of all primitives. Each
-// primitive has a matIdx to keep track of its own material.
-// -----------------------------------------------------------
-typedef struct Material
-{
-	float4 color;
-	float specular, n1, n2;
-	bool isDieletric;
-	int texIdx = -1;
-	int texW, texH;
-};
-
-typedef struct Sphere
-{
-	float4 pos;
-	float r2, invr; // r * r, 1 / r
-};
-
-typedef struct Plane
-{
-	float4 N;
-	float d;
-};
-
-typedef struct Cube
-{
-	float4 b[2];
-	mat4 M, invM;
-};
-
-typedef struct Quad
-{
-	float size;
-	mat4 T, invT;
-};
-
-typedef struct Light
-{
-	float4 pos, color;
-	float strength;
-	// Not used for point lights
-	int primIdx;
-};
-
-typedef struct Triangle
-{
-	float4 v0, v1, v2;
-	float2 uv0, uv1, uv2;
-	float4 N;
-	float u, v, w; // barycenter, is calculated upon intersection
-};
+//#define SPHERE 0
+//#define PLANE 1
+//#define CUBE 2
+//#define QUAD 3
+//#define TRIANGLE 4
+//// -----------------------------------------------------------
+//typedef struct Primitive
+//{
+//	int objType, objIdx, matIdx;
+//};
+//
+//// -----------------------------------------------------------
+//// Material struct
+//// Keeps track of material properties of all primitives. Each
+//// primitive has a matIdx to keep track of its own material.
+//// -----------------------------------------------------------
+//typedef struct Material
+//{
+//	float4 color;
+//	float specular, n1, n2;
+//	bool isDieletric;
+//	int texIdx = -1;
+//	int texW, texH;
+//};
+//
+//typedef struct Sphere
+//{
+//	float4 pos;
+//	float r2, invr; // r * r, 1 / r
+//};
+//
+//typedef struct Plane
+//{
+//	float4 N;
+//	float d;
+//};
+//
+//typedef struct Cube
+//{
+//	float4 b[2];
+//	mat4 M, invM;
+//};
+//
+//typedef struct Quad
+//{
+//	float size;
+//	mat4 T, invT;
+//};
+//
+//typedef struct Light
+//{
+//	float4 pos, color;
+//	float strength;
+//	// Not used for point lights
+//	int primIdx;
+//};
+//
+//typedef struct Triangle
+//{
+//	float4 v0, v1, v2;
+//	float2 uv0, uv1, uv2;
+//	float4 N;
+//	float u, v, w; // barycenter, is calculated upon intersection
+//};
 
 //// -----------------------------------------------------------
 //// Cube primitive

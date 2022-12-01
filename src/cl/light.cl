@@ -1,14 +1,5 @@
-typedef struct Light
-{
-	float3 pos, color;
-	float strength;
-    // primIdx is only used in path tracing
-    int primIdx;
-} Light;
-__global Light* lights;
 
-
-float3 getDiffuseShading( Light* light, float dot, float r )
+float4 getDiffuseShading( Light* light, float dot, float r )
 {
     return dot * (1 / (r * r)) * light->strength * light->color;
 }
@@ -25,9 +16,9 @@ bool shootShadowRay( Ray* ray, float d )
     return true;
 }
 
-float3 handleShadowRay( Ray* ray, Light* light )
+float4 handleShadowRay( Ray* ray, Light* light )
 {
-    float3 dir = intersectionPoint(ray) - light->pos;
+    float4 dir = intersectionPoint(ray) - light->pos;
     float dotP = dot(ray->N, -dir);
     if(dotP > 0)
     {
@@ -40,6 +31,6 @@ float3 handleShadowRay( Ray* ray, Light* light )
             return getDiffuseShading(light, dotP, dist);
         }
     } 
-    return (float3)(0);
+    return (float4)(0);
 }
 

@@ -1,17 +1,16 @@
 int nPrimitives = 0;
 int nLights = 0;
 
-#include "kernels/constants.cl""
-#include "kernels/ray.cl"
-#include "kernels/primitives.cl"
-#include "kernels/light.cl"
-#include "kernels/camera.cl"
+#include "src/cl/primitives.cl"
+#include "src/cl/ray.cl"
+#include "src/cl/light.cl"
+#include "src/cl/camera.cl"
 
 const sampler_t SAMPLER = CLK_NORMALIZED_COORDS_TRUE | CLK_ADDRESS_CLAMP_TO_EDGE | CLK_FILTER_LINEAR;
 
-float3 shoot_whitted( Ray* primaryRay )
+float4 shoot_whitted( Ray* primaryRay )
 {
-	float3 color = (float3)(0);
+	float4 color = (float4)(0);
 
 	Ray stack[1024];
 	stack[0] = *primaryRay;
@@ -24,7 +23,7 @@ float3 shoot_whitted( Ray* primaryRay )
 
 		if ( ray.primIdx != -1 )
 		{
-			float3 I = intersectionPoint( &ray );
+			float4 I = intersectionPoint( &ray );
 			ray.N = getNormal( primitives + ray.primIdx, I );
 			if ( ray.inside )
 				ray.N = -ray.N;
@@ -46,9 +45,9 @@ float3 shoot_whitted( Ray* primaryRay )
 				if ( mat.specular > 0 && ray.bounces < MAX_BOUNCE )
 				{
 					// shoot another ray into the scene from the point of impact
-					Ray* reflectRay = reflect( &ray, I );
-					reflectRay->intensity *= mat.specular;
-					stack[n++] = *reflectRay;
+					Ray reflectRay = reflect( &ray, I );
+					reflectRay.intensity *= mat.specular;
+					stack[n++] = reflectRay;
 				}
 			}
 			else if ( ray.bounces < MAX_BOUNCE )
@@ -63,7 +62,7 @@ float3 shoot_whitted( Ray* primaryRay )
 					n2 = mat.n1;
 
 					// give material absorption
-					float3 a = (float3)(1.f, 1.f, 1.f);
+					float4 a = (float4)(1.f);
 					ray.intensity.x *= exp( -a.x * ray.t );
 					ray.intensity.y *= exp( -a.y * ray.t );
 					ray.intensity.z *= exp( -a.z * ray.t );
@@ -75,13 +74,13 @@ float3 shoot_whitted( Ray* primaryRay )
 				{
 					// total internal reflection
 					// shoot another ray into the scene from the point of impact
-					Ray* reflectRay = reflect( &ray, I );
-					stack[n++] = *reflectRay;
+					Ray reflectRay = reflect( &ray, I );
+					stack[n++] = reflectRay;
 				}
 				else
 				{
 					// use fresnel's law to find reflection and refraction factors
-					float3 T = frac * ray.D + ray.N * (frac * costhetai - sqrt( k ));
+					float4 T = frac * ray.D + ray.N * (frac * costhetai - sqrt( k ));
 					T = normalize( T );
 					float costhetat = dot( -ray.N, T );
 					// precompute
@@ -98,14 +97,14 @@ float3 shoot_whitted( Ray* primaryRay )
 					if ( Fr < 0 || Fr > 1 )
 						printf( "%f\n", Fr );
 					// create reflection ray
-					Ray* reflectRay = reflect( &ray, I );
-					reflectRay->intensity *= Fr;
-					stack[n++] = *reflectRay;
+					Ray reflectRay = reflect( &ray, I );
+					reflectRay.intensity *= Fr;
+					stack[n++] = reflectRay;
 
 					// create transmission ray
-					Ray* transmissionRay = transmission( &ray, I, T );
-					transmissionRay->intensity *= (1 - Fr);
-					stack[n++] = *transmissionRay;
+					Ray transmissionRay = transmission( &ray, I, T );
+					transmissionRay.intensity *= (1 - Fr);
+					stack[n++] = transmissionRay;
 				}
 
 			}
@@ -115,7 +114,7 @@ float3 shoot_whitted( Ray* primaryRay )
 	return color;
 }
 
-__kernel void trace( __global float3* pixels,
+__kernel void trace( __global float4* pixels,
 	__global float3* _textures,
 	__global Sphere* _spheres,
 	__global Triangle* _triangles,
@@ -144,9 +143,9 @@ __kernel void trace( __global float3* pixels,
 
 	// create and shoot a ray into the scene
 	Ray ray = initPrimaryRay( x, y, &cam );
-	float3 color = shoot_whitted( &ray );
+	float4 color = shoot_whitted( &ray );
 	// prevent color overflow
-	color = min( color, (float3)(1) );
+	color = min( color, (float4)(1) );
 	pixels[idx] = color;
 
 	//color *= 255;
