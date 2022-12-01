@@ -1,6 +1,7 @@
 int nPrimitives = 0;
 int nLights = 0;
 
+#include "src/constants.h"
 #include "src/cl/primitives.cl"
 #include "src/cl/ray.cl"
 #include "src/cl/light.cl"

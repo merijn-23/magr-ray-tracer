@@ -1,10 +1,6 @@
 #pragma once
 
-// default screen resolution
-#define SCRWIDTH 2000
-#define SCRHEIGHT 720
-// #define FULLSCREEN
-// #define DOUBLESIZE
+#include "constants.h"
 
 #define DEG_TO_RAD(deg) (deg * PI / 180.0)
 
