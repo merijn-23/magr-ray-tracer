@@ -1,4 +1,4 @@
-#include "src/common.h"
+#include "src/constants.h"
 
 __kernel void display(__global float3* pixels,
 	write_only image2d_t target)
