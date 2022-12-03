@@ -3,7 +3,7 @@
 #define SCRWIDTH 1280 //1280
 #define SCRHEIGHT 720
 
-#define MAX_BOUNCE 1
+#define MAX_BOUNCE 10
 #define EPSILON 0.0001f
 
 #define SPHERE		0

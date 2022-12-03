@@ -1,13 +1,13 @@
 int nPrimitives = 0;
 int nLights = 0;
-uint seed = 1;
+__global uint* seed;
 
 uint randomUInt( )
 {
-	seed ^= seed << 13;
-	seed ^= seed >> 17;
-	seed ^= seed << 5;
-	return seed;
+	*seed ^= *seed << 13;
+	*seed ^= *seed >> 17;
+	*seed ^= *seed << 5;
+	return *seed;
 }
 float randomFloat( ) { return randomUInt( ) * 2.3283064365387e-10f; }
 float4 randomFloat3( ) { return ( float4 )( randomFloat( ), randomFloat( ), randomFloat( ), 0 ); };
@@ -49,7 +49,7 @@ bool fresnel( Ray* ray, Material* mat, float* outFr, float4* outT )
 
 	// use fresnel's law to find reflection and refraction factors
 	( *outT ) = normalize(
-		frac * ray->D + ray->N * ( frac * costhetai - sqrt( k ) )
+		frac * ray->D + ray->N * ( frac * costhetai - sqrt( k ) ) 
 	);
 	float costhetat = dot( -( ray->N ), ( *outT ) );
 	// precompute
@@ -89,7 +89,6 @@ float4 shootWhitted( Ray* primaryRay )
 		Ray ray = stack[--n];
 		if ( !trace( &ray ) ) continue;
 
-		// we hit an object
 		Primitive prim = primitives[ray.primIdx];
 		Material mat = materials[prim.matIdx];
 
@@ -126,13 +125,12 @@ float4 shootWhitted( Ray* primaryRay )
 			stack[n++] = reflectRay;
 		}
 	}
-	printf("%f, %f, %f\n", color.x, color.y, color.z);
 	return color;
 }
 
 float4 shootKajiya( Ray* ray )
 {
-	float4 color = ( float4 )( 1 );
+	float4 color = ( float4 )( 0 );
 
 	for(int i = 0; i < MAX_BOUNCE; i++)
 	{
@@ -149,13 +147,12 @@ float4 shootKajiya( Ray* ray )
 		if(mat.isLight)
 		{
 			color = mat.emittance * ray->intensity;
-			printf( "%f %f %f\n", color.x, color.y, color.z );
-			//return color;
+			return color;
 		}
 
-		//float4 diffuseReflection = randomRayHemisphere(ray->N);
-		float4 diffuseReflection = normalize(( float4 )( 0, 1, 0, 0 ));
-		Ray r = initRayNoNorm(ray->I, diffuseReflection);
+		float4 diffuseReflection = randomRayHemisphere(ray->N);
+		//float4 diffuseReflection = normalize(( float4 )( 0, 1, 0, 0 ));
+		Ray r = initRay(ray->I, diffuseReflection);
 
 		// * pi / pi ???
 		float4 brdf = getAlbedo(ray) * M_1_PI_F;
@@ -184,9 +181,7 @@ __kernel void render( __global float4* pixels,
 
 	nPrimitives = numPrimitives;
 	nLights = numLights;
-	seed = seeds[idx];
-
-	//if ( _materials[4].isLight ) printf( "true\n" );
+	seed = seeds + idx;
 
 	spheres = _spheres;
 	planes = _planes;
@@ -198,7 +193,7 @@ __kernel void render( __global float4* pixels,
 
 	// create and shoot a ray into the scene
 	Ray ray = initPrimaryRay( x, y, &cam );
-	float4 color = shootWhitted( &ray );
+	float4 color = shootKajiya( &ray );
 	// prevent color overflow
 	color = min( color, ( float4 )( 1 ) );
 	pixels[idx] = color;
