@@ -35,10 +35,10 @@ namespace Tmpl8
 		LoadTexture( "assets/suprised_pikachu.png", "pika" );
 
 		AddSphere( float4( 0, 0.f, -1.5f, 0.f ), 0.5f, "glass" );
-		AddSphere( float4( 1.5f, -0.49f, 0.f, 0 ), 0.5f, "cash" );
+		AddSphere( float4( 1.5f, -0.49f, 0.f, 0 ), 0.5f, "red" );
 
-		AddPlane( float3( 1, 0, 0 ), 5.f, "yellow" );
 		AddPlane( float3( -1, 0, 0 ), 2.99f, "green" );
+		AddPlane( float3( 1, 0, 0 ), 5.f, "yellow" );
 		AddPlane( float3( 0, 1, 0 ), 1.f, "pika" );
 		AddPlane( float3( 0, -1, 0 ), 2.f, "white" );
 		AddPlane( float3( 0, 0, 1 ), 9.f, "magenta" );
@@ -232,7 +232,7 @@ namespace Tmpl8
 		int texIdx = textures.size( );
 		textures.insert( textures.end( ), &data[0], &data[size] );
 
-		auto mat = AddMaterial( name );
+		auto& mat = AddMaterial( name );
 		mat.texIdx = texIdx;
 		mat.isDieletric = false;
 		mat.texW = width;

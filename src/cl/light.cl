@@ -22,7 +22,7 @@ float4 handleShadowRay( Ray* ray, Light* light )
     if(dotP > 0)
     {
         // Shoot a shadow ray into the scene and check if anything obstructs it
-        Ray shadowRay = initRay(light->pos, dir);
+        Ray shadowRay = initRay(light->pos, normalize(dir));
         float dist = length(dir) - EPSILON;
         if(shootShadowRay(&shadowRay, dist))
         {
