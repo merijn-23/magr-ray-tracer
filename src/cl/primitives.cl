@@ -37,9 +37,9 @@ void intersectPlane( int primIdx, Plane* plane, Ray* ray )
 
 	float4 uAxis = ( float4 )( plane->N.y, plane->N.z, -plane->N.x, 0 );
 	float4 vAxis = cross( uAxis, plane->N );
-	float4 I = normalize(ray->O + ray->t * ray->D);
-	ray->u = dot(I, uAxis );
-	ray->v = dot(I, normalize(vAxis ));
+	float4 I = normalize( ray->O + ray->t * ray->D );
+	ray->u = dot( I, uAxis );
+	ray->v = dot( I, normalize( vAxis ) );
 
 }
 
@@ -109,15 +109,7 @@ float4 getNormal( Primitive* prim, float4 I )
 	}
 }
 
-float2 getSphereUV( Sphere* sphere, float4 N )
-{
-	float2 tex;
-	tex.x = ( 1 + atan2pi( N.z, N.x ) ) * 0.5;
-	tex.y = acospi( N.y );
-	return tex;
-}
-
-float4 getAlbedo( Ray* ray, float4 I )
+float4 getAlbedo( Ray* ray )
 {
 	Primitive prim = primitives[ray->primIdx];
 	Material mat = materials[prim.matIdx];
@@ -128,7 +120,9 @@ float4 getAlbedo( Ray* ray, float4 I )
 		{
 			case SPHERE:
 			{
-				float2 uv = getSphereUV( spheres + prim.objIdx, ray->N );
+				float2 uv;
+				uv.x = ( 1 + atan2pi( ray->N.z, ray->N.x ) ) * 0.5;
+				uv.y = acospi( ray->N.y );
 				int x = (int)( uv.x * mat.texW );
 				int y = (int)( uv.y * mat.texH );
 				albedo = textures[mat.texIdx + x + y * mat.texW];
@@ -145,8 +139,7 @@ float4 getAlbedo( Ray* ray, float4 I )
 			{
 				int x = (int)( ray->u * mat.texW );
 				int y = (int)( ray->v * mat.texH );
-
-				albedo = textures[mat.texIdx + abs(x) + abs(y) * mat.texW];
+				albedo = textures[mat.texIdx + abs( x ) + abs( y ) * mat.texW];
 			}break;
 		}
 	return albedo;

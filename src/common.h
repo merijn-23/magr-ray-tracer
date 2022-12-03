@@ -2,7 +2,7 @@
 
 typedef struct Ray
 {
-	float4 O, D, rD, N, intensity;
+	float4 O, D, rD, N, I, intensity;
 	float t;
 	// Index of primitive
 	int primIdx, bounces;
@@ -27,8 +27,8 @@ typedef struct Material
 	int texW, texH;
 
 	// Kajiya
-	bool isEmissive;
-	float strength;
+	bool isLight;
+	float4 emittance; 
 } Material;
 
 typedef struct Sphere
@@ -59,8 +59,6 @@ typedef struct Light
 	// Kajiya
 	int primIdx;
 } Light;
-
-
 
 // typedef struct Cube
 // {

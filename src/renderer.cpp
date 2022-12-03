@@ -10,7 +10,6 @@ static bool gamma_corr = false;
 // -----------------------------------------------------------
 void Renderer::Init( )
 {
-	Scene scene = Scene( );
 	InitKernel( );
 }
 
@@ -51,7 +50,7 @@ void Renderer::Tick( float _deltaTime )
 
 void Renderer::InitKernel( )
 {
-	traceKernel = new Kernel( "src/cl/trace.cl", "trace" );
+	traceKernel = new Kernel( "src/cl/trace.cl", "render" );
 	displayKernel = new Kernel( "src/cl/postproc.cl", "display" );
 	vignetKernel = new Kernel( "src/cl/postproc.cl", "vignetting" );
 
@@ -62,6 +61,7 @@ void Renderer::InitKernel( )
 	triangleBuffer = new Buffer( sizeof( Triangle ) * scene.triangles.size( ) );
 	lightBuffer = new Buffer( sizeof( Light ) * scene.lights.size( ) );
 	texBuffer = new Buffer( sizeof( float4 ) * scene.textures.size( ) );
+	seedBuffer = new Buffer( sizeof(uint) * SCRHEIGHT * SCRWIDTH );
 
 	// screen and temp buffer
 	pixelBuffer = new Buffer( 4 * 4 * SCRHEIGHT * SCRWIDTH );
@@ -78,12 +78,18 @@ void Renderer::InitKernel( )
 	lightBuffer->hostBuffer = (uint*)scene.lights.data( );
 	texBuffer->hostBuffer = (uint*)scene.textures.data( );
 
+	seedBuffer->hostBuffer = new uint[SCRHEIGHT * SCRWIDTH];
+	for(int i = 0; i < SCRHEIGHT * SCRWIDTH; i++)
+	{
+		seedBuffer->hostBuffer[i] = i;
+	}
+
 	// Set trace kernel arguments
 	traceKernel->SetArguments( pixelBuffer, texBuffer, sphereBuffer, triangleBuffer, planeBuffer,
-		matBuffer, primBuffer, lightBuffer );
+		matBuffer, primBuffer, lightBuffer, seedBuffer );
 	CamToDevice( );
-	traceKernel->SetArgument( 9, (int)scene.primitives.size( ) );
-	traceKernel->SetArgument( 10, (int)scene.lights.size( ) );
+	traceKernel->SetArgument( 10, (int)scene.primitives.size( ) );
+	traceKernel->SetArgument( 11, (int)scene.lights.size( ) );
 
 	// Set post processing kernels arguments
 	displayKernel->SetArguments( pixelBuffer, screenBuffer );
@@ -96,6 +102,7 @@ void Renderer::InitKernel( )
 	primBuffer->CopyToDevice( );
 	lightBuffer->CopyToDevice( );
 	texBuffer->CopyToDevice( );
+	seedBuffer->CopyToDevice();
 }
 
 void Renderer::UpdateBuffers( )
@@ -106,7 +113,7 @@ void Renderer::UpdateBuffers( )
 
 void Tmpl8::Renderer::CamToDevice( )
 {
-	clSetKernelArg( traceKernel->kernel, 8, sizeof( Camera ), &camera.cam );
+	clSetKernelArg( traceKernel->kernel, 9, sizeof( Camera ), &camera.cam );
 }
 
 void Renderer::MouseMove( int x, int y )
