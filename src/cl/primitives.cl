@@ -40,7 +40,7 @@ void intersectPlane( int primIdx, Plane* plane, Ray* ray )
 	float4 I = normalize(ray->O + ray->t * ray->D);
 	ray->u = dot(I, uAxis );
 	ray->v = dot(I, normalize(vAxis ));
-	//printf( "%f, %f\n", ray->u, ray->v );
+
 }
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
@@ -145,6 +145,7 @@ float4 getAlbedo( Ray* ray, float4 I )
 			{
 				int x = (int)( ray->u * mat.texW );
 				int y = (int)( ray->v * mat.texH );
+
 				albedo = textures[mat.texIdx + abs(x) + abs(y) * mat.texW];
 			}break;
 		}
