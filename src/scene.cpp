@@ -24,16 +24,16 @@ Scene::Scene( )
 	Material default;
 
 
-	AddMaterial( Material{ float3( 1, 0, 0 ), 0, 0, 0, false }, "red" );
-	AddMaterial( Material{ float3( 0, 1, 0 ), 0, 0, 0, false }, "green" );
-	AddMaterial( Material{ float3( 0, 0, 1 ), 0, 0, 0, false }, "blue" );
-	AddMaterial( Material{ float3( 1, 1, 1 ), 0, 0, 0, false }, "white" );
-	AddMaterial( Material{ float3( 1, 1, 0 ), 0, 0, 0, false }, "yellow" );
-	AddMaterial( Material{ float3( 1, 0, 1 ), 0, 0, 0, false }, "magenta" );
-	AddMaterial( Material{ float3( 0, 1, 1 ), 0, 0, 0, false }, "cyan" );
-	AddMaterial( Material{ float3( 1, 1, 1 ), 0, 1, 1.5f, true }, "glass" );
-	LoadTexture( "cash_money.png", "cash" );
-	LoadTexture( "suprised_pikachu.png", "pika" );
+	AddMaterial( Material{ float3( 1, 0, 0 ), 0, 0, 0, false, -1 }, "red" );
+	AddMaterial( Material{ float3( 0, 1, 0 ), 0, 0, 0, false, -1 }, "green" );
+	AddMaterial( Material{ float3( 0, 0, 1 ), 0, 0, 0, false, -1 }, "blue" );
+	AddMaterial( Material{ float3( 1, 1, 1 ), 0, 0, 0, false, -1 }, "white" );
+	AddMaterial( Material{ float3( 1, 1, 0 ), 0, 0, 0, false, -1 }, "yellow" );
+	AddMaterial( Material{ float3( 1, 0, 1 ), 0, 0, 0, false, -1 }, "magenta" );
+	AddMaterial( Material{ float3( 0, 1, 1 ), 0, 0, 0, false, -1 }, "cyan" );
+	AddMaterial( Material{ float3( 1, 1, 1 ), 0, 1, 1.5f, true, -1 }, "glass" );
+	LoadTexture( "assets/cash_money.png", "cash" );
+	LoadTexture( "assets/suprised_pikachu.png", "pika" );
 
 	AddSphere( float4( 0, 0.f, -1.5f, 0.f ), 0.5f, "glass" );
 	AddSphere( float4( 1.5f, -0.49f, 0.f, 0 ), 0.5f, "cash" );

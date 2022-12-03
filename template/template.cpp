@@ -52,9 +52,10 @@ void ReshapeWindowCallback( GLFWwindow* window, int w, int h )
 {
 	glViewport( 0, 0, w, h );
 }
+
+static bool toggle_cursor = false;
 void KeyEventCallback( GLFWwindow* window, int key, int scancode, int action, int mods )
 {
-	static bool toggle_cursor = false;
 	if ( key == GLFW_KEY_ESCAPE ) running = false;
 	if ( key == GLFW_KEY_C && action == GLFW_PRESS)
 	{
@@ -87,7 +88,7 @@ void MouseScrollCallback( GLFWwindow* window, double x, double y )
 }
 void MousePosCallback( GLFWwindow* window, double x, double y )
 {
-	if ( app ) app->MouseMove( (int)x, (int)y );
+	if ( app && !toggle_cursor ) app->MouseMove( (int)x, (int)y );
 }
 void ErrorCallback( int error, const char* description )
 {

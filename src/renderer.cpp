@@ -1,5 +1,10 @@
 #include "precomp.h"
 
+// ImGui variables
+static float vignet_strength = 0.5f;
+static bool chromatic = false;
+static bool gamma_corr = false;
+
 // -----------------------------------------------------------
 // Initialize the renderer
 // -----------------------------------------------------------
@@ -28,7 +33,11 @@ void Renderer::Tick( float _deltaTime )
 	CamToDevice( );
 
 	traceKernel->Run( SCRWIDTH * SCRHEIGHT );
-	vignetKernel->Run( SCRWIDTH * SCRHEIGHT );
+	if (vignet_strength > 0)
+	{
+		vignetKernel->SetArgument(1, vignet_strength);
+		vignetKernel->Run( SCRWIDTH * SCRHEIGHT );
+	}
 	displayKernel->Run( SCRWIDTH * SCRHEIGHT );
 
 	// performance report - running average - ms, MRays/s
@@ -78,7 +87,7 @@ void Renderer::InitKernel( )
 
 	// Set post processing kernels arguments
 	displayKernel->SetArguments( pixelBuffer, screenBuffer );
-	vignetKernel->SetArguments( pixelBuffer, .9f );
+	vignetKernel->SetArguments( pixelBuffer, vignet_strength );
 
 	sphereBuffer->CopyToDevice( );
 	planeBuffer->CopyToDevice( );
@@ -102,6 +111,7 @@ void Tmpl8::Renderer::CamToDevice( )
 
 void Renderer::MouseMove( int x, int y )
 {
+
 	camera.MouseMove( x - mousePos.x, y - mousePos.y );
 	mousePos.x = x, mousePos.y = y;
 }
@@ -139,5 +149,6 @@ void Renderer::KeyDown( int key ) { }
 
 void Renderer::Gui( )
 {
-	ImGui::ShowDemoWindow( );
+	//ImGui::Checkbox("Vignetting", &vignetting);
+	ImGui::SliderFloat("Vignetting strength", &vignet_strength, 0.0f, 1.0f, "ratio = %.3f");
 }
