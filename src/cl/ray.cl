@@ -20,7 +20,7 @@ Ray reflect( Ray* ray, float4 I )
 	return reflectRay;
 }
 
-Ray transmission( Ray* ray, float4 I, float4 T )
+Ray transmit( Ray* ray, float4 I, float4 T )
 {
 	float4 origin = I + T * EPSILON;
 	Ray tRay = initRayNoNorm( origin, T );

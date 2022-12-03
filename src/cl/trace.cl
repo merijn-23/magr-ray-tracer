@@ -8,9 +8,57 @@ int nLights = 0;
 #include "src/cl/light.cl"
 #include "src/cl/camera.cl"
 
+
+void beersLaw( Ray* ray )
+{
+	float4 a = ( float4 )( 1.f );
+	ray->intensity.x *= exp( -a.x * ray->t );
+	ray->intensity.y *= exp( -a.y * ray->t );
+	ray->intensity.z *= exp( -a.z * ray->t );
+}
+
+bool fresnel( Ray* ray, Material* mat, float* outFr, float4* outT )
+{
+	float costhetai = dot( ray->N, ray->rD );
+
+	float n1 = mat->n1;
+	float n2 = mat->n2;
+	if ( ray->inside )
+	{
+		n1 = mat->n2;
+		n2 = mat->n1;
+
+		// give material absorption
+		beersLaw( ray );
+	}
+
+	float frac = n1 * ( 1 / n2 );
+	float k = 1 - frac * frac * ( 1 - costhetai * costhetai );
+
+	if ( k < 0 ) return false;
+
+	// use fresnel's law to find reflection and refraction factors
+	( *outT ) = normalize( 
+		frac * ray->D + ray->N * ( frac * costhetai - sqrt( k ) ) 
+	);
+	float costhetat = dot( -(ray->N), ( *outT ) );
+	// precompute
+	float n1costhetai = n1 * costhetai;
+	float n2costhetai = n2 * costhetai;
+	float n1costhetat = n1 * costhetat;
+	float n2costhetat = n2 * costhetat;
+
+	float frac1 = ( n1costhetai - n2costhetat ) / ( n1costhetai + n2costhetat );
+	float frac2 = ( n1costhetat - n2costhetai ) / ( n1costhetat + n2costhetai );
+
+	// calculate fresnel
+	( *outFr ) = 0.5f * ( frac1 * frac1 + frac2 * frac2 );
+	return true;
+}
+
 float4 shootWhitted( Ray* primaryRay )
 {
-	float4 color = (float4)(0);
+	float4 color = ( float4 )( 0 );
 
 	Ray stack[1024];
 	stack[0] = *primaryRay;
@@ -52,61 +100,19 @@ float4 shootWhitted( Ray* primaryRay )
 			}
 			else if ( ray.bounces < MAX_BOUNCE )
 			{
-				float costhetai = dot( ray.N, ray.rD );
-
-				float n1 = mat.n1;
-				float n2 = mat.n2;
-				if ( ray.inside )
-				{
-					n1 = mat.n2;
-					n2 = mat.n1;
-
-					// give material absorption
-					float4 a = (float4)(1.f);
-					ray.intensity.x *= exp( -a.x * ray.t );
-					ray.intensity.y *= exp( -a.y * ray.t );
-					ray.intensity.z *= exp( -a.z * ray.t );
-				}
-				float frac = n1 * (1 / n2);
-				float k = 1 - frac * frac * (1 - costhetai * costhetai);
-
-				if ( k < 0 )
+				Ray reflectRay = reflect( &ray, I );
+				float Fr = 0.f;
+				float4 T = ( float4 )( 0 );
+				if ( fresnel( &ray, &mat, &Fr, &T ) )
 				{
 					// total internal reflection
 					// shoot another ray into the scene from the point of impact
-					Ray reflectRay = reflect( &ray, I );
-					stack[n++] = reflectRay;
-				}
-				else
-				{
-					// use fresnel's law to find reflection and refraction factors
-					float4 T = frac * ray.D + ray.N * (frac * costhetai - sqrt( k ));
-					T = normalize( T );
-					float costhetat = dot( -ray.N, T );
-					// precompute
-					float n1costhetai = n1 * costhetai;
-					float n2costhetai = n2 * costhetai;
-					float n1costhetat = n1 * costhetat;
-					float n2costhetat = n2 * costhetat;
-
-					float frac1 = (n1costhetai - n2costhetat) / (n1costhetai + n2costhetat);
-					float frac2 = (n1costhetat - n2costhetai) / (n1costhetat + n2costhetai);
-
-					// calculate fresnel
-					float Fr = 0.5f * (frac1 * frac1 + frac2 * frac2);
-					//if ( Fr < 0 || Fr > 1 )
-						//printf( "%f\n", Fr );
-					// create reflection ray
-					Ray reflectRay = reflect( &ray, I );
 					reflectRay.intensity *= Fr;
-					stack[n++] = reflectRay;
-
-					// create transmission ray
-					Ray transmissionRay = transmission( &ray, I, T );
-					transmissionRay.intensity *= (1 - Fr);
+					Ray transmissionRay = transmit( &ray, I, T );
+					transmissionRay.intensity *= ( 1 - Fr );
 					stack[n++] = transmissionRay;
 				}
-
+				stack[n++] = reflectRay;
 			}
 		}
 	}
@@ -145,7 +151,7 @@ __kernel void trace( __global float4* pixels,
 	Ray ray = initPrimaryRay( x, y, &cam );
 	float4 color = shootWhitted( &ray );
 	// prevent color overflow
-	color = min( color, (float4)(1) );
+	color = min( color, ( float4 )( 1 ) );
 	pixels[idx] = color;
 
 	//color *= 255;

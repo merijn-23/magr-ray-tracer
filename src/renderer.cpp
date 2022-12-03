@@ -150,5 +150,5 @@ void Renderer::KeyDown( int key ) { }
 void Renderer::Gui( )
 {
 	//ImGui::Checkbox("Vignetting", &vignetting);
-	ImGui::SliderFloat("Vignetting strength", &vignet_strength, 0.0f, 1.0f, "ratio = %.3f");
+	ImGui::SliderFloat("Vignetting", &vignet_strength, 0.0f, 1.0f, "ratio = %.3f");
 }
