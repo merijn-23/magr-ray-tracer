@@ -260,22 +260,11 @@ namespace Tmpl8
 // -----------------------------------------------------------
 class Scene
 {
-private:
-	template <class T>
-	void Resize( T* arr, int currSize, int newSize )
-	{
-		T* newArray = new T[newSize];
-		memcpy( newArray, arr, currSize * sizeof( T ) );
-		currSize = newSize;
-		delete[] arr;
-		arr = newArray;
-	}
-
 public:
 	Scene( );
 	~Scene( );
 	void SetTime( float t );
-	void AddMaterial( Material material, std::string name );
+	Material& AddMaterial( std::string name );
 	void AddSphere( float3 pos, float radius, std::string material );
 	void AddPlane( float3 N, float d, std::string material );
 	void AddTriangle( float3 v0, float3 v1, float3 v2, float2 uv0, float2 uv1, float2 uv2, std::string material );

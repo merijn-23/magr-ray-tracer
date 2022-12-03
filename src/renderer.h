@@ -47,6 +47,8 @@ public:
 
 	Buffer* camBuffer;
 	Buffer* lightBuffer;
+
+	Buffer* seedBuffer;
 };
 
 } // namespace Tmpl8

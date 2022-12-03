@@ -12,17 +12,15 @@ bool shootShadowRay( Ray* ray, float d )
         if(ray->t < d - EPSILON)
             return false;
     }
-    //printf("shoot");
     return true;
 }
 
 float4 handleShadowRay( Ray* ray, Light* light )
 {
-    float4 dir = intersectionPoint(ray) - light->pos;
+    float4 dir = ray->I - light->pos;
     float dotP = dot(ray->N, -dir);
     if(dotP > 0)
     {
-        //printf("handle");
         // Shoot a shadow ray into the scene and check if anything obstructs it
         Ray shadowRay = initRay(light->pos, dir);
         float dist = length(dir) - EPSILON;
