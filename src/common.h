@@ -54,6 +54,8 @@ typedef struct Light
 	int primIdx;
 } Light;
 
+
+
 // typedef struct Cube
 // {
 // 	float4 b[2];

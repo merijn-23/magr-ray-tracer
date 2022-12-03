@@ -9,29 +9,36 @@ namespace Tmpl8
 {
 Scene::Scene( )
 {
-	/*	primitives = new Primitive[9];
-			_sizePrimitives = 9;
-			spheres = new Sphere[2];
-			_sizeSpheres = 2;
-			planes = new Plane[6];
-			_sizePlanes = 6;
-			materials = new Material[8];
-			_sizeMaterials = 8;
-			triangles = new Triangle[1];
-			_sizeTriangles = 1;
-			lights = new Light[3];*/
-			//Resize( primitives, 0, 9 );
 	Material default;
+	default.color = float4( 0 );
+	default.isDieletric = false;
+	default.n1 = default.n2 = 0;
+	default.specular = 0;
+	default.texIdx = -1;
+	default.texH = 0;
+	default.texW = 0;
 
+	default.color = float3( 1, 0, 0 );
+	AddMaterial( default, "red" );
+	default.color = float3( 0, 1, 0 );
+	AddMaterial( default, "green" );
 
-	AddMaterial( Material{ float3( 1, 0, 0 ), 0, 0, 0, false }, "red" );
-	AddMaterial( Material{ float3( 0, 1, 0 ), 0, 0, 0, false }, "green" );
-	AddMaterial( Material{ float3( 0, 0, 1 ), 0, 0, 0, false }, "blue" );
-	AddMaterial( Material{ float3( 1, 1, 1 ), 0, 0, 0, false }, "white" );
-	AddMaterial( Material{ float3( 1, 1, 0 ), 0, 0, 0, false }, "yellow" );
-	AddMaterial( Material{ float3( 1, 0, 1 ), 0, 0, 0, false }, "magenta" );
-	AddMaterial( Material{ float3( 0, 1, 1 ), 0, 0, 0, false }, "cyan" );
-	AddMaterial( Material{ float3( 1, 1, 1 ), 0, 1, 1.5f, true }, "glass" );
+	default.color = float3( 0, 0, 1 );
+	AddMaterial( default, "blue" );
+	default.color = float3( 1, 1, 1 );
+	AddMaterial( default, "white" );
+	default.color = float3( 1, 1, 0 );
+	AddMaterial( default, "yellow" );
+	default.color = float3( 1, 0, 1 );
+	AddMaterial( default, "magenta" );
+	default.color = float3( 0, 1, 1 );
+	AddMaterial( default, "cyan" );
+
+	default.color = float3( 1 );
+	default.isDieletric = true;
+	default.n1 = 1.f;
+	default.n2 = 1.5f;
+	AddMaterial( default, "glass" );
 	LoadTexture( "cash_money.png", "cash" );
 	LoadTexture( "suprised_pikachu.png", "pika" );
 
@@ -40,7 +47,7 @@ Scene::Scene( )
 
 	AddPlane( float3( 1, 0, 0 ), 5.f, "red" );
 	AddPlane( float3( -1, 0, 0 ), 2.99f, "green" );
-	AddPlane( float3( 0, 1, 0 ), 1.f, "blue" );
+	AddPlane( float3( 0, 1, 0 ), 1.f, "pika" );
 	AddPlane( float3( 0, -1, 0 ), 2.f, "white" );
 	AddPlane( float3( 0, 0, 1 ), 9.f, "magenta" );
 	AddPlane( float3( 0, 0, -1 ), 3.99f, "cyan" );

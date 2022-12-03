@@ -94,8 +94,6 @@ float4 shootWhitted( Ray* primaryRay )
 
 					// calculate fresnel
 					float Fr = 0.5f * (frac1 * frac1 + frac2 * frac2);
-					if ( Fr < 0 || Fr > 1 )
-						printf( "%f\n", Fr );
 					// create reflection ray
 					Ray reflectRay = reflect( &ray, I );
 					reflectRay.intensity *= Fr;
