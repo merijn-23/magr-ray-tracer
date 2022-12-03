@@ -25,6 +25,10 @@ typedef struct Material
 	bool isDieletric;
 	int texIdx;
 	int texW, texH;
+
+	// Kajiya
+	bool isEmissive;
+	float strength;
 } Material;
 
 typedef struct Sphere
@@ -48,9 +52,11 @@ typedef struct Triangle
 
 typedef struct Light
 {
+	// Whitted
 	float4 pos, color;
 	float strength;
-	// Not used for point lights
+
+	// Kajiya
 	int primIdx;
 } Light;
 
