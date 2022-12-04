@@ -40,12 +40,15 @@ void intersectionPoint( Ray* ray )
 	ray->I = ray->O + ray->t * ray->D;
 }
 
-float4 randomRayHemisphere( float4 N )
+float4 randomRayHemisphere( float4 N, uint* seed )
 {
-	float4 v = randomFloat3() * 2 - 1;
+	float4 v = randomFloat3( seed ) * 2 - 1;
+	//printf("after %i\n", seed);
+
 	//printf("%f, %f, %f\n", v.x, v.y, v.z);
+
 	// 22% chance of failure, v is outside of unit circle
-	while ( v.x * v.x + v.y * v.y + v.z * v.z > 1) v = randomFloat3() * 2 - 1;
+	while ( v.x * v.x + v.y * v.y + v.z * v.z > 1) v = randomFloat3( seed ) * 2 - 1;
 	if(dot(v, N) < 0) v = -v;
 
 	return normalize(v);

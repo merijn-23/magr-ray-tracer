@@ -1,7 +1,7 @@
 #include "precomp.h"
 
 // ImGui variables
-static float vignet_strength = 0.5f;
+static float vignet_strength = 0.f;
 static bool chromatic = false;
 static bool gamma_corr = false;
 
@@ -31,6 +31,14 @@ void Renderer::Tick( float _deltaTime )
 	camera.UpdateCamVec( );
 	CamToDevice( );
 
+	if (camera.moved)
+	{
+		resetKernel->Run( SCRWIDTH * SCRHEIGHT );
+		camera.moved = false;
+		consecutiveFrames = 1;
+	}
+
+	traceKernel->SetArgument(12, consecutiveFrames++);
 	traceKernel->Run( SCRWIDTH * SCRHEIGHT );
 	if (vignet_strength > 0)
 	{
@@ -38,6 +46,7 @@ void Renderer::Tick( float _deltaTime )
 		vignetKernel->Run( SCRWIDTH * SCRHEIGHT );
 	}
 	displayKernel->Run( SCRWIDTH * SCRHEIGHT );
+
 
 	// performance report - running average - ms, MRays/s
 	static float avg = 10, alpha = 1;
@@ -50,7 +59,8 @@ void Renderer::Tick( float _deltaTime )
 
 void Renderer::InitKernel( )
 {
-	traceKernel = new Kernel( "src/cl/trace.cl", "render" );
+	traceKernel = new Kernel("src/cl/trace.cl", "render");
+	resetKernel = new Kernel( "src/cl/trace.cl", "reset" );
 	displayKernel = new Kernel( "src/cl/postproc.cl", "display" );
 	vignetKernel = new Kernel( "src/cl/postproc.cl", "vignetting" );
 
@@ -79,10 +89,6 @@ void Renderer::InitKernel( )
 	texBuffer->hostBuffer = (uint*)scene.textures.data( );
 
 	seedBuffer->hostBuffer = new uint[SCRHEIGHT * SCRWIDTH];
-	for(int i = 0; i < SCRHEIGHT * SCRWIDTH; i++)
-	{
-		seedBuffer->hostBuffer[i] = i;
-	}
 
 	// Set trace kernel arguments
 	traceKernel->SetArguments( pixelBuffer, texBuffer, sphereBuffer, triangleBuffer, planeBuffer,
@@ -94,6 +100,8 @@ void Renderer::InitKernel( )
 	// Set post processing kernels arguments
 	displayKernel->SetArguments( pixelBuffer, screenBuffer );
 	vignetKernel->SetArguments( pixelBuffer, vignet_strength );
+
+	resetKernel->SetArguments( pixelBuffer );
 
 	sphereBuffer->CopyToDevice( );
 	planeBuffer->CopyToDevice( );
@@ -109,6 +117,12 @@ void Renderer::UpdateBuffers( )
 {
 	lightBuffer->CopyToDevice( );
 	sphereBuffer->CopyToDevice( );
+
+	for (int i = 0; i < SCRHEIGHT * SCRWIDTH; i++)
+	{
+		seedBuffer->hostBuffer[i] = RandomUInt();
+	}
+	seedBuffer->CopyToDevice();
 }
 
 void Tmpl8::Renderer::CamToDevice( )

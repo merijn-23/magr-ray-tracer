@@ -25,6 +25,7 @@ public:
 
 	// data members
 	float deltaTime;
+	int consecutiveFrames = 1;
 	int2 mousePos;
 	float4* accumulator;
 	Scene scene;
@@ -33,6 +34,7 @@ public:
 	Kernel* traceKernel;
 	Kernel* vignetKernel;
 	Kernel* displayKernel;
+	Kernel* resetKernel;
 
 	// Buffers
 	Buffer* sphereBuffer;
