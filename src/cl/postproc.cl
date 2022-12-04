@@ -8,6 +8,8 @@ __kernel void display(__global float3* pixels,
 	int y = idx / SCRWIDTH;
 
 	float3 color = pixels[idx];
+	color = min( color, ( float3 )( 1 ) );
+
 	write_imagef(target, (int2)(x, y), (float4)(color, 1));
 }
 
