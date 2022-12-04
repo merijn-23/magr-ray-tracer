@@ -1,16 +1,16 @@
 int nPrimitives = 0;
 int nLights = 0;
-__global uint* seed;
+//uint* seed;
 
-uint randomUInt( )
+uint randomUInt( uint* seed )
 {
 	*seed ^= *seed << 13;
 	*seed ^= *seed >> 17;
 	*seed ^= *seed << 5;
 	return *seed;
 }
-float randomFloat( ) { return randomUInt( ) * 2.3283064365387e-10f; }
-float4 randomFloat3( ) { return ( float4 )( randomFloat( ), randomFloat( ), randomFloat( ), 0 ); };
+float randomFloat( uint* seed) { return randomUInt( seed ) * 2.3283064365387e-10f; }
+float4 randomFloat3( uint* seed ) { return ( float4 )( randomFloat( seed ), randomFloat( seed ), randomFloat( seed ), 0 ); };
 
 #include "src/constants.h"
 #include "src/common.h"
@@ -128,38 +128,28 @@ float4 shootWhitted( Ray* primaryRay )
 	return color;
 }
 
-float4 shootKajiya( Ray* ray )
+float4 shootKajiya( Ray* ray, uint* seed )
 {
-	float4 color = ( float4 )( 0 );
-
 	for(int i = 0; i < MAX_BOUNCE; i++)
 	{
-		if ( !trace( ray ) )
-		{
-			printf( "x\n" );
-			return color;
-		}
-	
+		if ( !trace( ray ) ) return (float4)(0);
+		
 		// we hit an object
 		Primitive prim = primitives[ray->primIdx];
 		Material mat = materials[prim.matIdx];
 
-		if(mat.isLight)
-		{
-			color = mat.emittance * ray->intensity;
-			return color;
-		}
-
-		float4 diffuseReflection = randomRayHemisphere(ray->N);
-		//float4 diffuseReflection = normalize(( float4 )( 0, 1, 0, 0 ));
-		Ray r = initRay(ray->I, diffuseReflection);
+		if(mat.isLight) return mat.emittance * ray->intensity;
+		
+		float4 diffuseReflection = randomRayHemisphere(ray->N, seed);
+		Ray r = initRay(ray->I + EPSILON * diffuseReflection, diffuseReflection);
+		r.intensity = ray->intensity;
 
 		// * pi / pi ???
 		float4 brdf = getAlbedo(ray) * M_1_PI_F;
 		r.intensity *= 2.0f * brdf * M_PI_F * dot(ray->N, diffuseReflection);
 		ray = &r;
 	}	
-	return color;
+	return (float4)(0);
 }
 
 __kernel void render( __global float4* pixels,
@@ -173,7 +163,8 @@ __kernel void render( __global float4* pixels,
 	__global uint* seeds,
 	Camera cam,
 	int numPrimitives,
-	int numLights )
+	int numLights,
+	int frames)
 {
 	int idx = get_global_id( 0 );
 	int x = idx % SCRWIDTH;
@@ -181,7 +172,6 @@ __kernel void render( __global float4* pixels,
 
 	nPrimitives = numPrimitives;
 	nLights = numLights;
-	seed = seeds + idx;
 
 	spheres = _spheres;
 	planes = _planes;
@@ -193,12 +183,16 @@ __kernel void render( __global float4* pixels,
 
 	// create and shoot a ray into the scene
 	Ray ray = initPrimaryRay( x, y, &cam );
-	float4 color = shootKajiya( &ray );
+	//float4 color = shootWhitted( &ray );
+	float4 color = shootKajiya( &ray, seeds + idx );
+
 	// prevent color overflow
 	color = min( color, ( float4 )( 1 ) );
-	pixels[idx] = color;
+	//pixels[idx] = color;
+	pixels[idx] = (pixels[idx] * (frames - 1) + color) * (1 / (float)frames);
+}
 
-	//color *= 255;
-	//write_imagef( target, (int2)(x, y), (float4)(color, 1) );
-
+__kernel void reset(__global float4* pixels)
+{
+	pixels[get_global_id(0)] = (float4)( 0 );
 }

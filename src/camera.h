@@ -48,8 +48,12 @@ public:
 	float focalLength = 1;
 	float mouseSensivity = 0.5f;
 
+	bool moved = false;
+
 	void Move( CamDir camdir, float deltaTime )
 	{
+		moved = true;
+
 		float velocity = speed_;
 		switch ( camdir )
 		{
@@ -76,6 +80,8 @@ public:
 
 	void MouseMove( float xOffset, float yOffset )
 	{
+		moved = true;
+
 		xOffset *= mouseSensivity;
 		yOffset *= mouseSensivity;
 
@@ -94,6 +100,8 @@ public:
 
 	void Fov( float offset )
 	{
+		moved = true; 
+
 		fov_ += offset;
 		auto theta = fov_ * PI / 180;
 		auto h = tan( theta / 2 );
