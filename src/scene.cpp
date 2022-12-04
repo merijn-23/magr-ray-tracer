@@ -12,7 +12,7 @@ namespace Tmpl8
 		//default.color = float3( 1, 0, 0 );
 		auto& red = AddMaterial( "red" );
 		red.color = float3( 1, 0, 0 );
-		red.emittance = float3( 15 );
+		red.emittance = float3( 1 );
 		red.isLight = true;
 		auto& green = AddMaterial( "green" );
 		green.color = float3( 0, 1, 0 );
@@ -35,8 +35,8 @@ namespace Tmpl8
 		LoadTexture( "assets/cash_money.png", "cash" );
 		LoadTexture( "assets/suprised_pikachu.png", "pika" );
 
-		AddSphere( float4( 0, 0.f, -1.5f, 0.f ), 0.5f, "glass" );
-		AddSphere( float4( -1.5f, -0.49f, 0.f, 0 ), 0.5f, "red" );
+		AddSphere( float4( 0, 0.f, -1.5f, 0.f ), 0.5f, "green" );
+		AddSphere( float4( -1.5f, -0.49f, 0.f, 0 ), 1.5f, "red" );
 
 		AddPlane( float3( -1, 0, 0 ), 2.99f, "green" );
 		AddPlane( float3( 1, 0, 0 ), 5.f, "yellow" );

@@ -128,28 +128,45 @@ float4 shootWhitted( Ray* primaryRay )
 	return color;
 }
 
-float4 shootKajiya( Ray* ray, uint* seed )
+float4 shootKajiya( Ray* camray, uint* seed )
 {
+	Ray* ray = camray;
+
+	float4 accumColor = (float4)(0);
+	float4 mask = (float4)(1);
+
 	for(int i = 0; i < MAX_BOUNCE; i++)
 	{
-		if ( !trace( ray ) ) return (float4)(0);
+		if ( !trace( ray ) ) return (float4)(0);	
 		
 		// we hit an object
 		Primitive prim = primitives[ray->primIdx];
 		Material mat = materials[prim.matIdx];
 
-		if(mat.isLight) return mat.emittance * ray->intensity;
+		if(mat.isLight) return mask * mat.emittance; //return mat.emittance * ray->intensity;
 		
-		float4 diffuseReflection = randomRayHemisphere(ray->N, seed);
+		float rand1 = 2.f * M_PI_F * randomFloat(seed);
+		float rand2 = randomFloat(seed);
+		float rand2s = sqrt(rand2);
+
+		float3 w = ray->N.xyz;
+		float3 axis = fabs(w.x) > 0.1f ? (float3)(0.0f, 1.0f, 0.0f) : (float3)(1.0f, 0.0f, 0.0f);
+		float3 u = normalize(cross(axis, w));
+		float3 v = cross(w, u);
+		float4 diffuseReflection = (float4)(normalize(u * cos(rand1)*rand2s + v*sin(rand1)*rand2s + w*sqrt(1.0f - rand2)), 0);
+
+		//float4 diffuseReflection = randomRayHemisphere(ray->N, seed);
 		Ray r = initRay(ray->I + EPSILON * diffuseReflection, diffuseReflection);
-		r.intensity = ray->intensity;
+		//r.intensity = ray->intensity;
 
 		// * pi / pi ???
-		float4 brdf = getAlbedo(ray) * M_1_PI_F;
-		r.intensity *= 2.0f * brdf * M_PI_F * dot(ray->N, diffuseReflection);
+		//float4 brdf = getAlbedo(ray) * M_1_PI_F;
+		//r.intensity *= 2.0f * brdf * M_PI_F * dot(ray->N, diffuseReflection);
+		mask *= 2.0f * getAlbedo(ray) * dot(diffuseReflection, ray->N);
 		ray = &r;
-	}	
-	return (float4)(0);
+	}
+	return accumColor;	
+	//return (float4)(0);
 }
 
 __kernel void render( __global float4* pixels,
@@ -187,7 +204,7 @@ __kernel void render( __global float4* pixels,
 	float4 color = shootKajiya( &ray, seeds + idx );
 
 	// prevent color overflow
-	color = min( color, ( float4 )( 1 ) );
+	//color = min( color, ( float4 )( 1 ) );
 	//pixels[idx] = color;
 	pixels[idx] = (pixels[idx] * (frames - 1) + color) * (1 / (float)frames);
 }

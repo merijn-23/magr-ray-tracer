@@ -49,8 +49,9 @@ float4 randomRayHemisphere( float4 N, uint* seed )
 
 	// 22% chance of failure, v is outside of unit circle
 	while ( v.x * v.x + v.y * v.y + v.z * v.z > 1) v = randomFloat3( seed ) * 2 - 1;
+	v = normalize(v);
 	if(dot(v, N) < 0) v = -v;
 
-	return normalize(v);
+	return v;
 }
 
