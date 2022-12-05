@@ -9,17 +9,23 @@ namespace Tmpl8
 {
 	Scene::Scene( )
 	{
+		// load skydome first
+		LoadTexture( "assets/skydome.png", "skydome" );
+
 		//default.color = float3( 1, 0, 0 );
-		auto& red = AddMaterial( "red" );
-		red.color = float3( 1, 0, 0 );
-		red.emittance = float3( 1 );
+		auto& red = AddMaterial( "light" );
+		red.color = float3( 1, 1, 1 );
+		red.emittance = float3( 2 );
 		red.isLight = true;
 		auto& green = AddMaterial( "green" );
-		green.color = float3( 0, 1, 0 );
+		green.color = float3( 1, .1f, .1f );
 		auto& blue = AddMaterial( "blue" );
 		blue.color = float3( 0, 0, 1 );
 		auto& white = AddMaterial( "white" );
-		white.color = float3( 1, 1, 1 );
+		white.color = float3( 1, 1, 1 );	
+		auto& mwhite = AddMaterial( "mwhite" );
+		mwhite.color = float3( .3f );
+		mwhite.specular = 1;
 		auto& yellow = AddMaterial( "yellow" );
 		yellow.color = float3( 1, 1, 0 );
 		auto& magenta = AddMaterial( "magenta" );
@@ -33,25 +39,32 @@ namespace Tmpl8
 		glass.isDieletric = true;
 		glass.n1 = 1.f;
 		glass.n2 = 1.5f;
+		glass.specular = 0.03f;
+
 		
 		LoadTexture( "assets/cash_money.png", "cash" );
 		LoadTexture( "assets/suprised_pikachu.png", "pika" );
 
-		AddSphere( float4( 0, 0.f, -1.5f, 0.f ), 0.5f, "green" );
-		AddSphere( float4( -1.5f, -0.49f, 0.f, 0 ), 1.5f, "red" );
+		AddSphere( float4( 0, -.25f, -1, 0.f ), 0.5f, "green" );
+		AddSphere( float4( 0, -1.75f, -1, 0.f ), 1, "white" );
+		//AddSphere( float4( 2, -.25f, -1, 0.f ), 0.5f, "mwhite" );
+		AddSphere( float4( -3, -.49f, -2, 0.f ), 0.5f, "glass" );
 
-		AddPlane( float3( -1, 0, 0 ), 2.99f, "green" );
-		AddPlane( float3( 1, 0, 0 ), 5.f, "yellow" );
-		AddPlane( float3( 0, 1, 0 ), 1.f, "pika" );
-		AddPlane( float3( 0, -1, 0 ), 2.f, "white" );
-		AddPlane( float3( 0, 0, 1 ), 9.f, "magenta" );
-		AddPlane( float3( 0, 0, -1 ), 3.99f, "cyan" );
+		//AddSphere( float4( 1.f, 0.f, -1.5f, 0.f ), 0.5f, "light" );
+		LoadModel( "assets/cube.obj", "white", float3(3, 0.01f, 3) );
 
-		float z = 1.5f;
+		//AddPlane( float3( -1, 0, 0 ), 2.99f, "green" );
+		//AddPlane( float3( 1, 0, 0 ), 5.f, "yellow" );
+		AddPlane( float3( 0, 1, 0 ), 1.f, "white" );
+		//AddPlane( float3( 0, -1, 0 ), 2.f, "white" );
+		//AddPlane( float3( 0, 0, 1 ), 9.f, "magenta" );
+		//AddPlane( float3( 0, 0, -1 ), 3.99f, "cyan" );
+
+		//float z = 1.5f;
 		AddTriangle(
 			// right,				left,				top
-			float3( -1, -1, z ), float3( 1, -1, z ), float3( 0, 1, z ),
-			float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "pika" );
+			float3( 0, 2, 0 ), float3( 16, 2, 0 ), float3( 0, 2, -16 ),
+			float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "light" );
 		//LoadModel( "triangle.obj", "green" );
 
 		lights.resize( 3 );
@@ -86,6 +99,7 @@ namespace Tmpl8
 	{
 		Material default;
 		default.color = float4( 0 );
+		default.absorption = float4( 0 );
 		default.isDieletric = false;
 		default.n1 = default.n2 = 0;
 		default.specular = 0;
@@ -165,7 +179,7 @@ namespace Tmpl8
 		primitives.push_back( prim );
 	}
 
-	void Scene::LoadModel( std::string filename, std::string material )
+	void Scene::LoadModel( std::string filename, std::string material, float3 pos )
 	{
 		tinyobj::ObjReaderConfig readerConfig;
 		tinyobj::ObjReader reader;
@@ -205,7 +219,7 @@ namespace Tmpl8
 					tinyobj::real_t vy = attrib.vertices[3 * size_t( idx.vertex_index ) + 1];
 					tinyobj::real_t vz = attrib.vertices[3 * size_t( idx.vertex_index ) + 2];
 
-					vertices.push_back( float3( vx, vy, vz ) );
+					vertices.push_back( float3( vx, vy, vz ) + pos );
 
 					tinyobj::real_t tx = 0, ty = 0;
 					if ( idx.texcoord_index >= 0 )
@@ -216,11 +230,12 @@ namespace Tmpl8
 					texcoords.push_back( float2( tx, ty ) );
 				}
 
-				for ( size_t v = 0, t = 0; v < vertices.size( ); )
+				for ( size_t v = 0, t = 0; v < vertices.size(); )
 					AddTriangle(
 						vertices[v++], vertices[v++], vertices[v++],
 						texcoords[t++], texcoords[t++], texcoords[t++], material );
 
+				
 				index_offset += fv;
 			}
 		}
@@ -241,4 +256,5 @@ namespace Tmpl8
 		mat.texW = width;
 		mat.texH = height;
 	}
+
 }; // namespace Tmpl8

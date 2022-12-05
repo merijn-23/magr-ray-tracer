@@ -183,6 +183,7 @@
     <None Include="src\cl\postproc.cl" />
     <None Include="src\cl\primitives.cl" />
     <None Include="src\cl\ray.cl" />
+    <None Include="src\cl\skydome.cl" />
     <None Include="src\cl\trace.cl" />
     <None Include="template\LICENSE" />
   </ItemGroup>
