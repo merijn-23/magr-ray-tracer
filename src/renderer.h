@@ -32,9 +32,11 @@ public:
 	CameraManager camera;
 
 	Kernel* traceKernel;
-	Kernel* vignetKernel;
-	Kernel* displayKernel;
 	Kernel* resetKernel;
+	Kernel* post_prepKernel;
+	Kernel* post_vignetKernel;
+	Kernel* post_gammaKernel;
+	Kernel* post_displayKernel;
 
 	// Buffers
 	Buffer* sphereBuffer;
@@ -42,6 +44,10 @@ public:
 	Buffer* triangleBuffer;
 	Buffer* matBuffer;
 	Buffer* primBuffer;
+
+	// Used for post processing
+	Buffer* swap1Buffer;
+	Buffer* swap2Buffer;
 
 	Buffer* pixelBuffer;
 	Buffer* screenBuffer;

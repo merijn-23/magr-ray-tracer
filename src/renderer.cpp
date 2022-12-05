@@ -3,7 +3,7 @@
 // ImGui variables
 static float vignet_strength = 0.f;
 static bool chromatic = false;
-static bool gamma_corr = false;
+static float gamma_corr = 1.f;
 
 // -----------------------------------------------------------
 // Initialize the renderer
@@ -33,19 +33,33 @@ void Renderer::Tick( float _deltaTime )
 
 	if (camera.moved)
 	{
-		resetKernel->Run( SCRWIDTH * SCRHEIGHT );
+		resetKernel->Run( PIXELS );
 		camera.moved = false;
 		consecutiveFrames = 1;
 	}
 
 	traceKernel->SetArgument(12, consecutiveFrames++);
-	traceKernel->Run( SCRWIDTH * SCRHEIGHT );
+	traceKernel->Run( PIXELS );
+
+	// Post processing
+	Buffer* src = swap1Buffer;
+	Buffer* dst = swap2Buffer;
+	post_prepKernel->SetArguments( pixelBuffer, src );
+	post_prepKernel->Run( PIXELS );
 	if (vignet_strength > 0)
 	{
-		vignetKernel->SetArgument(1, vignet_strength);
-		vignetKernel->Run( SCRWIDTH * SCRHEIGHT );
+		post_vignetKernel->SetArguments( src, dst, vignet_strength );
+		post_vignetKernel->Run( PIXELS );
+		std::swap( src, dst );
+	}	
+	if (gamma_corr != 1)
+	{
+		post_gammaKernel->SetArguments( src, dst, gamma_corr );
+		post_gammaKernel->Run( PIXELS );
+		std::swap( src, dst );
 	}
-	displayKernel->Run( SCRWIDTH * SCRHEIGHT );
+	post_displayKernel->SetArgument( 0, src );
+	post_displayKernel->Run( PIXELS );
 
 
 	// performance report - running average - ms, MRays/s
@@ -61,8 +75,11 @@ void Renderer::InitKernel( )
 {
 	traceKernel = new Kernel("src/cl/trace.cl", "render");
 	resetKernel = new Kernel( "src/cl/trace.cl", "reset" );
-	displayKernel = new Kernel( "src/cl/postproc.cl", "display" );
-	vignetKernel = new Kernel( "src/cl/postproc.cl", "vignetting" );
+
+	post_displayKernel = new Kernel( "src/cl/postproc.cl", "display" );
+	post_vignetKernel = new Kernel( "src/cl/postproc.cl", "vignetting" );
+	post_gammaKernel = new Kernel( "src/cl/postproc.cl", "gamma_corr" );
+	post_prepKernel = new Kernel( "src/cl/postproc.cl", "prep" );
 
 	primBuffer = new Buffer( sizeof( Primitive ) * scene.primitives.size( ) );
 	matBuffer = new Buffer( sizeof( Material ) * scene.materials.size( ) );
@@ -76,6 +93,9 @@ void Renderer::InitKernel( )
 	// screen and temp buffer
 	pixelBuffer = new Buffer( 4 * 4 * SCRHEIGHT * SCRWIDTH );
 	screenBuffer = new Buffer( GetRenderTarget( )->ID, 0, Buffer::TARGET );
+
+	swap1Buffer = new Buffer( 4 * 4 * SCRHEIGHT * SCRWIDTH );
+	swap2Buffer = new Buffer( 4 * 4 * SCRHEIGHT * SCRWIDTH );
 
 	screen = 0;
 
@@ -98,8 +118,7 @@ void Renderer::InitKernel( )
 	traceKernel->SetArgument( 11, (int)scene.lights.size( ) );
 
 	// Set post processing kernels arguments
-	displayKernel->SetArguments( pixelBuffer, screenBuffer );
-	vignetKernel->SetArguments( pixelBuffer, vignet_strength );
+	post_displayKernel->SetArgument(1, screenBuffer );
 
 	resetKernel->SetArguments( pixelBuffer );
 
@@ -171,5 +190,6 @@ void Renderer::KeyDown( int key ) { }
 void Renderer::Gui( )
 {
 	//ImGui::Checkbox("Vignetting", &vignetting);
-	ImGui::SliderFloat("Vignetting", &vignet_strength, 0.0f, 1.0f, "ratio = %.3f");
+	ImGui::SliderFloat( "Vignetting", &vignet_strength, 0.0f, 1.0f, "ratio = %.3f" );
+	ImGui::SliderFloat("Gamma Correction", &gamma_corr, 0.0f, 2.0f, "ratio = %.3f");
 }
