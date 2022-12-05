@@ -204,7 +204,7 @@ __kernel void render( __global float4* pixels,
 	float4 color = shootKajiya( &ray, seeds + idx );
 
 	// prevent color overflow
-	//color = min( color, ( float4 )( 1 ) );
+	color = min( color, ( float4 )( 1 ) );
 	//pixels[idx] = color;
 	pixels[idx] = (pixels[idx] * (frames - 1) + color) * (1 / (float)frames);
 }

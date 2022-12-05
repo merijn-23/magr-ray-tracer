@@ -24,6 +24,8 @@ namespace Tmpl8
 		yellow.color = float3( 1, 1, 0 );
 		auto& magenta = AddMaterial( "magenta" );
 		magenta.color = float3( 1, 0, 1 );
+		magenta.isLight = true;
+		magenta.emittance = float3( 1, .1f, 1 );
 		auto& cyan = AddMaterial( "cyan" );
 		cyan.color = float3( 0, 1, 1 );
 		auto& glass = AddMaterial( "glass" );
