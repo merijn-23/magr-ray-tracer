@@ -35,6 +35,29 @@ __kernel void gamma_corr( __global float3* source,
 	dest[idx] = pow(source[idx], gamma);
 }
 
+__kernel void chromatic( __global float3* source,
+	__global float3* dest,
+	float offset )
+{
+	int idx = get_global_id( 0 );
+	
+	// skip the first column
+	if (idx % SCRWIDTH == 0) 
+	{
+		dest[idx] = source[idx];
+		return; 
+	}
+
+	float3 cur = source[idx];
+	float3 prev = source[idx - 1];
+	// linear interpolation based on index
+	float r = cur.x;
+	float g = cur.y * (1 - offset) + prev.y * offset;
+	float b = cur.z * (1 - 2 * offset) + prev.z * 2 * offset;
+
+	dest[idx] = (float3)(r, g, b);
+}
+
 __kernel void prep(__global float3* pixels, __global float3* swap)
 {
 	int idx = get_global_id(0);
@@ -42,5 +65,7 @@ __kernel void prep(__global float3* pixels, __global float3* swap)
 	int y = idx / SCRWIDTH;
 	
 	float3 color = pixels[get_global_id(0)];
+	color = min( color, (float3)(1) );
+
 	swap[idx] = pixels[get_global_id(0)];
 }

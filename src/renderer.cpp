@@ -2,7 +2,7 @@
 
 // ImGui variables
 static float vignet_strength = 0.f;
-static bool chromatic = false;
+static float chromatic = 0.f;
 static float gamma_corr = 1.f;
 
 // -----------------------------------------------------------
@@ -58,6 +58,13 @@ void Renderer::Tick( float _deltaTime )
 		post_gammaKernel->Run( PIXELS );
 		std::swap( src, dst );
 	}
+	if (chromatic > 0)
+	{
+		post_chromaticKernel->SetArguments( src, dst, chromatic );
+		post_chromaticKernel->Run( PIXELS );
+		std::swap( src, dst );
+	}
+	
 	post_displayKernel->SetArgument( 0, src );
 	post_displayKernel->Run( PIXELS );
 
@@ -79,6 +86,7 @@ void Renderer::InitKernel( )
 	post_displayKernel = new Kernel( "src/cl/postproc.cl", "display" );
 	post_vignetKernel = new Kernel( "src/cl/postproc.cl", "vignetting" );
 	post_gammaKernel = new Kernel( "src/cl/postproc.cl", "gamma_corr" );
+	post_chromaticKernel = new Kernel( "src/cl/postproc.cl", "chromatic" );
 	post_prepKernel = new Kernel( "src/cl/postproc.cl", "prep" );
 
 	primBuffer = new Buffer( sizeof( Primitive ) * scene.primitives.size( ) );
@@ -191,5 +199,6 @@ void Renderer::Gui( )
 {
 	//ImGui::Checkbox("Vignetting", &vignetting);
 	ImGui::SliderFloat( "Vignetting", &vignet_strength, 0.0f, 1.0f, "ratio = %.3f" );
-	ImGui::SliderFloat("Gamma Correction", &gamma_corr, 0.0f, 2.0f, "ratio = %.3f");
+	ImGui::SliderFloat( "Gamma Correction", &gamma_corr, 0.0f, 2.0f, "ratio = %.3f" );
+	ImGui::SliderFloat( "Chromatic Abberation", &chromatic, 0.0f, 1.0f, "ratio = %.3f" );
 }

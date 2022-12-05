@@ -20,7 +20,7 @@ typedef struct Primitive
 
 typedef struct Material
 {
-	float4 color;
+	float4 color, absorption;
 	float specular, n1, n2;
 	bool isDieletric;
 	int texIdx;

@@ -42,16 +42,14 @@ void intersectionPoint( Ray* ray )
 
 float4 randomRayHemisphere( float4 N, uint* seed )
 {
-	float4 v = randomFloat3( seed ) * 2 - 1;
-	//printf("after %i\n", seed);
+	float rand1 = 2.f * M_PI_F * randomFloat( seed );
+	float rand2 = randomFloat( seed );
+	float rand2s = sqrt( rand2 );
 
-	//printf("%f, %f, %f\n", v.x, v.y, v.z);
-
-	// 22% chance of failure, v is outside of unit circle
-	while ( v.x * v.x + v.y * v.y + v.z * v.z > 1) v = randomFloat3( seed ) * 2 - 1;
-	v = normalize(v);
-	if(dot(v, N) < 0) v = -v;
-
-	return v;
+	float3 w = N.xyz;
+	float3 axis = fabs( w.x ) > 0.1f ? (float3)(0.0f, 1.0f, 0.0f) : (float3)(1.0f, 0.0f, 0.0f);
+	float3 u = normalize( cross( axis, w ) );
+	float3 v = cross( w, u );
+	return (float4)(normalize( u * cos( rand1 ) * rand2s + v * sin( rand1 ) * rand2s + w * sqrt( 1.0f - rand2 ) ), 0);
 }
 

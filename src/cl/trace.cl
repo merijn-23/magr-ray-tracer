@@ -9,8 +9,8 @@ uint randomUInt( uint* seed )
 	*seed ^= *seed << 5;
 	return *seed;
 }
-float randomFloat( uint* seed) { return randomUInt( seed ) * 2.3283064365387e-10f; }
-float4 randomFloat3( uint* seed ) { return ( float4 )( randomFloat( seed ), randomFloat( seed ), randomFloat( seed ), 0 ); };
+float randomFloat( uint* seed ) { return randomUInt( seed ) * 2.3283064365387e-10f; }
+float4 randomFloat3( uint* seed ) { return (float4)(randomFloat( seed ), randomFloat( seed ), randomFloat( seed ), 0); };
 
 #include "src/constants.h"
 #include "src/common.h"
@@ -18,16 +18,16 @@ float4 randomFloat3( uint* seed ) { return ( float4 )( randomFloat( seed ), rand
 #include "src/cl/ray.cl"
 #include "src/cl/light.cl"
 #include "src/cl/camera.cl"
+#include "src/cl/skydome.cl"
 
-void beersLaw( Ray* ray )
+void beersLaw( Ray* ray, Material* mat )
 {
-	float4 a = ( float4 )( 1.f );
-	ray->intensity.x *= exp( -a.x * ray->t );
-	ray->intensity.y *= exp( -a.y * ray->t );
-	ray->intensity.z *= exp( -a.z * ray->t );
+	ray->intensity.x *= exp( -mat->absorption.x * ray->t );
+	ray->intensity.y *= exp( -mat->absorption.y * ray->t );
+	ray->intensity.z *= exp( -mat->absorption.z * ray->t );
 }
 
-bool fresnel( Ray* ray, Material* mat, float* outFr, float4* outT )
+float fresnel( Ray* ray, Material* mat, float4* outT )
 {
 	float costhetai = dot( ray->N, ray->rD );
 
@@ -39,39 +39,40 @@ bool fresnel( Ray* ray, Material* mat, float* outFr, float4* outT )
 		n2 = mat->n1;
 
 		// give material absorption
-		beersLaw( ray );
+		beersLaw( ray, mat );
 	}
 
-	float frac = n1 * ( 1 / n2 );
-	float k = 1 - frac * frac * ( 1 - costhetai * costhetai );
+	float frac = n1 * (1 / n2);
+	float k = 1 - frac * frac * (1 - costhetai * costhetai);
 
-	if ( k < 0 ) return false;
+	// TIR
+	if ( k < 0 ) return 1.f;
 
 	// use fresnel's law to find reflection and refraction factors
-	( *outT ) = normalize(
-		frac * ray->D + ray->N * ( frac * costhetai - sqrt( k ) ) 
+	(*outT) = normalize(
+		frac * ray->D + ray->N * (frac * costhetai - sqrt( k ))
 	);
-	float costhetat = dot( -( ray->N ), ( *outT ) );
+	float costhetat = dot( -(ray->N), (*outT) );
 	// precompute
 	float n1costhetai = n1 * costhetai;
 	float n2costhetai = n2 * costhetai;
 	float n1costhetat = n1 * costhetat;
 	float n2costhetat = n2 * costhetat;
 
-	float frac1 = ( n1costhetai - n2costhetat ) / ( n1costhetai + n2costhetat );
-	float frac2 = ( n1costhetat - n2costhetai ) / ( n1costhetat + n2costhetai );
+	float frac1 = (n1costhetai - n2costhetat) / (n1costhetai + n2costhetat);
+	float frac2 = (n1costhetat - n2costhetai) / (n1costhetat + n2costhetai);
 
 	// calculate fresnel
-	( *outFr ) = 0.5f * ( frac1 * frac1 + frac2 * frac2 );
-	return true;
+	float Fr = 0.5f * (frac1 * frac1 + frac2 * frac2);
+	return mat->specular + (1 - mat->specular) * Fr;
 }
 
-bool trace(Ray* ray)
+bool trace( Ray* ray )
 {
 	for ( int i = 0; i < nPrimitives; i++ )
 		intersect( i, primitives + i, ray );
 	if ( ray->primIdx == -1 ) return false;
-	intersectionPoint(ray);
+	intersectionPoint( ray );
 	ray->N = getNormal( primitives + ray->primIdx, ray->I );
 	if ( ray->inside ) ray->N = -ray->N;
 	return true;
@@ -79,7 +80,7 @@ bool trace(Ray* ray)
 
 float4 shootWhitted( Ray* primaryRay )
 {
-	float4 color = ( float4 )( 0 );
+	float4 color = (float4)(0);
 
 	Ray stack[1024];
 	stack[0] = *primaryRay;
@@ -111,15 +112,15 @@ float4 shootWhitted( Ray* primaryRay )
 		else if ( ray.bounces < MAX_BOUNCE )
 		{
 			Ray reflectRay = reflect( &ray );
-			float Fr = 0.f;
-			float4 T = ( float4 )( 0 );
-			if ( fresnel( &ray, &mat, &Fr, &T ) )
+			float4 T = (float4)(0);
+			float Fr = fresnel( &ray, &mat, &T );
+			if ( Fr < 1.f )
 			{
 				// total internal reflection
 				// shoot another ray into the scene from the point of impact
 				reflectRay.intensity *= Fr;
 				Ray transmissionRay = transmit( &ray, T );
-				transmissionRay.intensity *= ( 1 - Fr );
+				transmissionRay.intensity *= (1 - Fr);
 				stack[n++] = transmissionRay;
 			}
 			stack[n++] = reflectRay;
@@ -132,40 +133,62 @@ float4 shootKajiya( Ray* camray, uint* seed )
 {
 	Ray* ray = camray;
 
-	float4 accumColor = (float4)(0);
 	float4 mask = (float4)(1);
 
-	for(int i = 0; i < MAX_BOUNCE; i++)
+	for ( int i = -1; i < MAX_BOUNCE; i++ )
 	{
-		if ( !trace( ray ) ) return (float4)(0);	
-		
+		// We did not hit anything, fall back to the skydome
+		if ( !trace( ray ) )
+		{
+			return mask * readSkydome( ray->D );
+		}
+
 		// we hit an object
 		Primitive prim = primitives[ray->primIdx];
 		Material mat = materials[prim.matIdx];
 
-		if(mat.isLight) return mask * mat.emittance; //return mat.emittance * ray->intensity;
-		
-		float rand1 = 2.f * M_PI_F * randomFloat(seed);
-		float rand2 = randomFloat(seed);
-		float rand2s = sqrt(rand2);
+		if ( mat.isLight ) return mask * mat.emittance; //return mat.emittance * ray->intensity;
 
-		float3 w = ray->N.xyz;
-		float3 axis = fabs(w.x) > 0.1f ? (float3)(0.0f, 1.0f, 0.0f) : (float3)(1.0f, 0.0f, 0.0f);
-		float3 u = normalize(cross(axis, w));
-		float3 v = cross(w, u);
-		float4 diffuseReflection = (float4)(normalize(u * cos(rand1)*rand2s + v*sin(rand1)*rand2s + w*sqrt(1.0f - rand2)), 0);
+		Ray r;
+		float rand = randomFloat( seed );
 
-		//float4 diffuseReflection = randomRayHemisphere(ray->N, seed);
-		Ray r = initRay(ray->I + EPSILON * diffuseReflection, diffuseReflection);
-		//r.intensity = ray->intensity;
+		if ( mat.isDieletric )
+		{
+			float4 T = (float4)(0);
+			float Fr = fresnel( ray, &mat, &T );
+			if ( rand < Fr )
+			{
+				// reflection
+				r = reflect( ray );
+			}
+			else
+			{
+				// refraction
+				// multiply mask with ray intensity cuz of beers law
+				mask *= ray->intensity;
+				r = transmit( ray, T );
+			}
+		}
+		else
+		{
+			if ( rand < mat.specular )
+			{
+				// reflection
+				r = reflect( ray );
+			}
+			else
+			{
+				// diffuse 
+				float4 diffuseReflection = randomRayHemisphere( ray->N, seed );
 
-		// * pi / pi ???
-		//float4 brdf = getAlbedo(ray) * M_1_PI_F;
-		//r.intensity *= 2.0f * brdf * M_PI_F * dot(ray->N, diffuseReflection);
-		mask *= 2.0f * getAlbedo(ray) * dot(diffuseReflection, ray->N);
+				mask *= getAlbedo( ray ) * dot( diffuseReflection, ray->N );
+
+				r = initRay( ray->I + EPSILON * diffuseReflection, diffuseReflection );
+			}
+		}
 		ray = &r;
 	}
-	return accumColor;	
+	return (float4)(0);
 	//return (float4)(0);
 }
 
@@ -181,7 +204,7 @@ __kernel void render( __global float4* pixels,
 	Camera cam,
 	int numPrimitives,
 	int numLights,
-	int frames)
+	int frames )
 {
 	int idx = get_global_id( 0 );
 	int x = idx % SCRWIDTH;
@@ -199,17 +222,16 @@ __kernel void render( __global float4* pixels,
 	textures = _textures;
 
 	// create and shoot a ray into the scene
-	Ray ray = initPrimaryRay( x, y, &cam );
+	Ray ray = initPrimaryRay( x, y, &cam, seeds + idx );
 	//float4 color = shootWhitted( &ray );
 	float4 color = shootKajiya( &ray, seeds + idx );
 
 	// prevent color overflow
-	color = min( color, ( float4 )( 1 ) );
 	//pixels[idx] = color;
 	pixels[idx] = (pixels[idx] * (frames - 1) + color) * (1 / (float)frames);
 }
 
-__kernel void reset(__global float4* pixels)
+__kernel void reset( __global float4* pixels )
 {
-	pixels[get_global_id(0)] = (float4)( 0 );
+	pixels[get_global_id( 0 )] = (float4)(0);
 }

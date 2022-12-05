@@ -36,6 +36,7 @@ public:
 	Kernel* post_prepKernel;
 	Kernel* post_vignetKernel;
 	Kernel* post_gammaKernel;
+	Kernel* post_chromaticKernel;
 	Kernel* post_displayKernel;
 
 	// Buffers
