@@ -1,124 +1,129 @@
 #pragma once
 
 #include "constants.h"
+#include "common.h"
 
-#define DEG_TO_RAD(deg) (deg * PI / 180.0)
+#define DEG_TO_RAD PI / 180.0
 
 namespace Tmpl8
 {
-struct Camera
-{
-	float4 origin, horizontal, vertical, topLeft;
-};
-
-enum class CamDir
-{
-	Forward,
-	Backwards,
-	Left,
-	Right,
-	Up,
-	Down
-};
-
-class CameraManager
-{
-private:
-	float yaw_;
-	float pitch_;
-	float fov_;
-	float4 forward_ = float3( 0, 0, -1 );
-	float3 right_ = float3( 1, 0, 0 );
-	float3 up_ = float3( 0, 1, 0 );
-
-public:
-	CameraManager( float vfov = 110 )
+	enum class CamDir
 	{
-		cam.origin = float3( 0, 0, 0 );
-		Fov( vfov );
-	}
-	Camera cam;
-	const float3 worldUp = float3( 0, 1, 0 );
+		Forward,
+		Backwards,
+		Left,
+		Right,
+		Up,
+		Down
+	};
 
-	float viewportHeight;
-	float viewportWidth;
-
-	float aspect = (float)SCRWIDTH / (float)SCRHEIGHT;
-	float focalLength = 1;
-	float mouseSensivity = 0.5f;
-	float speed = .1f;
-
-	bool moved = false;
-
-	void Move( CamDir camdir, float deltaTime )
+	class CameraManager
 	{
-		moved = true;
+	private:
+		float yaw_;
+		float pitch_;
 
-		float velocity = speed;
-		switch ( camdir )
+	public:
+		CameraManager(float vfov = 110, int type = FISHEYE)
 		{
-		case CamDir::Forward:
-			cam.origin -= forward_ * velocity;
-			break;
-		case CamDir::Backwards:
-			cam.origin += forward_ * velocity;
-			break;
-		case CamDir::Left:
-			cam.origin -= right_ * velocity;
-			break;
-		case CamDir::Right:
-			cam.origin += right_ * velocity;
-			break;
-		case CamDir::Up:
-			cam.origin += up_ * velocity;
-			break;
-		case CamDir::Down:
-			cam.origin -= up_ * velocity;
-			break;
+			cam.type = type;
+			cam.fov = vfov;
+			cam.origin = float3(0, 0, 0);
+			cam.forward = float3(0, 0, -1);
+			cam.right = float3(1, 0, 0);
+			cam.up = float3(0, 1, 0);
+			Fov(vfov);
 		}
-	}
+		Camera cam;
+		const float3 worldUp = float3(0, 1, 0);
 
-	void MouseMove( float xOffset, float yOffset )
-	{
-		moved = true;
+		float viewportHeight;
+		float viewportWidth;
 
-		xOffset *= mouseSensivity;
-		yOffset *= mouseSensivity;
+		float aspect = (float)SCRWIDTH / (float)SCRHEIGHT;
+		float focalLength = 1;
+		float mouseSensivity = 0.5f;
+		float speed = 1.f;
 
-		yaw_ = fmod( yaw_ + xOffset, 360.f );
-		pitch_ += yOffset;
-		pitch_ = clamp( pitch_, -89.f, 89.f );
+		bool moved = false;
 
-		float4 forward;
-		float yaw = DEG_TO_RAD( yaw_ );
-		float pitch = DEG_TO_RAD( pitch_ );
-		forward.x = cos( yaw ) * cos( pitch );
-		forward.y = sin( pitch );
-		forward.z = sin( yaw ) * cos( pitch );
-		forward_ = normalize( forward );
-	}
+		void Move(CamDir camdir, float deltaTime)
+		{
+			moved = true;
 
-	void Fov( float offset )
-	{
-		moved = true; 
+			float velocity = speed; // * deltaTime;
+			switch (camdir)
+			{
+			case CamDir::Forward:
+				cam.origin -= cam.forward * velocity;
+				break;
+			case CamDir::Backwards:
+				cam.origin += cam.forward * velocity;
+				break;
+			case CamDir::Left:
+				cam.origin -= cam.right * velocity;
+				break;
+			case CamDir::Right:
+				cam.origin += cam.right * velocity;
+				break;
+			case CamDir::Up:
+				cam.origin += cam.up * velocity;
+				break;
+			case CamDir::Down:
+				cam.origin -= cam.up * velocity;
+				break;
+			}
+		}
 
-		fov_ += offset;
-		auto theta = fov_ * PI / 180;
-		auto h = tan( theta / 2 );
+		void MouseMove(float xOffset, float yOffset)
+		{
+			moved = true;
 
-		viewportHeight = 2 * h;
-		viewportWidth = aspect * viewportHeight;
-	}
+			xOffset *= mouseSensivity;
+			yOffset *= mouseSensivity;
 
-	void UpdateCamVec( )
-	{
-		right_ = normalize( cross( worldUp, forward_ ) );
-		up_ = normalize( cross( right_, forward_ ) );
+			yaw_ = fmod(yaw_ + xOffset, 360.f);
+			pitch_ += yOffset;
+			pitch_ = clamp(pitch_, -89.f, 89.f);
 
-		cam.horizontal = viewportWidth * right_;
-		cam.vertical = viewportHeight * up_;
-		cam.topLeft = cam.origin - cam.horizontal / 2 - cam.vertical / 2 -
-			forward_ * focalLength;
-	}
-};
+			float4 forward;
+			float yaw = yaw_ * DEG_TO_RAD;
+			float pitch = pitch_ * DEG_TO_RAD;
+			forward.x = cos(yaw) * cos(pitch);
+			forward.y = sin(pitch);
+			forward.z = sin(yaw) * cos(pitch);
+			cam.forward = normalize(forward);
+		}
+
+		void Zoom(float offset)
+		{
+			moved = true;
+			Fov(cam.fov + offset);
+		}
+
+		void Fov(float vfov) 
+		{
+			if (cam.fov == vfov) return;
+
+			moved = true;
+			cam.fov = vfov;
+			auto theta = cam.fov * DEG_TO_RAD;
+			auto h = tan(theta / 2);
+
+			viewportHeight = 2 * h;
+			viewportWidth = aspect * viewportHeight;
+		}
+
+		void UpdateCamVec()
+		{
+			Fov(cam.fov); // Needed for when fov is updated through imgui
+			cam.right = normalize(cross(worldUp, cam.forward));
+			cam.up = normalize(cross(cam.right, cam.forward));
+
+			cam.horizontal = viewportWidth * cam.right;
+			cam.vertical = viewportHeight * cam.up;
+			cam.topLeft = cam.origin - cam.horizontal / 2 - cam.vertical / 2 -
+				cam.forward * focalLength;
+		}
+	};
 } // namespace Tmpl8

@@ -4,7 +4,6 @@ Ray initRay( float4 O, float4 D )
 	Ray ray;
 	ray.O = O;
 	ray.D = D;
-	ray.rD = -D;
 	ray.N = (float4)(0);
 	ray.I = (float4)(0);
 	ray.intensity = (float4)(1);
@@ -52,4 +51,3 @@ float4 randomRayHemisphere( float4 N, uint* seed )
 	float3 v = cross( w, u );
 	return (float4)(normalize( u * cos( rand1 ) * rand2s + v * sin( rand1 ) * rand2s + w * sqrt( 1.0f - rand2 ) ), 0);
 }
-

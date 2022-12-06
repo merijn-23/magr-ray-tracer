@@ -29,7 +29,7 @@ void beersLaw( Ray* ray, Material* mat )
 
 float fresnel( Ray* ray, Material* mat, float4* outT )
 {
-	float costhetai = dot( ray->N, ray->rD );
+	float costhetai = dot( ray->N, ray->D * -1 );
 
 	float n1 = mat->n1;
 	float n2 = mat->n2;
@@ -138,16 +138,13 @@ float4 shootKajiya( Ray* camray, uint* seed )
 	for ( int i = -1; i < MAX_BOUNCE; i++ )
 	{
 		// We did not hit anything, fall back to the skydome
-		if ( !trace( ray ) )
-		{
-			return mask * readSkydome( ray->D );
-		}
+		if ( !trace( ray ) ) return mask * readSkydome( ray->D );
 
 		// we hit an object
 		Primitive prim = primitives[ray->primIdx];
 		Material mat = materials[prim.matIdx];
 
-		if ( mat.isLight ) return mask * mat.emittance; //return mat.emittance * ray->intensity;
+		if ( mat.isLight ) return mask * mat.emittance; // return mat.emittance * ray->intensity;
 
 		Ray r;
 		float rand = randomFloat( seed );
@@ -180,16 +177,13 @@ float4 shootKajiya( Ray* camray, uint* seed )
 			{
 				// diffuse 
 				float4 diffuseReflection = randomRayHemisphere( ray->N, seed );
-
 				mask *= getAlbedo( ray ) * dot( diffuseReflection, ray->N );
-
 				r = initRay( ray->I + EPSILON * diffuseReflection, diffuseReflection );
 			}
 		}
 		ray = &r;
 	}
 	return (float4)(0);
-	//return (float4)(0);
 }
 
 __kernel void render( __global float4* pixels,
@@ -223,12 +217,14 @@ __kernel void render( __global float4* pixels,
 
 	// create and shoot a ray into the scene
 	Ray ray = initPrimaryRay( x, y, &cam, seeds + idx );
-	//float4 color = shootWhitted( &ray );
-	float4 color = shootKajiya( &ray, seeds + idx );
-
 	// prevent color overflow
-	//pixels[idx] = color;
+#ifdef WHITTED
+	float4 color = shootWhitted( &ray );
+	pixels[idx] = color;
+#else
+	float4 color = shootKajiya( &ray, seeds + idx );
 	pixels[idx] = (pixels[idx] * (frames - 1) + color) * (1 / (float)frames);
+#endif // WHITTED
 }
 
 __kernel void reset( __global float4* pixels )

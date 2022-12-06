@@ -138,7 +138,6 @@ float4 getAlbedo( Ray* ray )
 			{
 				int x = abs((int)( ray->u) ) % mat.texW;
 				int y = abs((int)( ray->v) ) % mat.texH;
-
 				albedo = textures[mat.texIdx + (x + y * mat.texW)];
 			}break;
 		}
