@@ -28,5 +28,5 @@ absorption (Beer’s law).
 - [ ] Besides the point lights: Spot lights and directional lights (max 0.5 pts).
 - [ ] Anti-aliasing (max 0.5 pts).
 - [x] A skydome, with a texture loaded from a HDR file format (max 0.5 pts).
-- [ ] Barrel distortion, a Panini-projection and/or a fish eye lens (max 0.5 pts).
+- [x] Barrel distortion, a Panini-projection and/or a fish eye lens (max 0.5 pts).
 - [x] Image postprocessing: gamma correction, vignetting and chromatic aberration (max 0.5 pts).
