@@ -29,7 +29,7 @@ Ray initPrimaryRay(int x, int y, Camera* cam, uint* seed)
 		float sinAlpha = u / r;
 		float cosAlpha = v / r;
 
-		float4 D = sinPsi * cosAlpha * cam->right + sinPsi * sinAlpha * cam->up - cosPsi * cam->forward;
+		float4 D = sinPsi * cosAlpha * cam->up + sinPsi * sinAlpha * cam->right - cosPsi * cam->forward;
 		return initRay(cam->origin, D);
 	}break;
 	}
