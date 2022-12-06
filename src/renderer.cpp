@@ -166,7 +166,7 @@ void Renderer::MouseMove( int x, int y )
 
 void Renderer::MouseWheel( float y )
 {
-	camera.Fov( -y );
+	camera.Zoom( -y );
 }
 void Renderer::KeyRepeat( int key )
 {
@@ -199,6 +199,7 @@ void Renderer::Gui( )
 {
 	ImGui::CollapsingHeader("Camera");
 	ImGui::SliderFloat("Speed", &camera.speed, 1, 100);
+	ImGui::SliderFloat("FOV", &camera.cam.fov, 90, 110);
 	ImGui::CollapsingHeader("Post Processing");
 	ImGui::SliderFloat( "Vignetting", &vignet_strength, 0.0f, 1.0f, "ratio = %.3f" );
 	ImGui::SliderFloat( "Gamma Correction", &gamma_corr, 0.0f, 2.0f, "ratio = %.3f" );

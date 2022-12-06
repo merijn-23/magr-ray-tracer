@@ -2,7 +2,7 @@
 
 typedef struct Ray
 {
-	float4 O, D, rD, N, I, intensity;
+	float4 O, D, N, I, intensity;
 	float t;
 	// Index of primitive
 	int primIdx, bounces;
@@ -60,8 +60,10 @@ typedef struct Light
 	int primIdx;
 } Light;
 
-// typedef struct Cube
-// {
-// 	float4 b[2];
-// 	float4x4 M, invM;
-// } Cube;
+typedef struct Camera
+{
+	int type;
+	float fov;
+	float4 forward, right, up;
+	float4 origin, horizontal, vertical, topLeft;
+} Camera;

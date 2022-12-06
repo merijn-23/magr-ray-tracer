@@ -24,7 +24,7 @@ absorption (Beer’s law).
 - [x] Support for triangle meshes of arbitrary size, using ‘obj’, ‘gltf’ or ‘fbx’ files to import scenes
 (max 1pt). The .obj file format is highly recommended for this assignment.
 - [ ] Support for complex primitives - complex being a torus or better (max 1pt).
-- [ ] Texturing on all supported primitives. Texture must be a bitmap loaded from a file (max 1pt).
+- [x] Texturing on all supported primitives. Texture must be a bitmap loaded from a file (max 1pt).
 - [ ] Besides the point lights: Spot lights and directional lights (max 0.5 pts).
 - [ ] Anti-aliasing (max 0.5 pts).
 - [x] A skydome, with a texture loaded from a HDR file format (max 0.5 pts).

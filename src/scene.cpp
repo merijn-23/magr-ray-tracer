@@ -49,7 +49,7 @@ namespace Tmpl8
 		AddSphere( float4( -3, -.49f, -2, 0.f ), 0.5f, "glass" );
 
 		//AddSphere( float4( 1.f, 0.f, -1.5f, 0.f ), 0.5f, "light" );
-		LoadModel( "assets/cube.obj", "white", float3(3, 0.01f, 3) );
+		LoadModel( "assets/cube.obj", "pika", float3(3, 0.01f, 3) );
 
 		//AddPlane( float3( -1, 0, 0 ), 2.99f, "green" );
 		//AddPlane( float3( 1, 0, 0 ), 5.f, "yellow" );

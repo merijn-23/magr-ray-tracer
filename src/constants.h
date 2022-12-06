@@ -12,3 +12,7 @@
 #define CUBE		2
 #define QUAD		3
 #define TRIANGLE	4
+
+#define PROJECTION	0
+#define FISHEYE		1
+
