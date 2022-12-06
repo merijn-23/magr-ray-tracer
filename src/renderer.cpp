@@ -47,7 +47,6 @@ void Renderer::Tick(float _deltaTime)
 
 	settings.frames++;
 
-	return;
 	// performance report - running average - ms, MRays/s
 	static float avg = 10, alpha = 1;
 	avg = (1 - alpha) * avg + alpha * t.elapsed() * 1000;
@@ -147,7 +146,7 @@ void Renderer::InitKernel()
 	settings.numLights = scene.lights.size();
 
 	sphereBuffer->CopyToDevice();
-	planeBuffer->CopyToDevice();
+	//planeBuffer->CopyToDevice();
 	triangleBuffer->CopyToDevice();
 	matBuffer->CopyToDevice();
 	primBuffer->CopyToDevice();
@@ -209,7 +208,7 @@ void Renderer::Gui()
 	}
 
 	if (ImGui::CollapsingHeader("Camera")) {
-		ImGui::SliderFloat("Speed", &camera.speed, .1f, 1, "%.2f");
+		ImGui::SliderFloat("Speed", &camera.speed, .01f, 1, "%.2f");
 		if (ImGui::SliderFloat("FOV", &camera.cam.fov, 30, 180, "%.2f")) camera.moved = true;
 		if (ImGui::SliderFloat("Aperture", &camera.cam.aperture, 0, .1f, "%.2f")) camera.moved = true;
 		if (ImGui::SliderFloat("Focal Length", &camera.cam.focalLength, 0, 3, "%.2f")) camera.moved = true;
