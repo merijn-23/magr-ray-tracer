@@ -12,12 +12,10 @@ namespace Tmpl8
 		// load skydome first
 		LoadTexture( "assets/skydome.png", "skydome" );
 
-		auto& red = AddMaterial( "light" );
-		red.color = float3( 1, 1, 1 );
-		red.emittance = float3( 2 );
-		red.isLight = true;
+		auto& red = AddMaterial( "red" );
+		red.color = float3( 1, 0, 0 );
 		auto& green = AddMaterial( "green" );
-		green.color = float3( 1, .1f, .1f );
+		green.color = float3( 0, 0, 1 );
 		auto& blue = AddMaterial( "blue" );
 		blue.color = float3( 0, 0, 1 );
 		auto& white = AddMaterial( "white" );
@@ -40,11 +38,18 @@ namespace Tmpl8
 		glass.n2 = 1.5f;
 		glass.specular = 0.03f;
 		glass.absorption = float3(0, 1, 1);
-				
+		auto& whiteLight = AddMaterial("white-light");
+		whiteLight.color = float4(1);
+		whiteLight.emittance = float4(2);
+		whiteLight.isLight = true;
+		auto& redLight = AddMaterial("red-light");
+		redLight = whiteLight;
+		redLight.color = float4(1, 0, 0, 0);
+
 		LoadTexture( "assets/cash_money.png", "cash" );
 		LoadTexture( "assets/suprised_pikachu.png", "pika" );
 
-		AddSphere( float4( 0, -.25f, -1, 0.f ), 0.5f, "green" );
+		AddSphere( float4( 0, -.25f, 0, 0.f ), 0.5f, "green" );
 		AddSphere( float4( 0, -1.75f, -1, 0.f ), 1, "white" );
 		//AddSphere( float4( 2, -.25f, -1, 0.f ), 0.5f, "mwhite" );
 		AddSphere( float4( -3, -.49f, -2, 0.f ), 0.5f, "glass" );
@@ -63,7 +68,7 @@ namespace Tmpl8
 		AddTriangle(
 			// right,				left,				top
 			float3( 0, 2, 0 ), float3( 16, 2, 0 ), float3( 0, 2, -16 ),
-			float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "light" );
+			float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "white-light" );
 		//LoadModel( "triangle.obj", "green" );
 
 		lights.resize( 3 );

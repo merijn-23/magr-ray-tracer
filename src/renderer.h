@@ -14,20 +14,22 @@ public:
 	void MouseDown( int button ) { /* implement if you want to detect mouse button presses */ }
 	void MouseMove( int x, int y );
 	void MouseWheel( float y );
-	void KeyUp( int key ) { /* implement if you want to handle keys */ }
-	void KeyDown( int key ) { /* implement if you want to handle keys */ };
-	void KeyRepeat( int key );
+	void KeyInput(std::map<int, int>);
+	//void KeyUp( int key ) { /* implement if you want to handle keys */ }
+	//void KeyDown( int key ) { /* implement if you want to handle keys */ };
+	//void KeyRepeat( int key );
 	void Gui( );
 
 	void InitKernel( );
 	void UpdateBuffers( );
 	void CamToDevice( );
+	void PostProc( );
+	void SaveFrame( const char* file );
 
 	// data members
 	float deltaTime;
 	int consecutiveFrames = 1;
 	int2 mousePos;
-	float4* accumulator;
 	Scene scene;
 	CameraManager camera;
 	Settings settings;
@@ -39,6 +41,7 @@ public:
 	Kernel* post_gammaKernel;
 	Kernel* post_chromaticKernel;
 	Kernel* post_displayKernel;
+	Kernel* saveImageKernel;
 
 	// Buffers
 	Buffer* sphereBuffer;

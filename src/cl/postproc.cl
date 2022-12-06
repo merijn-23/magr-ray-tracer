@@ -27,7 +27,7 @@ __kernel void vignetting( __global float3* source,
 	dest[idx] = color; //write_imagef(dest, (x,y), (float4)(color, 1));
 	}
 
-__kernel void gamma_corr( __global float3* source,
+__kernel void gammaCorr( __global float3* source,
 	__global float3* dest,
 	float gamma)
 {
@@ -68,4 +68,15 @@ __kernel void prep(__global float3* pixels, __global float3* swap)
 	color = min( color, (float3)(1) );
 
 	swap[idx] = pixels[get_global_id(0)];
+}
+
+__kernel void saveImage(read_only image2d_t src, __global float4* dst)
+{
+	int idx = get_global_id( 0 );
+	int x = idx % SCRWIDTH;
+	int y = idx / SCRWIDTH;
+
+	float4 color = read_imagef(src, (int2)(x, y));
+	color = min( color, (float4)(1) );
+	dst[idx] = color;
 }
