@@ -211,7 +211,7 @@ void Renderer::Gui()
 		ImGui::SliderFloat("Speed", &camera.speed, .01f, 1, "%.2f");
 		if (ImGui::SliderFloat("FOV", &camera.cam.fov, 30, 180, "%.2f")) camera.moved = true;
 		if (ImGui::SliderFloat("Aperture", &camera.cam.aperture, 0, .1f, "%.2f")) camera.moved = true;
-		if (ImGui::SliderFloat("Focal Length", &camera.cam.focalLength, 0, 3, "%.2f")) camera.moved = true;
+		if (ImGui::SliderFloat("Focal Length", &camera.cam.focalLength, 0, 10, "%.2f")) camera.moved = true;
 		if (ImGui::RadioButton("Projection", &camera.cam.type, PROJECTION)) camera.moved = true;
 		if (ImGui::RadioButton("FishEye", &camera.cam.type, FISHEYE)) camera.moved = true;
 	}

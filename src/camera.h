@@ -43,7 +43,7 @@ namespace Tmpl8
 
 		float aspect = (float)SCRWIDTH / (float)SCRHEIGHT;
 		float mouseSensivity = 0.5f;
-		float speed = .01f;
+		float speed = .05f;
 
 		bool moved = true;
 

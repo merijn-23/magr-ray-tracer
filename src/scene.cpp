@@ -65,10 +65,10 @@ namespace Tmpl8
 		int lamp_y = 4;
 		int size = 50;
 		AddTriangle(
-			float3( -size, lamp_y, 0 ), float3( size, lamp_y, 0 ), float3( -size, lamp_y, 1 ),
+			float3( -size, lamp_y, 0 ), float3( size, lamp_y, 0 ), float3( -size, lamp_y, 2 ),
 			float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "white-light" );
 		AddTriangle(
-			float3( -size, lamp_y, 1 ), float3( size, lamp_y, 1 ), float3( size, lamp_y, 0 ),
+			float3( -size, lamp_y, 2 ), float3( size, lamp_y, 2 ), float3( size, lamp_y, 0 ),
 			float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "white-light" );
 
 		// Back wall
@@ -101,7 +101,7 @@ namespace Tmpl8
 		AddSphere(float3(4 * step, -0.75f, 0), 1, "white");
 		AddSphere(float3(4 * step, .75f, 0), .5f, "pika");
 
-		LoadModel("assets/cube.obj", "green-glass", float3(5 * step, .75f, 0));
+		LoadModel("assets/cube.obj", "green-glass", float3(5 * step, 1.2f, .5f));
 		
 		//LoadModel( "assets/ufo/Low_poly_UFO.obj", "glass", float3(0, 2, -2));
 		//AddSphere( float3( 0, 1.5f, -2.f ), 0.5f, "green-light" );
