@@ -12,7 +12,6 @@ namespace Tmpl8
 		// load skydome first
 		LoadTexture( "assets/skydome.png", "skydome" );
 
-		//default.color = float3( 1, 0, 0 );
 		auto& red = AddMaterial( "light" );
 		red.color = float3( 1, 1, 1 );
 		red.emittance = float3( 2 );
@@ -40,8 +39,7 @@ namespace Tmpl8
 		glass.n1 = 1.f;
 		glass.n2 = 1.5f;
 		glass.specular = 0.03f;
-
-		
+				
 		LoadTexture( "assets/cash_money.png", "cash" );
 		LoadTexture( "assets/suprised_pikachu.png", "pika" );
 
@@ -150,11 +148,6 @@ namespace Tmpl8
 
 	void Scene::AddTriangle( float3 v0, float3 v1, float3 v2, float2 uv0, float2 uv1, float2 uv2, std::string material )
 	{
-		/*if ( _triIdx >= _sizeTriangles || _primIdx >= _sizePrimitives )
-				{
-					Resize( triangles, _sizeTriangles );
-					Resize( primitives, _sizePrimitives );
-				}*/
 		float3 v0v1 = v1 - v0;
 		float3 v0v2 = v2 - v0;
 		float3 N = normalize( cross( v0v1, v0v2 ) );
@@ -168,7 +161,6 @@ namespace Tmpl8
 		tri.uv2 = uv2;
 
 		tri.N = N;
-		//triangles[triIdx_] = tri;
 		triangles.push_back( tri );
 
 		// create primitive
@@ -229,6 +221,9 @@ namespace Tmpl8
 					}
 					texcoords.push_back( float2( tx, ty ) );
 				}
+
+				// reverse the vector to get the correct vertex order
+				std::reverse(vertices.begin(), vertices.end());
 
 				for ( size_t v = 0, t = 0; v < vertices.size(); )
 					AddTriangle(
