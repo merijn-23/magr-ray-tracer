@@ -1,19 +1,9 @@
-int nPrimitives = 0;
-int nLights = 0;
-//uint* seed;
-
-uint randomUInt( uint* seed )
-{
-	*seed ^= *seed << 13;
-	*seed ^= *seed >> 17;
-	*seed ^= *seed << 5;
-	return *seed;
-}
-float randomFloat( uint* seed ) { return randomUInt( seed ) * 2.3283064365387e-10f; }
-float4 randomFloat3( uint* seed ) { return (float4)(randomFloat( seed ), randomFloat( seed ), randomFloat( seed ), 0); };
-
 #include "src/constants.h"
 #include "src/common.h"
+
+Settings settings;
+
+#include "src/cl/util.cl"
 #include "src/cl/primitives.cl"
 #include "src/cl/ray.cl"
 #include "src/cl/light.cl"
@@ -69,7 +59,7 @@ float fresnel( Ray* ray, Material* mat, float4* outT )
 
 bool trace( Ray* ray )
 {
-	for ( int i = 0; i < nPrimitives; i++ )
+	for ( int i = 0; i < settings.numPrimitives; i++ )
 		intersect( i, primitives + i, ray );
 	if ( ray->primIdx == -1 ) return false;
 	intersectionPoint( ray );
@@ -88,7 +78,7 @@ float4 shootWhitted( Ray* primaryRay )
 	while ( n > 0 )
 	{
 		Ray ray = stack[--n];
-		if ( !trace( &ray ) ) continue;
+		if ( !trace( &ray ) ) color += ray.intensity * readSkydome(ray.D);
 
 		Primitive prim = primitives[ray.primIdx];
 		Material mat = materials[prim.matIdx];
@@ -98,7 +88,7 @@ float4 shootWhitted( Ray* primaryRay )
 			if ( mat.specular < 1 )
 			{
 				// find the diffuse of this object
-				for ( int i = 0; i < nLights; i++ )
+				for ( int i = 0; i < settings.numLights; i++ )
 					color += handleShadowRay( &ray, lights + i ) * getAlbedo( &ray ) * ray.intensity;
 			}
 			if ( mat.specular > 0 && ray.bounces < MAX_BOUNCE )
@@ -196,16 +186,13 @@ __kernel void render( __global float4* pixels,
 	__global Light* _lights,
 	__global uint* seeds,
 	Camera cam,
-	int numPrimitives,
-	int numLights,
-	int frames )
+	Settings _settings )
 {
 	int idx = get_global_id( 0 );
 	int x = idx % SCRWIDTH;
 	int y = idx / SCRWIDTH;
 
-	nPrimitives = numPrimitives;
-	nLights = numLights;
+	settings = _settings;
 
 	spheres = _spheres;
 	planes = _planes;
@@ -215,16 +202,26 @@ __kernel void render( __global float4* pixels,
 	lights = _lights;
 	textures = _textures;
 
+	uint* seed = seeds + idx;
+
 	// create and shoot a ray into the scene
-	Ray ray = initPrimaryRay( x, y, &cam, seeds + idx );
-	// prevent color overflow
-#ifdef WHITTED
-	float4 color = shootWhitted( &ray );
-	pixels[idx] = color;
-#else
-	float4 color = shootKajiya( &ray, seeds + idx );
-	pixels[idx] = (pixels[idx] * (frames - 1) + color) * (1 / (float)frames);
-#endif // WHITTED
+	float u = x;
+	float v = y;
+	if(settings.antiAliasing)
+	{
+		u += randomFloat(seed) / (float)SCRWIDTH;
+		v += randomFloat(seed) / (float)SCRHEIGHT;
+	}
+	Ray ray = initPrimaryRay( u, v, &cam, seed );
+	if (settings.tracerType == KAJIYA)
+	{
+		float4 color = shootKajiya(&ray, seed);
+		pixels[idx] = (pixels[idx] * (settings.frames - 1) + color) * (1 / (float)settings.frames);
+	} else if(settings.tracerType == WHITTED)
+	{
+		float4 color = shootWhitted( &ray );
+		pixels[idx] = color;
+	}
 }
 
 __kernel void reset( __global float4* pixels )

@@ -15,7 +15,7 @@ public:
 	void MouseMove( int x, int y );
 	void MouseWheel( float y );
 	void KeyUp( int key ) { /* implement if you want to handle keys */ }
-	void KeyDown( int key );
+	void KeyDown( int key ) { /* implement if you want to handle keys */ };
 	void KeyRepeat( int key );
 	void Gui( );
 
@@ -30,6 +30,7 @@ public:
 	float4* accumulator;
 	Scene scene;
 	CameraManager camera;
+	Settings settings;
 
 	Kernel* traceKernel;
 	Kernel* resetKernel;

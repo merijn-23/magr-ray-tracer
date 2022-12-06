@@ -31,6 +31,7 @@ Ray transmit( Ray* ray, float4 T )
 	Ray tRay = initRay( origin, T );
 	tRay.intensity = ray->intensity;
 	tRay.bounces = ray->bounces + 1;
+	tRay.inside = !ray->inside;
 	return tRay;
 }
 

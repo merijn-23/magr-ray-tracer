@@ -24,7 +24,7 @@ void intersectSphere( int primIdx, Sphere* sphere, Ray* ray )
 	t = d - b;
 	if ( t < ray->t && t > 0 )
 	{
-		ray->t = t, ray->primIdx = primIdx, ray->inside = true;
+		ray->t = t, ray->primIdx = primIdx;//, ray->inside = true;
 		return;
 	}
 }
@@ -69,7 +69,7 @@ void intersectTriangle( int primIdx, Triangle* tri, Ray* ray )
 	if ( t > ray->t || t < 0 ) return;
 	ray->t = t;
 	ray->primIdx = primIdx;
-	ray->inside = false;
+	//ray->inside = false;
 	// set barycenter
 	ray->u = u;
 	ray->v = v;

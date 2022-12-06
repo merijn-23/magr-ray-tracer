@@ -39,6 +39,7 @@ namespace Tmpl8
 		glass.n1 = 1.f;
 		glass.n2 = 1.5f;
 		glass.specular = 0.03f;
+		glass.absorption = float3(0, 1, 1);
 				
 		LoadTexture( "assets/cash_money.png", "cash" );
 		LoadTexture( "assets/suprised_pikachu.png", "pika" );
@@ -49,11 +50,11 @@ namespace Tmpl8
 		AddSphere( float4( -3, -.49f, -2, 0.f ), 0.5f, "glass" );
 
 		//AddSphere( float4( 1.f, 0.f, -1.5f, 0.f ), 0.5f, "light" );
-		LoadModel( "assets/cube.obj", "pika", float3(3, 0.01f, 3) );
+		LoadModel( "assets/cube.obj", "glass", float3(3, 0.01f, 3) );
 
 		//AddPlane( float3( -1, 0, 0 ), 2.99f, "green" );
 		//AddPlane( float3( 1, 0, 0 ), 5.f, "yellow" );
-		AddPlane( float3( 0, 1, 0 ), 1.f, "cash" );
+		AddPlane( float3( 0, 1, 0 ), 1.f, "white" );
 		//AddPlane( float3( 0, -1, 0 ), 2.f, "white" );
 		//AddPlane( float3( 0, 0, 1 ), 9.f, "magenta" );
 		//AddPlane( float3( 0, 0, -1 ), 3.99f, "cyan" );

@@ -6,7 +6,7 @@ float4 getDiffuseShading( Light* light, float dot, float r )
 
 bool shootShadowRay( Ray* ray, float d )
 {
-    for(int i = 0; i < nPrimitives; i++)
+    for(int i = 0; i < settings.numPrimitives; i++)
     {
         intersect(i, primitives + i, ray);
         if(ray->t < d - EPSILON)
