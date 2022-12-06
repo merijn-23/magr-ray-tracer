@@ -13,7 +13,12 @@ Ray initPrimaryRay(int x, int y, Camera* cam, uint* seed)
 		}
 
 		float4 P = cam->topLeft + u * cam->horizontal + v * cam->vertical;
-		return initRay(cam->origin, normalize(P - cam->origin));
+		float4 dir = normalize(P - cam->origin);
+
+		float4 focalPoint = cam->origin + dir * cam->focalLength;
+		float4 O = cam->origin + (randomFloat3(seed) - 0.5f) * cam->aperture;
+		dir = normalize(focalPoint - O);
+		return initRay(O, dir);
 	}break;
 	case FISHEYE: { // Kevin Suffern's book: "Ray Tracing from the Ground Up" p.188
 		float u = (float)(x - SCRWIDTH * .5f) * (2.f / SCRWIDTH);

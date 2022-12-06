@@ -36,7 +36,6 @@
             ray.t = t, ray.primIdx = i;               \
     }
 
-#include <map>
 #include "common.h"
 
 namespace Tmpl8

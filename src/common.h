@@ -63,7 +63,7 @@ typedef struct
 typedef struct
 {
 	int type;
-	float fov;
+	float fov, aperture, focalLength;
 	float4 forward, right, up;
 	float4 origin, horizontal, vertical, topLeft;
 } Camera;

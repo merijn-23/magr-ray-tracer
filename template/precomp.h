@@ -1636,6 +1636,8 @@ public:
 	}
 };
 
+#include <map>
+
 // application base class
 class TheApp
 {
@@ -1647,15 +1649,17 @@ public:
 	virtual void MouseDown( int button ) = 0;
 	virtual void MouseMove( int x, int y ) = 0;
 	virtual void MouseWheel( float y ) = 0;
-	virtual void KeyUp( int key ) = 0;
-	virtual void KeyDown( int key ) = 0;
-	virtual void KeyRepeat( int key ) = 0;
+	virtual void KeyInput(std::map<int, int>) = 0;
+	//virtual void KeyUp( int key ) = 0;
+	//virtual void KeyDown( int key ) = 0;
+	//virtual void KeyRepeat( int key ) = 0;
 	virtual void Gui( ) = 0;
 	Surface* screen = 0;
 };
 
 
 float3* LoadImageF( const char* file, int& width, int& height, int& channels );
+void SaveImageF(const char* file, int width, int height, float4* data);
 
 #include "scene.h"
 #include "camera.h"

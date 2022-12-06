@@ -205,14 +205,8 @@ __kernel void render( __global float4* pixels,
 	uint* seed = seeds + idx;
 
 	// create and shoot a ray into the scene
-	float u = x;
-	float v = y;
-	if(settings.antiAliasing)
-	{
-		u += randomFloat(seed) / (float)SCRWIDTH;
-		v += randomFloat(seed) / (float)SCRHEIGHT;
-	}
-	Ray ray = initPrimaryRay( u, v, &cam, seed );
+	Ray ray = initPrimaryRay( x, y, &cam, seed );
+
 	if (settings.tracerType == KAJIYA)
 	{
 		float4 color = shootKajiya(&ray, seed);

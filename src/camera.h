@@ -31,6 +31,8 @@ namespace Tmpl8
 			cam.forward = float3(0, 0, -1);
 			cam.right = float3(1, 0, 0);
 			cam.up = float3(0, 1, 0);
+			cam.aperture = 0;
+			cam.focalLength = 1;
 			Fov(vfov);
 		}
 		Camera cam;
@@ -40,9 +42,8 @@ namespace Tmpl8
 		float viewportWidth;
 
 		float aspect = (float)SCRWIDTH / (float)SCRHEIGHT;
-		float focalLength = 1;
 		float mouseSensivity = 0.5f;
-		float speed = 1.f;
+		float speed = .1f;
 
 		bool moved = false;
 
@@ -50,7 +51,7 @@ namespace Tmpl8
 		{
 			moved = true;
 
-			float velocity = speed; // * deltaTime;
+			float velocity = speed; // *deltaTime;
 			switch (camdir)
 			{
 			case CamDir::Forward:
@@ -102,9 +103,6 @@ namespace Tmpl8
 
 		void Fov(float vfov) 
 		{
-			if (cam.fov == vfov) return;
-
-			moved = true;
 			cam.fov = vfov;
 			auto theta = cam.fov * DEG_TO_RAD;
 			auto h = tan(theta / 2);
@@ -122,7 +120,7 @@ namespace Tmpl8
 			cam.horizontal = viewportWidth * cam.right;
 			cam.vertical = viewportHeight * cam.up;
 			cam.topLeft = cam.origin - cam.horizontal / 2 - cam.vertical / 2 -
-				cam.forward * focalLength;
+				cam.forward;
 		}
 	};
 } // namespace Tmpl8
