@@ -16,9 +16,9 @@ orientation at run-time.
 - [x] Support for (at least) planes, spheres and triangles.
 - [x] A basic scene, consisting of a small set of these primitives. Use each primitive type at least
 once.
-- [ ] A Whitted-style ray tracing renderer, supporting shadows, reflections and refraction with
+- [x] A Whitted-style ray tracing renderer, supporting shadows, reflections and refraction with
 absorption (Beer’s law).
-- [ ] A Kajiya-style path tracing renderer, supporting diffuse interreflections and area lights.
+- [x] A Kajiya-style path tracing renderer, supporting diffuse interreflections and area lights.
 
 ### Bonus:
 - [x] Support for triangle meshes of arbitrary size, using ‘obj’, ‘gltf’ or ‘fbx’ files to import scenes
@@ -26,7 +26,16 @@ absorption (Beer’s law).
 - [ ] Support for complex primitives - complex being a torus or better (max 1pt).
 - [x] Texturing on all supported primitives. Texture must be a bitmap loaded from a file (max 1pt).
 - [ ] Besides the point lights: Spot lights and directional lights (max 0.5 pts).
-- [ ] Anti-aliasing (max 0.5 pts).
+- [x] Anti-aliasing (max 0.5 pts).
 - [x] A skydome, with a texture loaded from a HDR file format (max 0.5 pts).
 - [x] Barrel distortion, a Panini-projection and/or a fish eye lens (max 0.5 pts).
 - [x] Image postprocessing: gamma correction, vignetting and chromatic aberration (max 0.5 pts).
+
+### TODO:
+- Beerslaw for everything
+- Keyinput fixen
+- Mesh struct
+- Imgui switch for raytracing styles (Whitted, Kajiya)
+- Imgui switch for anti-aliasing
+- Scene: Showroom 
+- Making code more memory/speed efficient
