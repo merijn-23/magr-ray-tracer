@@ -197,7 +197,9 @@ void Renderer::KeyDown( int key ) { }
 
 void Renderer::Gui( )
 {
-	//ImGui::Checkbox("Vignetting", &vignetting);
+	ImGui::CollapsingHeader("Camera");
+	ImGui::SliderFloat("Speed", &camera.speed, 1, 100);
+	ImGui::CollapsingHeader("Post Processing");
 	ImGui::SliderFloat( "Vignetting", &vignet_strength, 0.0f, 1.0f, "ratio = %.3f" );
 	ImGui::SliderFloat( "Gamma Correction", &gamma_corr, 0.0f, 2.0f, "ratio = %.3f" );
 	ImGui::SliderFloat( "Chromatic Abberation", &chromatic, 0.0f, 1.0f, "ratio = %.3f" );

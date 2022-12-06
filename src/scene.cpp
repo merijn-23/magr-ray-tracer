@@ -53,7 +53,7 @@ namespace Tmpl8
 
 		//AddPlane( float3( -1, 0, 0 ), 2.99f, "green" );
 		//AddPlane( float3( 1, 0, 0 ), 5.f, "yellow" );
-		AddPlane( float3( 0, 1, 0 ), 1.f, "white" );
+		AddPlane( float3( 0, 1, 0 ), 1.f, "cash" );
 		//AddPlane( float3( 0, -1, 0 ), 2.f, "white" );
 		//AddPlane( float3( 0, 0, 1 ), 9.f, "magenta" );
 		//AddPlane( float3( 0, 0, -1 ), 3.99f, "cyan" );

@@ -30,7 +30,6 @@ private:
 	float4 forward_ = float3( 0, 0, -1 );
 	float3 right_ = float3( 1, 0, 0 );
 	float3 up_ = float3( 0, 1, 0 );
-	float speed_ = .1f;
 
 public:
 	CameraManager( float vfov = 110 )
@@ -47,6 +46,7 @@ public:
 	float aspect = (float)SCRWIDTH / (float)SCRHEIGHT;
 	float focalLength = 1;
 	float mouseSensivity = 0.5f;
+	float speed = .1f;
 
 	bool moved = false;
 
@@ -54,7 +54,7 @@ public:
 	{
 		moved = true;
 
-		float velocity = speed_;
+		float velocity = speed;
 		switch ( camdir )
 		{
 		case CamDir::Forward:
