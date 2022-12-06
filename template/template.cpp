@@ -307,7 +307,8 @@ void main()
 
 		deltaTime = min(500.0f, 1000.0f * timer.elapsed());
 		timer.reset();
-		app->KeyInput(key_map);
+		ImGuiIO& io = ImGui::GetIO();
+		if(!io.WantCaptureKeyboard) app->KeyInput(key_map);
 		app->Tick(deltaTime);
 		// send the rendering result to the screen using OpenGL
 		if (frameNr++ > 1)

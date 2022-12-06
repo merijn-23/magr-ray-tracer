@@ -10,66 +10,112 @@ namespace Tmpl8
 	Scene::Scene( )
 	{
 		// load skydome first
-		LoadTexture( "assets/skydome.png", "skydome" );
+		LoadTexture( "assets/office.png", "skydome" );
 
 		auto& red = AddMaterial( "red" );
 		red.color = float3( 1, 0, 0 );
 		auto& green = AddMaterial( "green" );
-		green.color = float3( 0, 0, 1 );
+		green.color = float3( 0, 1, 0 );
 		auto& blue = AddMaterial( "blue" );
 		blue.color = float3( 0, 0, 1 );
 		auto& white = AddMaterial( "white" );
 		white.color = float3( 1, 1, 1 );	
-		auto& mwhite = AddMaterial( "mwhite" );
-		mwhite.color = float3( .3f );
-		mwhite.specular = 1;
+
 		auto& yellow = AddMaterial( "yellow" );
 		yellow.color = float3( 1, 1, 0 );
+
 		auto& magenta = AddMaterial( "magenta" );
 		magenta.color = float3( 1, 0, 1 );
 		magenta.isLight = true;
 		magenta.emittance = float3( 1, .1f, 1 );
+
+		auto& mirror = AddMaterial( "mirror" );
+		mirror.color = float3( .1f, .1f, .9f );
+		mirror.specular = .5f;
+
 		auto& cyan = AddMaterial( "cyan" );
 		cyan.color = float3( 0, 1, 1 );
-		auto& glass = AddMaterial( "glass" );
-		glass.color = float3( 1 );
-		glass.isDieletric = true;
-		glass.n1 = 1.f;
-		glass.n2 = 1.5f;
-		glass.specular = 0.03f;
-		glass.absorption = float3(0, 1, 1);
+
+		auto& redglass = AddMaterial( "red-glass" );
+		redglass.color = float3( 1 );
+		redglass.isDieletric = true;
+		redglass.n1 = 1.f;
+		redglass.n2 = 1.5f;
+		redglass.specular = 0.03f;
+		redglass.absorption = float3(0, 1, 1);
+
+		auto& greenglass = AddMaterial("green-glass");
+		greenglass = redglass;
+		greenglass.absorption = float3(0, 1, 0);
+
 		auto& whiteLight = AddMaterial("white-light");
+		whiteLight.isLight = true;
 		whiteLight.color = float4(1);
 		whiteLight.emittance = float4(2);
-		whiteLight.isLight = true;
-		auto& redLight = AddMaterial("red-light");
-		redLight = whiteLight;
-		redLight.color = float4(1, 0, 0, 0);
+		auto& greenLight = AddMaterial("green-light");
+		greenLight.isLight = true;
+		greenLight.color = float4(.1f, 1, .1f, 0);
+		greenLight.emittance = float4(.1f, 1, .1f, 0) * 5;
 
 		LoadTexture( "assets/cash_money.png", "cash" );
 		LoadTexture( "assets/suprised_pikachu.png", "pika" );
+		LoadTexture( "assets/ufo/ufo_diffuse.png", "ufo");
 
-		AddSphere( float4( 0, -.25f, 0, 0.f ), 0.5f, "green" );
-		AddSphere( float4( 0, -1.75f, -1, 0.f ), 1, "white" );
-		//AddSphere( float4( 2, -.25f, -1, 0.f ), 0.5f, "mwhite" );
-		AddSphere( float4( -3, -.49f, -2, 0.f ), 0.5f, "glass" );
+		// Ceiling lamp
+		int lamp_y = 4;
+		int size = 50;
+		AddTriangle(
+			float3( -size, lamp_y, 0 ), float3( size, lamp_y, 0 ), float3( -size, lamp_y, 1 ),
+			float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "white-light" );
+		AddTriangle(
+			float3( -size, lamp_y, 1 ), float3( size, lamp_y, 1 ), float3( size, lamp_y, 0 ),
+			float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "white-light" );
 
-		//AddSphere( float4( 1.f, 0.f, -1.5f, 0.f ), 0.5f, "light" );
-		LoadModel( "assets/cube.obj", "glass", float3(3, 0.01f, 3) );
+		// Back wall
+		AddTriangle(
+			float3( -size, 2, -1 ), float3( -size, 0, -1 ), float3(size, 2, -1 ),
+			float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "white" );	
+		AddTriangle(
+			float3( -size, 0, -1 ), float3(size, 0, -1 ), float3(size, 2, -1 ),
+			float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "white" );	
+
+		// Floor
+		AddTriangle(
+			float3( -size, 0, -1 ), float3( -size, 0, 3 ), float3(size, 0, -1 ),
+			float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "white" );	
+		AddTriangle(
+			float3( -size, 0, 3 ), float3(size, 0, 3 ), float3(size, 0, -1 ),
+			float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "white" );	
+
+
+		float step = -1.5f;
+		AddSphere( float3( 1 * step, -0.75f, 0), 1, "white" );
+		AddSphere( float3( 1 * step, .75f, 0), .5f, "green" );
+
+		AddSphere(float3(2 * step, -0.75f, 0), 1, "white");
+		AddSphere(float3(2 * step, .75f, 0), .5f, "mirror");
+
+		AddSphere(float3(3 * step, -0.75f, 0), 1, "white");
+		AddSphere(float3(3 * step, .75f, 0), .5f, "red-glass");
+
+		AddSphere(float3(4 * step, -0.75f, 0), 1, "white");
+		AddSphere(float3(4 * step, .75f, 0), .5f, "pika");
+
+		LoadModel("assets/cube.obj", "green-glass", float3(5 * step, .75f, 0));
+		
+		//LoadModel( "assets/ufo/Low_poly_UFO.obj", "glass", float3(0, 2, -2));
+		//AddSphere( float3( 0, 1.5f, -2.f ), 0.5f, "green-light" );
+
+
 
 		//AddPlane( float3( -1, 0, 0 ), 2.99f, "green" );
 		//AddPlane( float3( 1, 0, 0 ), 5.f, "yellow" );
-		AddPlane( float3( 0, 1, 0 ), 1.f, "white" );
+		//AddPlane( float3( 0, 1, 0 ), 0, "white" );
 		//AddPlane( float3( 0, -1, 0 ), 2.f, "white" );
 		//AddPlane( float3( 0, 0, 1 ), 9.f, "magenta" );
 		//AddPlane( float3( 0, 0, -1 ), 3.99f, "cyan" );
 
-		//float z = 1.5f;
-		AddTriangle(
-			// right,				left,				top
-			float3( 0, 2, 0 ), float3( 16, 2, 0 ), float3( 0, 2, -16 ),
-			float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "white-light" );
-		//LoadModel( "triangle.obj", "green" );
+		
 
 		lights.resize( 3 );
 		lights[0] = Light{ float4( 2, 0, 3, 0 ), float4( 1, 1, .8f, 0 ), 2, -1 };
