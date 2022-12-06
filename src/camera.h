@@ -24,10 +24,9 @@ namespace Tmpl8
 		float pitch_;
 
 	public:
-		CameraManager(float vfov = 110, int type = FISHEYE)
+		CameraManager(float vfov = 110, int type = PROJECTION)
 		{
 			cam.type = type;
-			cam.fov = vfov;
 			cam.origin = float3(0, 0, 0);
 			cam.forward = float3(0, 0, -1);
 			cam.right = float3(1, 0, 0);
