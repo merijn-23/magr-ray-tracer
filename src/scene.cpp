@@ -10,7 +10,7 @@ namespace Tmpl8
 	Scene::Scene( )
 	{
 		// load skydome first
-		LoadTexture( "assets/office.png", "skydome" );
+		LoadTexture( "assets/office.hdr", "skydome" );
 
 		auto& red = AddMaterial( "red" );
 		red.color = float3( 1, 0, 0 );
@@ -19,20 +19,16 @@ namespace Tmpl8
 		auto& blue = AddMaterial( "blue" );
 		blue.color = float3( 0, 0, 1 );
 		auto& white = AddMaterial( "white" );
-		white.color = float3( 1, 1, 1 );	
-
+		white.color = float3( 1, 1, 1 );
 		auto& yellow = AddMaterial( "yellow" );
 		yellow.color = float3( 1, 1, 0 );
-
 		auto& magenta = AddMaterial( "magenta" );
 		magenta.color = float3( 1, 0, 1 );
 		magenta.isLight = true;
 		magenta.emittance = float3( 1, .1f, 1 );
-
 		auto& mirror = AddMaterial( "mirror" );
 		mirror.color = float3( .1f, .1f, .9f );
 		mirror.specular = .5f;
-
 		auto& cyan = AddMaterial( "cyan" );
 		cyan.color = float3( 0, 1, 1 );
 
@@ -60,32 +56,35 @@ namespace Tmpl8
 		LoadTexture( "assets/cash_money.png", "cash" );
 		LoadTexture( "assets/suprised_pikachu.png", "pika" );
 		LoadTexture( "assets/ufo/ufo_diffuse.png", "ufo");
+		LoadTexture("assets/mosaic.png", "mosaic");
+		LoadTexture("assets/stone.jpg", "stone");
 
 		// Ceiling lamp
 		int lamp_y = 4;
-		int size = 50;
+		int width = 10;
+		int depth = 2;
 		AddTriangle(
-			float3( -size, lamp_y, 0 ), float3( size, lamp_y, 0 ), float3( -size, lamp_y, 2 ),
+			float3( -width, lamp_y, 0 ), float3( width, lamp_y, 0 ), float3( -width, lamp_y, 2 ),
 			float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "white-light" );
 		AddTriangle(
-			float3( -size, lamp_y, 2 ), float3( size, lamp_y, 2 ), float3( size, lamp_y, 0 ),
+			float3( -width, lamp_y, 2 ), float3( width, lamp_y, 2 ), float3( width, lamp_y, 0 ),
 			float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "white-light" );
 
 		// Back wall
 		AddTriangle(
-			float3( -size, 2, -1 ), float3( -size, 0, -1 ), float3(size, 2, -1 ),
-			float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "white" );	
+			float3( -width, 2, -1 ), float3( -width, 0, -1 ), float3(width, 2, -1 ),
+			float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "mosaic" );	
 		AddTriangle(
-			float3( -size, 0, -1 ), float3(size, 0, -1 ), float3(size, 2, -1 ),
-			float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "white" );	
+			float3( -width, 0, -1 ), float3(width, 0, -1 ), float3(width, 2, -1 ),
+			float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "mosaic" );	
 
 		// Floor
 		AddTriangle(
-			float3( -size, 0, -1 ), float3( -size, 0, 3 ), float3(size, 0, -1 ),
-			float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "white" );	
+			float3( -width, 0, -1 ), float3( -width, 0, depth), float3(width, 0, -1 ),
+			float2( 2, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "stone" );	
 		AddTriangle(
-			float3( -size, 0, 3 ), float3(size, 0, 3 ), float3(size, 0, -1 ),
-			float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "white" );	
+			float3( -width, 0, depth), float3(width, 0, depth), float3(width, 0, -1 ),
+			float2( 2, 0 ), float2( 0, 0 ), float2( 2, 1 ), "stone" );	
 
 
 		float step = -1.5f;
