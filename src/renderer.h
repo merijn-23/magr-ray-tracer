@@ -15,9 +15,6 @@ public:
 	void MouseMove( int x, int y );
 	void MouseWheel( float y );
 	void KeyInput(std::map<int, int>);
-	//void KeyUp( int key ) { /* implement if you want to handle keys */ }
-	//void KeyDown( int key ) { /* implement if you want to handle keys */ };
-	//void KeyRepeat( int key );
 	void Gui( );
 
 	void InitKernel( );

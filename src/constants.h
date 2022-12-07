@@ -4,7 +4,7 @@
 #define SCRHEIGHT 720
 #define PIXELS SCRWIDTH * SCRHEIGHT
 
-#define MAX_BOUNCE 20
+#define MAX_BOUNCE 30
 #define EPSILON 0.0001f
 
 #define SPHERE		0
