@@ -1608,6 +1608,7 @@ void Kernel::Run2D(const int2 count, const int2 lsize, cl_event* eventToWaitFor,
 
 float3* LoadImageF(const char* file, int& w, int& h, int& c)
 {
+<<<<<<< HEAD
 	float* data = stbi_loadf(file, &w, &h, &c, 0);
 	int s = w * h;
 	float3* result = new float3[s];
@@ -1620,6 +1621,21 @@ float3* LoadImageF(const char* file, int& w, int& h, int& c)
 	stbi_image_free(data);
 	return result;
 }		
+=======
+	unsigned char* data = stbi_load(file, &w, &h, &c, 0);
+	int s = w * h;
+	float3* result = new float3[s];
+
+	for (int i = 0; i < s; i++)
+	{
+		result[i].x = data[i * c + 0] / 255.f;
+		result[i].y = data[i * c + 1] / 255.f;
+		result[i].z = data[i * c + 2] / 255.f;
+	}
+	stbi_image_free(data);
+	return result;
+}
+>>>>>>> b224aff57cc2901df6be5614310263b3dc6883f8
 
 void SaveImageF(const char* file, int w, int h, float4* data)
 {
