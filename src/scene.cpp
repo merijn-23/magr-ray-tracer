@@ -69,7 +69,6 @@ namespace Tmpl8
 
 		LoadTexture("assets/cash_money.png", "cash");
 		LoadTexture("assets/suprised_pikachu.png", "pika");
-		LoadTexture("assets/ufo/ufo_diffuse.png", "ufo");
 		LoadTexture("assets/mosaic.png", "mosaic");
 		LoadTexture("assets/stone.jpg", "stone");
 
