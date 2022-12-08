@@ -178,9 +178,6 @@ float4 shootKajiya( Ray* camray, uint* seed )
 
 __kernel void render( __global float4* pixels,
 	__global float4* _textures,
-	__global Sphere* _spheres,
-	__global Triangle* _triangles,
-	__global Plane* _planes,
 	__global Material* _materials,
 	__global Primitive* _primitives,
 	__global Light* _lights,
@@ -193,10 +190,7 @@ __kernel void render( __global float4* pixels,
 	int y = idx / SCRWIDTH;
 
 	settings = _settings;
-
-	spheres = _spheres;
-	planes = _planes;
-	triangles = _triangles;
+	
 	materials = _materials;
 	primitives = _primitives;
 	lights = _lights;

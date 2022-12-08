@@ -67,10 +67,7 @@ public:
 
 	std::vector<Primitive> primitives;
 	std::vector<Material> materials;
-	std::vector<Sphere> spheres;
-	std::vector<Plane> planes;
 	std::vector<Light> lights;
-	std::vector<Triangle> triangles;
 	std::vector<float4> textures;
 
 private:

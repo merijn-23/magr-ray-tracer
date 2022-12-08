@@ -72,9 +72,20 @@ namespace Tmpl8
 		LoadTexture("assets/mosaic.png", "mosaic");
 		LoadTexture("assets/stone.jpg", "stone");
 
+		int width = 15;
+		int height = 2;
+		int u = 3;
+		int depth = 1;
+		// Back wall
+		AddTriangle(
+			float3(-width, height, -depth), float3(-width, 0, -depth), float3(width, height, -depth),
+			float2(u, 1), float2(0, 0), float2(u, 0), "mosaic");
+		AddTriangle(
+			float3(-width, 0, -depth), float3(width, 0, -depth), float3(width, height, -depth),
+			float2(u, 0), float2(u, 1), float2(0, 0), "mosaic");
+
 		// Ceiling lamp
 		int lamp_y = 4;
-		int depth = 1;
 		int size = 2;
 		float step = 5;
 		float offset = -10;
@@ -89,17 +100,6 @@ namespace Tmpl8
 		}
 		
 
-		int width = 15;
-		int height = 2;
-		int u = 3;
-		depth = 1;
-		// Back wall
-		AddTriangle(
-			float3(-width, height, -depth), float3(-width, 0, -depth), float3(width, height, -depth),
-			float2(u, 1), float2(0, 0), float2(u, 0), "mosaic");
-		AddTriangle(
-			float3(-width, 0, -depth), float3(width, 0, -depth), float3(width, height, -depth),
-			float2(u, 0), float2(u, 1), float2(0, 0), "mosaic");
 
 		// Floor
 		AddTriangle(
@@ -133,9 +133,10 @@ namespace Tmpl8
 
 		AddSphere(float3(4 * step + offset, -0.75f, 0), 1, "white");
 		AddSphere(float3(4 * step + offset, .75f, 0), .5f, "pika");
+		
 
 		LoadModel("assets/cube.obj", "green-glass", float3(5 * step + offset, 1.2f, .5f));
-		LoadModel("assets/bunny_low_poly.obj", "white-glass", float3(.5 + offset, 0, 0));
+		//LoadModel("assets/bunny_low_poly.obj", "white-glass", float3(.5 + offset, 0, 0));
 
 		lights.resize(3);
 		lights[0] = Light{ float4(2, 0, 3, 0), float4(1, 1, .8f, 0), 2, -1 };
@@ -188,32 +189,22 @@ namespace Tmpl8
 		float r2 = radius * radius;
 		float invr = 1 / radius;
 
-		// create sphere
-		Sphere sphere;
-		sphere.pos = pos;
-		sphere.r2 = r2;
-		sphere.invr = invr;
-		spheres.push_back(sphere);
-
 		// create primitive
 		Primitive prim;
+		prim.objData.sphere.pos = pos;
+		prim.objData.sphere.r2 = r2;
+		prim.objData.sphere.invr = invr;
 		prim.objType = SPHERE;
-		prim.objIdx = spheres.size() - 1;
 		prim.matIdx = matMap_[material];
 		primitives.push_back(prim);
 	}
 
 	void Scene::AddPlane(float3 N, float d, std::string material)
 	{
-		Plane plane;
-		plane.N = N;
-		plane.d = d;
-		planes.push_back(plane);
-
-		// create primitive
 		Primitive prim;
+		prim.objData.plane.N = N;
+		prim.objData.plane.d = d;
 		prim.objType = PLANE;
-		prim.objIdx = planes.size() - 1;
 		prim.matIdx = matMap_[material];
 		primitives.push_back(prim);
 	}
@@ -224,21 +215,16 @@ namespace Tmpl8
 		float3 v0v2 = v2 - v0;
 		float3 N = normalize(cross(v0v1, v0v2));
 
-		Triangle tri;
-		tri.v0 = v0;
-		tri.v1 = v1;
-		tri.v2 = v2;
-		tri.uv0 = uv0;
-		tri.uv1 = uv1;
-		tri.uv2 = uv2;
-
-		tri.N = N;
-		triangles.push_back(tri);
-
 		// create primitive
 		Primitive prim;
+		prim.objData.triangle.v0 = v0;
+		prim.objData.triangle.v1 = v1;
+		prim.objData.triangle.v2 = v2;
+		prim.objData.triangle.uv0 = uv0;
+		prim.objData.triangle.uv1 = uv1;
+		prim.objData.triangle.uv2 = uv2;
+		prim.objData.triangle.N = N;
 		prim.objType = TRIANGLE;
-		prim.objIdx = triangles.size() - 1;
 		prim.matIdx = matMap_[material];
 		primitives.push_back(prim);
 	}
