@@ -123,6 +123,17 @@
     <None Include="src\cl\skydome.cl">
       <Filter>cl</Filter>
     </None>
-    <None Include="src\cl\util.cl" />
+    <None Include="src\cl\wavefront.cl">
+      <Filter>cl</Filter>
+    </None>
+    <None Include="src\cl\util.cl">
+      <Filter>cl</Filter>
+    </None>
+    <None Include="src\cl\glass.cl">
+      <Filter>cl</Filter>
+    </None>
+    <None Include="src\cl\shading.cl">
+      <Filter>cl</Filter>
+    </None>
   </ItemGroup>
 </Project>

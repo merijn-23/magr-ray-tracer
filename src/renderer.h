@@ -17,10 +17,10 @@ public:
 	void KeyInput(std::map<int, int>);
 	void Gui( );
 
-	void InitKernel( );
-	void UpdateBuffers( );
+	void InitKernels();
 	void CamToDevice( );
 	void PostProc( );
+	void RayTrace( );
 	void SaveFrame( const char* file );
 
 	// data members
@@ -29,15 +29,13 @@ public:
 	int2 mousePos;
 	Scene scene;
 	CameraManager camera;
-	Settings settings;
+	Settings* settings;
 
-	Kernel* traceKernel;
 	Kernel* resetKernel;
 	Kernel* post_prepKernel;
 	Kernel* post_vignetKernel;
 	Kernel* post_gammaKernel;
 	Kernel* post_chromaticKernel;
-	Kernel* post_displayKernel;
 	Kernel* saveImageKernel;
 
 	// Buffers
@@ -48,13 +46,23 @@ public:
 	Buffer* swap1Buffer;
 	Buffer* swap2Buffer;
 
-	Buffer* pixelBuffer;
+	Buffer* accumBuffer;
 	Buffer* screenBuffer;
 	Buffer* texBuffer;
 
 	Buffer* camBuffer;
 	Buffer* lightBuffer;
 
+	// Wavefront kernels
+	Kernel* generateKernel;
+	Kernel* extendKernel;
+	Kernel* shadeKernel;
+	Kernel* displayKernel;
+
+	Buffer* ray1Buffer;
+	Buffer* ray2Buffer;
+	Buffer* shadowRayBuffer;
+	Buffer* settingsBuffer;
 	Buffer* seedBuffer;
 };
 

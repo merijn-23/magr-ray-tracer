@@ -1,3 +1,6 @@
+#ifndef __SKYDOME_CL
+#define __SKYDOME_CL
+
 // https://www.cs.uu.nl/docs/vakken/magr/2021-2022/files/lecture%2011%20-%20various.pdf
 float4 readSkydome( float4 dir )
 {
@@ -8,3 +11,5 @@ float4 readSkydome( float4 dir )
 	int y = (int)(v * mat.texH);
 	return textures[mat.texIdx + x + y * mat.texW];
 }
+
+#endif // __SKYDOME_CL

@@ -5,7 +5,7 @@ typedef struct
 	float4 O, D, N, I, intensity;
 	float t;
 	// Index of primitive
-	int primIdx, bounces;
+	int primIdx, bounces, pixelIdx;
 	bool inside;
 	float u, v, w; // barycenter, is calculated upon intersection
 } Ray;
@@ -75,4 +75,5 @@ typedef struct
 typedef struct
 {
 	int numPrimitives, numLights, tracerType, frames, antiAliasing;
+	int numInRays, numOutRays;
 } Settings;

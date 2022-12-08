@@ -179,13 +179,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="src\cl\camera.cl" />
+    <None Include="src\cl\glass.cl" />
     <None Include="src\cl\light.cl" />
     <None Include="src\cl\postproc.cl" />
     <None Include="src\cl\primitives.cl" />
     <None Include="src\cl\ray.cl" />
+    <None Include="src\cl\shading.cl" />
     <None Include="src\cl\skydome.cl" />
     <None Include="src\cl\trace.cl" />
     <None Include="src\cl\util.cl" />
+    <None Include="src\cl\wavefront.cl" />
     <None Include="template\LICENSE" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

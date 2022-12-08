@@ -1,3 +1,6 @@
+#ifndef __PRIMITIVES_CL
+#define __PRIMITIVES_CL
+
 #include "src/common.h"
 
 __global Primitive* primitives;
@@ -147,3 +150,5 @@ float4 getAlbedo( Ray* ray )
 		}
 	return albedo;
 }
+
+#endif // __PRIMITIVES_CL

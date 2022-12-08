@@ -1,4 +1,8 @@
+#ifndef __POSTPROC_CL
+#define __POSTPROC_CL
+
 #include "src/constants.h"
+#include "src/common.h"
 
 __kernel void display(__global float3* source,
 	write_only image2d_t target)
@@ -58,16 +62,16 @@ __kernel void chromatic( __global float3* source,
 	dest[idx] = (float3)(r, g, b);
 }
 
-__kernel void prep(__global float3* pixels, __global float3* swap)
+__kernel void prep(__global float3* pixels, __global float3* swap, __global Settings* settings)
 {
 	int idx = get_global_id(0);
 	int x = idx % SCRWIDTH;
 	int y = idx / SCRWIDTH;
-	
-	float3 color = pixels[get_global_id(0)];
+
+	float3 color = pixels[get_global_id(0)] * (1 / (float)(settings->frames));
 	color = min( color, (float3)(1) );
 
-	swap[idx] = pixels[get_global_id(0)];
+	swap[idx] = color;
 }
 
 __kernel void saveImage(read_only image2d_t src, __global float4* dst)
@@ -80,3 +84,5 @@ __kernel void saveImage(read_only image2d_t src, __global float4* dst)
 	color = min( color, (float4)(1) );
 	dst[idx] = color;
 }
+
+#endif // __POSTPROC_CL
