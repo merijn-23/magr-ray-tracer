@@ -130,30 +130,22 @@ float4 getAlbedo( Ray* ray )
 			{
 				Triangle t = triangles[prim.objIdx];
 				float2 uv = ray->u * t.uv0 + ray->v * t.uv1 + ray->w * t.uv2;
-<<<<<<< HEAD
 				uv = fmod(uv, (float2)(1.f, 1.f));
 				if (uv.x < 0) uv.x = 1 - uv.x;
 				if (uv.y < 0) uv.y = 1 - uv.y;
 
-=======
->>>>>>> b224aff57cc2901df6be5614310263b3dc6883f8
 				int x = (int)( uv.x * mat.texW );
 				int y = (int)( uv.y * mat.texH );
 				albedo = textures[mat.texIdx + x + y * mat.texW];
 			}break;
 			case PLANE:
 			{
-<<<<<<< HEAD
 				float u = fmod(ray->u, 1.f);
 				float v = fmod(ray->v, 1.f);
 				if (u < 0) u = 1 - u;
 				if (v < 0) v = 1 - v;
 				int x = (int)( u * mat.texW);
 				int y = (int)( v * mat.texH);
-=======
-				int x = abs((int)( ray->u) ) % mat.texW;
-				int y = abs((int)( ray->v) ) % mat.texH;
->>>>>>> b224aff57cc2901df6be5614310263b3dc6883f8
 				albedo = textures[mat.texIdx + (x + y * mat.texW)];
 			}break;
 		}
