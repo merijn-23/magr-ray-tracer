@@ -9,9 +9,7 @@
 
 #define SPHERE		0
 #define PLANE		1
-#define CUBE		2
-#define QUAD		3
-#define TRIANGLE	4
+#define TRIANGLE	2
 
 #define PROJECTION	0
 #define FISHEYE		1

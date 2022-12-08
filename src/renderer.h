@@ -41,9 +41,6 @@ public:
 	Kernel* saveImageKernel;
 
 	// Buffers
-	Buffer* sphereBuffer;
-	Buffer* planeBuffer;
-	Buffer* triangleBuffer;
 	Buffer* matBuffer;
 	Buffer* primBuffer;
 

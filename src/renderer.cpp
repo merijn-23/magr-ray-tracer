@@ -40,7 +40,7 @@ void Renderer::Tick(float _deltaTime)
 		settings.frames = 1;
 	}
 
-	clSetKernelArg(traceKernel->kernel, 10, sizeof(Settings), &settings);
+	clSetKernelArg(traceKernel->kernel, 7, sizeof(Settings), &settings);
 	traceKernel->Run(PIXELS);
 
 	PostProc();
@@ -105,9 +105,6 @@ void Renderer::InitKernel()
 
 	primBuffer = new Buffer(sizeof(Primitive) * scene.primitives.size());
 	matBuffer = new Buffer(sizeof(Material) * scene.materials.size());
-	sphereBuffer = new Buffer(sizeof(Sphere) * scene.spheres.size());
-	planeBuffer = new Buffer(sizeof(Plane) * scene.planes.size());
-	triangleBuffer = new Buffer(sizeof(Triangle) * scene.triangles.size());
 	lightBuffer = new Buffer(sizeof(Light) * scene.lights.size());
 	texBuffer = new Buffer(sizeof(float4) * scene.textures.size());
 	seedBuffer = new Buffer(sizeof(uint) * PIXELS);
@@ -124,17 +121,13 @@ void Renderer::InitKernel()
 	//sphereBuffer->hostBuffer = (uint*)scene.spheres;
 	primBuffer->hostBuffer = (uint*)scene.primitives.data();
 	matBuffer->hostBuffer = (uint*)scene.materials.data();
-	sphereBuffer->hostBuffer = (uint*)scene.spheres.data();
-	planeBuffer->hostBuffer = (uint*)scene.planes.data();
-	triangleBuffer->hostBuffer = (uint*)scene.triangles.data();
 	lightBuffer->hostBuffer = (uint*)scene.lights.data();
 	texBuffer->hostBuffer = (uint*)scene.textures.data();
 
 	seedBuffer->hostBuffer = new uint[PIXELS];
 
 	// Set trace kernel arguments
-	traceKernel->SetArguments(pixelBuffer, texBuffer, sphereBuffer, triangleBuffer, planeBuffer,
-		matBuffer, primBuffer, lightBuffer, seedBuffer);
+	traceKernel->SetArguments(pixelBuffer, texBuffer, matBuffer, primBuffer, lightBuffer, seedBuffer);
 
 	// Set post processing kernels arguments
 	post_displayKernel->SetArgument(1, screenBuffer);
@@ -145,9 +138,6 @@ void Renderer::InitKernel()
 	settings.numPrimitives = scene.primitives.size();
 	settings.numLights = scene.lights.size();
 
-	sphereBuffer->CopyToDevice();
-	//planeBuffer->CopyToDevice();
-	triangleBuffer->CopyToDevice();
 	matBuffer->CopyToDevice();
 	primBuffer->CopyToDevice();
 	lightBuffer->CopyToDevice();
@@ -157,9 +147,6 @@ void Renderer::InitKernel()
 
 void Renderer::UpdateBuffers()
 {
-	lightBuffer->CopyToDevice();
-	sphereBuffer->CopyToDevice();
-
 	for (int i = 0; i < SCRHEIGHT * SCRWIDTH; i++)
 		seedBuffer->hostBuffer[i] = RandomUInt();
 	seedBuffer->CopyToDevice();
@@ -167,7 +154,7 @@ void Renderer::UpdateBuffers()
 
 void Tmpl8::Renderer::CamToDevice()
 {
-	clSetKernelArg(traceKernel->kernel, 9, sizeof(Camera), &camera.cam);
+	clSetKernelArg(traceKernel->kernel, 6, sizeof(Camera), &camera.cam);
 }
 
 void Renderer::SaveFrame(const char* file)

@@ -12,14 +12,6 @@ typedef struct
 
 typedef struct
 {
-	int objType;
-	// Index of object in respective list
-	int objIdx;
-	int matIdx;
-} Primitive;
-
-typedef struct
-{
 	float4 color, absorption;
 	float specular, n1, n2;
 	bool isDieletric;
@@ -45,10 +37,22 @@ typedef struct
 
 typedef struct
 {
-	float4 v0, v1, v2;
+	float4 v0, v1, v2, N;
 	float2 uv0, uv1, uv2;
-	float4 N;
 } Triangle;
+
+typedef struct
+{
+	union
+	{
+		Triangle triangle;
+		Sphere sphere;
+		Plane plane;
+	} objData;
+
+	int objType;
+	int matIdx;
+} Primitive;
 
 typedef struct
 {
