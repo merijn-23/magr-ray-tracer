@@ -1,3 +1,6 @@
+#ifndef __UTIL_CL
+#define __UTIL_CL
+
 uint shiftBits(uint x)
 {
 	// x =                                 00000000000000001111111111111111
@@ -31,6 +34,19 @@ uint2 reverseZOrderCurve(uint idx)
 	return (uint2)(x, y);
 }
 
+uint wangHash( uint s )
+{
+	s = (s ^ 61) ^ (s >> 16);
+	s *= 9, s = s ^ (s >> 4);
+	s *= 0x27d4eb2d;
+	s = s ^ (s >> 15);
+	return s;
+}
+uint initSeed( uint seedBase )
+{
+	return wangHash( (seedBase + 1) * 17 );
+}
+
 uint randomUInt( uint* seed )
 {
 	*seed ^= *seed << 13;
@@ -40,3 +56,5 @@ uint randomUInt( uint* seed )
 }
 float randomFloat( uint* seed ) { return randomUInt( seed ) * 2.3283064365387e-10f; }
 float4 randomFloat3( uint* seed ) { return (float4)(randomFloat( seed ), randomFloat( seed ), randomFloat( seed ), 0); };
+
+#endif // __UTIL_CL

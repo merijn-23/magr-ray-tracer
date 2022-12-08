@@ -1,3 +1,5 @@
+#ifndef __LIGHT_CL
+#define __LIGHT_CL
 
 float4 getDiffuseShading( Light* light, float dot, float r )
 {
@@ -32,3 +34,4 @@ float4 handleShadowRay( Ray* ray, Light* light )
     return (float4)(0);
 }
 
+#endif // __LIGHT_CL
