@@ -136,7 +136,7 @@ namespace Tmpl8
 		
 
 		LoadModel("assets/cube.obj", "green-glass", float3(5 * step + offset, 1.2f, .5f));
-		//LoadModel("assets/bunny_low_poly.obj", "white-glass", float3(.5 + offset, 0, 0));
+		LoadModel("assets/bunny_low_poly.obj", "white", float3(.5 + offset, 0, 0));
 
 		lights.resize(3);
 		lights[0] = Light{ float4(2, 0, 3, 0), float4(1, 1, .8f, 0), 2, -1 };
@@ -209,11 +209,12 @@ namespace Tmpl8
 		primitives.push_back(prim);
 	}
 
-	void Scene::AddTriangle(float3 v0, float3 v1, float3 v2, float2 uv0, float2 uv1, float2 uv2, std::string material)
+	void Scene::AddTriangle( float3 v0, float3 v1, float3 v2, float2 uv0, float2 uv1, float2 uv2, std::string material )
 	{
 		float3 v0v1 = v1 - v0;
 		float3 v0v2 = v2 - v0;
-		float3 N = normalize(cross(v0v1, v0v2));
+		float3 N = normalize( cross( v0v1, v0v2 ) );
+		float3 centroid = (v0 + v1 + v2) * 0.3333f;
 
 		// create primitive
 		Primitive prim;
@@ -224,9 +225,10 @@ namespace Tmpl8
 		prim.objData.triangle.uv1 = uv1;
 		prim.objData.triangle.uv2 = uv2;
 		prim.objData.triangle.N = N;
+		prim.objData.triangle.centroid = centroid;
 		prim.objType = TRIANGLE;
 		prim.matIdx = matMap_[material];
-		primitives.push_back(prim);
+		primitives.push_back( prim );
 	}
 
 	void Scene::LoadModel(std::string filename, std::string material, float3 pos)

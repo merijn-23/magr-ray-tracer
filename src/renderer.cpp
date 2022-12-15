@@ -13,6 +13,7 @@ void Renderer::Init()
 	settings = new Settings();
 	settings->tracerType = KAJIYA;
 	settings->antiAliasing = true;
+	bvh.BuildBvh( scene.primitives );
 	InitKernels();
 }
 
@@ -45,7 +46,7 @@ void Renderer::Tick( float _deltaTime )
 	PostProc();
 
 	settings->frames++;
-
+	
 	// performance report - running average - ms, MRays/s
 	static float avg = 10, alpha = 1;
 	avg = (1 - alpha) * avg + alpha * t.elapsed() * 1000;
@@ -169,7 +170,9 @@ void Renderer::InitKernels()
 	generateKernel->SetArgument( 2, seedBuffer );
 
 	extendKernel->SetArgument( 1, primBuffer );
-	extendKernel->SetArgument( 2, settingsBuffer );
+	extendKernel->SetArgument( 2, bvh.GetBVHNodeBuffer() );
+	extendKernel->SetArgument( 3, bvh.GetIdxBuffer() );
+	extendKernel->SetArgument( 4, settingsBuffer );
 
 	shadeKernel->SetArgument( 2, shadowRayBuffer );
 	shadeKernel->SetArgument( 3, primBuffer );
@@ -186,6 +189,7 @@ void Renderer::InitKernels()
 	primBuffer->CopyToDevice();
 	texBuffer->CopyToDevice();
 	matBuffer->CopyToDevice();
+	bvh.CopyToDevice();
 }
 
 void Tmpl8::Renderer::CamToDevice()
