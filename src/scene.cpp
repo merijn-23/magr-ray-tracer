@@ -136,7 +136,7 @@ namespace Tmpl8
 		
 
 		LoadModel("assets/cube.obj", "green-glass", float3(5 * step + offset, 1.2f, .5f));
-		LoadModel("assets/bunny_low_poly.obj", "white", float3(.5 + offset, 0, 0));
+		//LoadModel("assets/bunny_low_poly.obj", "white", float3(.5 + offset, 0, 0));
 
 		lights.resize(3);
 		lights[0] = Light{ float4(2, 0, 3, 0), float4(1, 1, .8f, 0), 2, -1 };
@@ -186,15 +186,12 @@ namespace Tmpl8
 
 	void Scene::AddSphere(float3 pos, float radius, std::string material)
 	{
-		float r2 = radius * radius;
-		float invr = 1 / radius;
-
-		// create primitive
 		Primitive prim;
-		prim.objData.sphere.pos = pos;
-		prim.objData.sphere.r2 = r2;
-		prim.objData.sphere.invr = invr;
 		prim.objType = SPHERE;
+		prim.objData.sphere.pos = pos;
+		prim.objData.sphere.r = radius;
+		prim.objData.sphere.r2 = radius * radius;
+		prim.objData.sphere.invr = 1 / radius;
 		prim.matIdx = matMap_[material];
 		primitives.push_back(prim);
 	}
@@ -202,9 +199,9 @@ namespace Tmpl8
 	void Scene::AddPlane(float3 N, float d, std::string material)
 	{
 		Primitive prim;
+		prim.objType = PLANE;
 		prim.objData.plane.N = N;
 		prim.objData.plane.d = d;
-		prim.objType = PLANE;
 		prim.matIdx = matMap_[material];
 		primitives.push_back(prim);
 	}
@@ -218,6 +215,7 @@ namespace Tmpl8
 
 		// create primitive
 		Primitive prim;
+		prim.objType = TRIANGLE;
 		prim.objData.triangle.v0 = v0;
 		prim.objData.triangle.v1 = v1;
 		prim.objData.triangle.v2 = v2;
@@ -226,7 +224,6 @@ namespace Tmpl8
 		prim.objData.triangle.uv2 = uv2;
 		prim.objData.triangle.N = N;
 		prim.objData.triangle.centroid = centroid;
-		prim.objType = TRIANGLE;
 		prim.matIdx = matMap_[material];
 		primitives.push_back( prim );
 	}

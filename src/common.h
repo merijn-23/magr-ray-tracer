@@ -2,7 +2,8 @@
 
 typedef struct
 {
-	float4 O, D, N, I, intensity;
+	float4 O, D, rD; // 1 / D
+	float4 N, I, intensity;
 	float t;
 	// Index of primitive
 	int primIdx, bounces, pixelIdx;
@@ -26,7 +27,7 @@ typedef struct
 typedef struct
 {
 	float4 pos;
-	float r2, invr;
+	float r, r2, invr;
 } Sphere;
 
 typedef struct

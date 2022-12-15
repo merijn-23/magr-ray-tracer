@@ -31,6 +31,9 @@
     <ClCompile Include="src\imgui\imgui_widgets.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
+    <ClCompile Include="src\bvh.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="template\common.h">
@@ -81,6 +84,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\scene.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\bvh.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
