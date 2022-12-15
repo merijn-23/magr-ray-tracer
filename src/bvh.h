@@ -12,6 +12,9 @@ public:
 
 private:
 	void UpdateNodeBounds(uint nodeIdx, std::vector<Primitive>& primitives);
+	void UpdateTriangleBounds( BVHNode& node, Triangle& triangle );
+	void UpdateSphereBounds( BVHNode& node, Sphere& sphere );
+	float EvaluateSAH( BVHNode& node, int axis, float pos, std::vector<Primitive>& primitives );
 	void Subdivide(uint nodeIdx, std::vector<Primitive>& primitives);
 
 	std::vector<BVHNode> bvhNode_;

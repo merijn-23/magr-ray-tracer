@@ -6,6 +6,7 @@ Ray initRay( float4 O, float4 D )
 	Ray ray;
 	ray.O = O;
 	ray.D = D;
+	ray.rD = 1 / D;
 	ray.N = (float4)(0);
 	ray.I = (float4)(0);
 	ray.intensity = (float4)(1);

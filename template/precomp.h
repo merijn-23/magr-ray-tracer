@@ -1663,6 +1663,7 @@ void SaveImageF(const char* file, int width, int height, float4* data);
 
 #include "scene.h"
 #include "camera.h"
+#include "bvh.h"
 #include "renderer.h"
 
 // EOF
