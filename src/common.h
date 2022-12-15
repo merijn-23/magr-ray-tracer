@@ -37,7 +37,8 @@ typedef struct
 
 typedef struct
 {
-	float4 v0, v1, v2, N;
+	float4 v0, v1, v2;
+	float4 N, centroid;
 	float2 uv0, uv1, uv2;
 } Triangle;
 
@@ -77,3 +78,9 @@ typedef struct
 	int numPrimitives, numLights, tracerType, frames, antiAliasing;
 	int numInRays, numOutRays;
 } Settings;
+
+typedef struct
+{
+	float4 aabbMin, aabbMax;
+	uint first, count;
+} BVHNode;

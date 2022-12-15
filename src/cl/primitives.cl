@@ -92,6 +92,44 @@ void intersect( int primIdx, Primitive* prim, Ray* ray )
 	}
 }
 
+bool intersectAABB(Ray* ray, const float4 bmin, const float4 bmax)
+{
+	float tx1 = (bmin.x - ray->O.x) / ray->D.x, tx2 = (bmax.x - ray->O.x) / ray->D.x;
+	float tmin = min(tx1, tx2), tmax = max(tx1, tx2);
+	float ty1 = (bmin.y - ray->O.y) / ray->D.y, ty2 = (bmax.y - ray->O.y) / ray->D.y;
+	tmin = max(tmin, min(ty1, ty2)), tmax = min(tmax, max(ty1, ty2));
+	float tz1 = (bmin.z - ray->O.z) / ray->D.z, tz2 = (bmax.z - ray->O.z) / ray->D.z;
+	tmin = max(tmin, min(tz1, tz2)), tmax = min(tmax, max(tz1, tz2));
+	return tmax >= tmin && tmin < ray->t&& tmax > 0;
+}
+
+void intersectBVH(Ray* ray, BVHNode* bvhNode, uint* bvhIdx)
+{
+	BVHNode* stack[64];
+	stack[0] = &bvhNode[0];
+	uint n = 1;
+
+	while (n > 0) {
+
+		BVHNode* node = stack[--n];
+
+		if (!intersectAABB(ray, node->aabbMin, node->aabbMax)) return;
+		if (node->count > 0) // isLeaf?
+		{
+			for (uint i = 0; i < node->count; i++)
+				intersect(bvhIdx[node->first + i], &primitives[bvhIdx[node->first + i]], ray);
+		}
+		else
+		{
+			BVHNode* child1 = &bvhNode[node->first];
+			BVHNode* child2 = &bvhNode[node->first + 1];
+
+			stack[n++] = child1;
+			stack[n++] = child2;
+		}
+	}
+}
+
 float4 getNormal( Primitive* prim, float4 I )
 {
 	switch ( prim->objType )

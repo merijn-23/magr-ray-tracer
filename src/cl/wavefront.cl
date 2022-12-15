@@ -41,6 +41,8 @@ __kernel void generate(
 __kernel void extend(
 	__global Ray* rays,
 	__global Primitive* _primitives,
+	__global BVHNode* bvhNode,
+	__global uint* bvhIdx,
 	__global Settings* settings
 )
 {
@@ -51,8 +53,9 @@ __kernel void extend(
 
 	Ray* ray = rays + idx;
 
-	for (int i = 0; i < settings->numPrimitives; i++)
-		intersect( i, primitives + i, ray );
+	/*for (int i = 0; i < settings->numPrimitives; i++)
+		intersect( i, primitives + i, ray );*/
+	intersectBVH(ray, bvhNode, bvhIdx);
 
 	if (ray->primIdx == -1) return;
 	
