@@ -76,7 +76,7 @@ typedef struct
 
 typedef struct
 {
-	int numPrimitives, numLights, tracerType, frames, antiAliasing;
+	int numPrimitives, numLights, tracerType, frames;
 	int numInRays, numOutRays;
 } Settings;
 

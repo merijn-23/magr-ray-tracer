@@ -11,10 +11,10 @@ static float gamma_corr = 1.f;
 void Renderer::Init()
 {
 	settings = new Settings();
-	settings->tracerType = KAJIYA;
-	settings->antiAliasing = true;
 	bvh.BuildBvh( scene.primitives );
-	InitKernels();
+	InitBuffers();
+	InitWavefrontKernels();
+	InitPostProcKernels();
 }
 
 void Renderer::Shutdown() {}
@@ -42,7 +42,19 @@ void Renderer::Tick( float _deltaTime )
 		settings->frames = 1;
 	}
 
+	if (resetKernels)
+	{
+		InitWavefrontKernels();
+		resetKernels = false;
+	}
+
 	RayTrace();
+
+	if (showEnergy)
+	{
+		ComputeEnergy();
+	}
+
 	PostProc();
 
 	settings->frames++;
@@ -81,7 +93,6 @@ void Renderer::RayTrace()
 		shadeKernel->Run( settings->numInRays );
 
 		settingsBuffer->CopyFromDevice();
-		//printf( "%i\n", settings->numOutRays );
 		if (settings->numOutRays < MAX_RAYS) break;
 
 		settings->numInRays = settings->numOutRays;
@@ -125,23 +136,26 @@ void Renderer::PostProc()
 	displayKernel->Run( PIXELS );
 }
 
-void Renderer::InitKernels()
+void Renderer::ComputeEnergy()
 {
-	generateKernel = new Kernel( "src/cl/wavefront.cl", "generate" );
-	extendKernel = new Kernel( "src/cl/wavefront.cl", "extend" );
-	shadeKernel = new Kernel( "src/cl/wavefront.cl", "shade" );
-	resetKernel = new Kernel( "src/cl/wavefront.cl", "reset" );
+	accumBuffer->CopyFromDevice();
+	float4* pixels = (float4*)(accumBuffer->hostBuffer);
 
-	post_prepKernel = new Kernel( "src/cl/postproc.cl", "prep" );
-	post_vignetKernel = new Kernel( "src/cl/postproc.cl", "vignetting" );
-	post_gammaKernel = new Kernel( "src/cl/postproc.cl", "gammaCorr" );
-	post_chromaticKernel = new Kernel( "src/cl/postproc.cl", "chromatic" );
-	displayKernel = new Kernel( "src/cl/postproc.cl", "display" );
+	energy = 0;
+	for (int i = 0; i < PIXELS; i++)
+	{
+		energy += pixels[i].x;
+		energy += pixels[i].y;
+		energy += pixels[i].z;
+	}
 
-	saveImageKernel = new Kernel( "src/cl/postproc.cl", "saveImage" );
+	energy *= 1 / (float)(settings->frames);
+}
 
+void Renderer::InitBuffers()
+{
 	primBuffer = new Buffer( sizeof( Primitive ) * scene.primitives.size() );
-	texBuffer = new Buffer( sizeof( float4 ) * scene.textures.size() ); 
+	texBuffer = new Buffer( sizeof( float4 ) * scene.textures.size() );
 	matBuffer = new Buffer( sizeof( Material ) * scene.materials.size() );
 
 	ray1Buffer = new Buffer( 2 * PIXELS * sizeof( Ray ) );
@@ -160,8 +174,31 @@ void Renderer::InitKernels()
 	primBuffer->hostBuffer = (uint*)scene.primitives.data();
 	matBuffer->hostBuffer = (uint*)scene.materials.data();
 	texBuffer->hostBuffer = (uint*)scene.textures.data();
-	settingsBuffer->hostBuffer = (uint*) settings;
+	settingsBuffer->hostBuffer = (uint*)settings;
 	seedBuffer->hostBuffer = new uint[PIXELS];
+
+	primBuffer->CopyToDevice();
+	texBuffer->CopyToDevice();
+	matBuffer->CopyToDevice();
+}
+
+void Renderer::InitWavefrontKernels()
+{
+	std::vector<std::string> defines = {};
+	if (defineAntiAliasing) defines.push_back( "ANTIALIASING" );
+	switch (defineShadingType)
+	{
+		case SHADING_SIMPLE:
+			defines.push_back( "SHADING_SIMPLE" );
+			break;
+		case SHADING_NEE:
+			defines.push_back( "SHADING_NEE" );
+			break;
+	}
+
+	generateKernel = new Kernel( "src/cl/wavefront.cl", "generate", defines );
+	extendKernel = new Kernel( "src/cl/wavefront.cl", "extend", defines );
+	shadeKernel = new Kernel( "src/cl/wavefront.cl", "shade", defines );
 
 	settings->numPrimitives = scene.primitives.size();
 	settings->numLights = scene.lights.size();
@@ -182,14 +219,22 @@ void Renderer::InitKernels()
 	shadeKernel->SetArgument( 7, accumBuffer );
 	shadeKernel->SetArgument( 8, seedBuffer );
 
+	bvh.CopyToDevice();
+}
+
+void Renderer::InitPostProcKernels()
+{
+	post_prepKernel = new Kernel( "src/cl/postproc.cl", "prep" );
+	post_vignetKernel = new Kernel( "src/cl/postproc.cl", "vignetting" );
+	post_gammaKernel = new Kernel( "src/cl/postproc.cl", "gammaCorr" );
+	post_chromaticKernel = new Kernel( "src/cl/postproc.cl", "chromatic" );
+	displayKernel = new Kernel( "src/cl/postproc.cl", "display" );
+	saveImageKernel = new Kernel( "src/cl/postproc.cl", "saveImage" );
+	resetKernel = new Kernel( "src/cl/wavefront.cl", "reset" );
+
 	resetKernel->SetArguments( accumBuffer );
 
 	displayKernel->SetArguments( accumBuffer, screenBuffer );
-
-	primBuffer->CopyToDevice();
-	texBuffer->CopyToDevice();
-	matBuffer->CopyToDevice();
-	bvh.CopyToDevice();
 }
 
 void Tmpl8::Renderer::CamToDevice()
@@ -246,9 +291,14 @@ void Renderer::Gui()
 	}
 	if (ImGui::CollapsingHeader( "Render" ))
 	{
-		if (ImGui::Checkbox( "Anti-Aliasing", (bool*)(&(settings->antiAliasing)) )) camera.moved = true;
-		if (ImGui::RadioButton( "Whitted", &(settings->tracerType), WHITTED )) camera.moved = true;
-		if (ImGui::RadioButton( "Kajiya", &(settings->tracerType), KAJIYA )) camera.moved = true;
+		if (ImGui::Checkbox( "Anti-Aliasing", &defineAntiAliasing )) { camera.moved = true; resetKernels = true; }
+		if (ImGui::Checkbox( "Show Energy", &showEnergy )) { energy = 0; };
+		if (showEnergy)
+		{
+			ImGui::Text( "Total Energy: %f", energy );
+		}
+		if (ImGui::RadioButton( "Simple", &(settings->tracerType), SHADING_SIMPLE )) { resetKernels = true; }
+		if (ImGui::RadioButton( "NEE", &(settings->tracerType), SHADING_NEE )) { resetKernels = true; }
 	}
 	if (ImGui::CollapsingHeader( "Post Processing" ))
 	{

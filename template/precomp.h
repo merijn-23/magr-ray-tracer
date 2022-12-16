@@ -1361,7 +1361,7 @@ class Kernel
 	friend class Buffer;
 public:
 	// constructor / destructor
-	Kernel( char* file, char* entryPoint );
+	Kernel( char* file, char* entryPoint, const std::vector<std::string> defines = {} );
 	Kernel( cl_program& existingProgram, char* entryPoint );
 	~Kernel();
 	// get / set

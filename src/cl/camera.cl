@@ -10,10 +10,10 @@ Ray initPrimaryRay(int x, int y, Camera cam, Settings* settings, uint* seed)
 		float u = (float)x * (1.0f / SCRWIDTH);
 		float v = (float)y * (1.0f / SCRHEIGHT);
 
-		if (settings->antiAliasing) {
-			u += randomFloat(seed) / (float)SCRWIDTH;
-			v += randomFloat(seed) / (float)SCRHEIGHT;
-		}
+#ifdef ANTIALIASING
+		u += randomFloat(seed) / (float)SCRWIDTH;
+		v += randomFloat(seed) / (float)SCRHEIGHT;
+#endif
 
 		float4 P = cam.topLeft + u * cam.horizontal + v * cam.vertical;
 		float4 dir = normalize(P - cam.origin);
@@ -27,10 +27,10 @@ Ray initPrimaryRay(int x, int y, Camera cam, Settings* settings, uint* seed)
 		float u = (float)(x - SCRWIDTH * .5f) * (2.f / SCRWIDTH);
 		float v = (float)(y - SCRHEIGHT * .5f) * (2.f / SCRHEIGHT);
 
-		if (settings->antiAliasing) {
-			u += randomFloat(seed) / (float)SCRWIDTH;
-			v += randomFloat(seed) / (float)SCRHEIGHT;
-		}
+#ifdef ANTIALIASING
+		u += randomFloat( seed ) / (float)SCRWIDTH;
+		v += randomFloat( seed ) / (float)SCRHEIGHT;
+#endif
 
 		float r2 = u * u + v * v;
 		if (r2 > 1.0) return initRay((float4)(0), (float4)(0));

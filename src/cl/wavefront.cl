@@ -99,7 +99,14 @@ __kernel void shade(
 	Ray extensionRay = initRay( ( float4 )( 0 ), ( float4 )( 0 ) );
 	extensionRay.bounces = MAX_BOUNCES + 1;
 
-	float4 color = kajiyaShading( ray, &extensionRay, seed );
+	float4 color = (float4)(0);
+#ifdef SHADING_SIMPLE
+	color = kajiyaShading( ray, &extensionRay, seed );
+#endif
+#ifdef SHADING_NEE
+	color = (float4)(1);
+#endif
+
 	accum[ray->pixelIdx] += color;
 
 	if ( extensionRay.bounces <= MAX_BOUNCES )

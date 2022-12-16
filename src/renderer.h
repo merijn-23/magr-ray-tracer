@@ -3,6 +3,13 @@
 namespace Tmpl8
 {
 
+// Shading types
+#define SHADING_SIMPLE 0
+#define SHADING_NEE 1
+#define SHADING_NEEIS 2
+#define SHADING_NEEMIS 3
+
+
 class Renderer : public TheApp
 {
 public:
@@ -17,20 +24,30 @@ public:
 	void KeyInput(std::map<int, int>);
 	void Gui( );
 
-	void InitKernels();
+	void InitWavefrontKernels();
+	void InitPostProcKernels();
+	void InitBuffers();
 	void CamToDevice( );
 	void PostProc( );
 	void RayTrace( );
+	void ComputeEnergy();
 	void SaveFrame( const char* file );
 
 	// data members
 	float deltaTime;
-	int consecutiveFrames = 1;
 	int2 mousePos;
 	Scene scene;
 	CameraManager camera;
 	Settings* settings;
 	BVH bvh;
+
+	int consecutiveFrames = 1;
+	float energy = 0;
+	bool showEnergy = true;
+	bool resetFrame = false;
+	bool resetKernels = false;
+	bool defineAntiAliasing = true;
+	int defineShadingType = SHADING_SIMPLE;
 
 	Kernel* resetKernel;
 	Kernel* post_prepKernel;

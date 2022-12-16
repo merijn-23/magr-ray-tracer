@@ -15,6 +15,5 @@
 #define PROJECTION	0
 #define FISHEYE		1
 
-#define WHITTED 0 
-#define KAJIYA 1
+
 
