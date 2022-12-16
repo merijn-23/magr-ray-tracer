@@ -1,7 +1,7 @@
 #ifndef __RAY_CL
 #define __RAY_CL
 
-Ray initRay( float4 O, float4 D )
+Ray initRay( float4 O, float4 D, bool lastSpecular = false )
 {
 	Ray ray;
 	ray.O = O;
@@ -14,6 +14,7 @@ Ray initRay( float4 O, float4 D )
 	ray.primIdx = -1;
 	ray.bounces = 0;
 	ray.inside = false;
+	ray.lastSpecular = lastSpecular;
 	return ray;
 }
 

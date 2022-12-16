@@ -101,7 +101,7 @@ __kernel void shade(
 
 	float4 color = (float4)(0);
 #ifdef SHADING_SIMPLE
-	color = kajiyaShading( ray, &extensionRay, seed );
+	color = simpleShading( ray, &extensionRay, seed );
 #endif
 #ifdef SHADING_NEE
 	color = (float4)(1);

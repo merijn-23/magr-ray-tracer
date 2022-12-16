@@ -210,4 +210,50 @@ float4 getAlbedo( Ray* ray )
 	return albedo;
 }
 
+float4 getRandomPoint(Primitive* prim, uint* seed)
+{
+	switch(prim->objType)
+	{
+		case SPHERE:
+		{
+			// https://www.demonstrations.wolfram.com/RandomPointsOnASphere/
+			float theta = randomFloat(seed) * 2 * M_PI_F;
+			float u = randomFloat(seed) * 2 - 1;
+
+			float precomp = sqrt(1 - u * u);
+			float x = cos(theta) * precomp;
+			float y = sin(theta) * precomp;
+			return (float4)(x, y, u, 0) * sphere.r + sphere.pos;
+		}
+		case TRIANGLE:
+		{
+			// https://blogs.sas.com/content/iml/2020/10/19/random-points-in-triangle.html
+			float u1 = randomFloat(seed);
+			float u2 = randomFloat(seed);
+			if(u1 + u2 > 1)
+			{
+				u1 = 1 - u1;
+				u2 = 1 - u2;
+			}
+			float4 a = triangle.v1 - triangle.v0;
+			float4 b = triangle.v2 - triangle.v0;
+			return u1 * a + u2 * b;
+		}
+	}
+}
+
+float4 getArea(Primitive* prim)
+{
+	switch(prim->objType)
+	{
+		case SPHERE:
+			return 4 * M_PI_F * prim->sphere.r2;
+		case TRIANGLE:
+		{
+			Triangle t = prim->triangle;
+			return 0.5f * (t.v0.x * (t.v1.y - t.v2.y) + t.v1.x * (t.v2.y - t.v0.y) + t.v2.x * (t.v0.y - t.v1.y));
+		}
+	}
+}
+
 #endif // __PRIMITIVES_CL

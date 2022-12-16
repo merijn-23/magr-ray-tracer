@@ -7,7 +7,7 @@ typedef struct
 	float t;
 	// Index of primitive
 	int primIdx, bounces, pixelIdx;
-	bool inside;
+	bool inside, lastSpecular;
 	float u, v, w; // barycenter, is calculated upon intersection
 } Ray;
 

@@ -177,6 +177,10 @@ void Renderer::InitBuffers()
 	settingsBuffer->hostBuffer = (uint*)settings;
 	seedBuffer->hostBuffer = new uint[PIXELS];
 
+	primIdxBuffer = bvh.GetIdxBuffer();
+	bvhTreeBuffer = bvh.GetBVHNodeBuffer();
+
+
 	primBuffer->CopyToDevice();
 	texBuffer->CopyToDevice();
 	matBuffer->CopyToDevice();
@@ -207,8 +211,8 @@ void Renderer::InitWavefrontKernels()
 	generateKernel->SetArgument( 2, seedBuffer );
 
 	extendKernel->SetArgument( 1, primBuffer );
-	extendKernel->SetArgument( 2, bvh.GetBVHNodeBuffer() );
-	extendKernel->SetArgument( 3, bvh.GetIdxBuffer() );
+	extendKernel->SetArgument( 2, bvhTreeBuffer );
+	extendKernel->SetArgument( 3, primIdxBuffer );
 	extendKernel->SetArgument( 4, settingsBuffer );
 
 	shadeKernel->SetArgument( 2, shadowRayBuffer );
@@ -297,8 +301,8 @@ void Renderer::Gui()
 		{
 			ImGui::Text( "Total Energy: %f", energy );
 		}
-		if (ImGui::RadioButton( "Simple", &(settings->tracerType), SHADING_SIMPLE )) { resetKernels = true; }
-		if (ImGui::RadioButton( "NEE", &(settings->tracerType), SHADING_NEE )) { resetKernels = true; }
+		if (ImGui::RadioButton( "Simple", &defineShadingType, SHADING_SIMPLE )) { resetKernels = true; }
+		if (ImGui::RadioButton( "NEE", &defineShadingType, SHADING_NEE )) { resetKernels = true; }
 	}
 	if (ImGui::CollapsingHeader( "Post Processing" ))
 	{
