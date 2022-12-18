@@ -50,7 +50,7 @@ __kernel void extend(
 	work_group_barrier( CLK_GLOBAL_MEM_FENCE );
 
 	Ray* ray = rays + idx;
-#if 0
+#if 1
 	for ( int i = 0; i < settings->numPrimitives; i++ )
 		intersect( i, primitives + i, ray );
 #else

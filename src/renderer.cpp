@@ -13,7 +13,7 @@ void Renderer::Init()
 	settings = new Settings();
 	settings->tracerType = KAJIYA;
 	settings->antiAliasing = true;
-	bvh.BuildBvh( scene.primitives );
+	bvh.BuildBVH( scene.primitives );
 	InitKernels();
 }
 
@@ -228,13 +228,13 @@ void Renderer::KeyInput( std::map<int, int> keyMap )
 void Renderer::Gui()
 {
 	static char str0[128] = "";
-	ImGui::InputText( "Filename", str0, IM_ARRAYSIZE( str0 ) ); ImGui::SameLine();
+	ImGui::InputTextWithHint( "Screenshot", "filename", str0, IM_ARRAYSIZE( str0 ) );
 	if (ImGui::Button( "Save Image" ))
 	{
 		std::string input( str0 );
 		SaveFrame( ("screenshots/" + input + ".png").c_str() );
 	}
-
+	ImGui::Spacing( );
 	if (ImGui::CollapsingHeader( "Camera" ))
 	{
 		ImGui::SliderFloat( "Speed", &camera.speed, .01f, 1, "%.2f" );

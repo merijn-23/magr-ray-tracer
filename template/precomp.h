@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <assert.h>
 #include <io.h>
+#include <random>
 
 // header for AVX, and every technology before it.
 // if your CPU does not support this (unlikely), include the appropriate header instead.
@@ -459,6 +460,7 @@ uint RandomUInt( uint& seed );
 float RandomFloat();
 float RandomFloat( uint& seed );
 float Rand( float range );
+int RandomRangeInt( int low, int high );
 
 // Perlin noise
 float noise2D( const float x, const float y );

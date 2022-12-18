@@ -85,3 +85,9 @@ typedef struct
 	float4 aabbMin, aabbMax;
 	uint first, count;
 } BVHNode;
+
+typedef struct
+{
+	float4 aabbMin, aabbMax;
+	uint leftBLAS, isLeaf;
+} TLASNode;
