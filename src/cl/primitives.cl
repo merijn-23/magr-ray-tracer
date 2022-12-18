@@ -73,7 +73,6 @@ void intersectTriangle( int primIdx, Triangle tri, Ray* ray )
 	// set barycenter
 	ray->u = u;
 	ray->v = v;
-	ray->w = 1 - u - v;
 }
 
 void intersect( int primIdx, Primitive* prim, Ray* ray )
@@ -102,7 +101,7 @@ bool intersectAABB( Ray* ray, const float4 bmin, const float4 bmax )
 
 void intersectBVH( Ray* ray, BVHNode* bvhNode, uint* bvhIdx )
 {
-	BVHNode* stack[32];
+	BVHNode* stack[64];
 	BVHNode* node = &bvhNode[0];
 	uint stackPtr = 0;
 
@@ -112,7 +111,7 @@ void intersectBVH( Ray* ray, BVHNode* bvhNode, uint* bvhIdx )
 		{
 			for ( uint i = 0; i < node->count; i++ )
 			{
-				int index = bvhIdx[node->first + i];
+				int index = bvhIdx[node->left + i];
 				intersect( index, &primitives[index], ray );
 			}
 			if ( stackPtr == 0 ) break;
@@ -120,16 +119,16 @@ void intersectBVH( Ray* ray, BVHNode* bvhNode, uint* bvhIdx )
 			continue;
 		}
 
-		BVHNode* child1 = &bvhNode[node->first];
-		BVHNode* child2 = &bvhNode[node->first + 1];
+		BVHNode* child1 = &bvhNode[node->left];
+		BVHNode* child2 = &bvhNode[node->left + 1];
 		float dist1 = intersectAABB( ray, child1->aabbMin, child1->aabbMax );
 		float dist2 = intersectAABB( ray, child2->aabbMin, child2->aabbMax );
 
 		if ( dist1 > dist2 )
 		{
 			// swap
-			float temp1 = dist1; dist1 = dist2; dist2 = temp1;
-			BVHNode* temp2 = child1; child1 = child2; child2 = temp2;
+			float d = dist1; dist1 = dist2; dist2 = d;
+			BVHNode* c = child1; child1 = child2; child2 = c;
 		}
 
 		if ( dist1 == 1e30f )
@@ -140,6 +139,7 @@ void intersectBVH( Ray* ray, BVHNode* bvhNode, uint* bvhIdx )
 		else
 		{
 			node = child1;
+			if ( stackPtr + 1 > 64 ) printf( "oops\n" );
 			if ( dist2 != 1e30f ) stack[stackPtr++] = child2;
 		}
 	}
@@ -172,7 +172,7 @@ float4 getAlbedo( Ray* ray )
 			case TRIANGLE:
 			{
 				Triangle t = prim.objData.triangle;
-				float2 uv = ray->u * t.uv0 + ray->v * t.uv1 + ray->w * t.uv2;
+				float2 uv = ray->u * t.uv0 + ray->v * t.uv1 + ( 1 - ray->u - ray->v) * t.uv2;
 				uv = fmod( uv, ( float2 )( 1.f, 1.f ) );
 				if ( uv.x < 0 ) uv.x = 1 - uv.x;
 				if ( uv.y < 0 ) uv.y = 1 - uv.y;

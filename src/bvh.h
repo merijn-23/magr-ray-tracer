@@ -4,43 +4,25 @@
 
 class BVH {
 public:	
-	struct Bin { aabb bounds; int count = 0; };
-	BVH() = default;
-	void BuildBVH(std::vector<Primitive>& primitives);
-	void Refit( std::vector<Primitive>& );
-	Buffer* GetIdxBuffer();
-	Buffer* GetBVHNodeBuffer();
-	void CopyToDevice();
+	BVH(std::vector<Primitive>&);
+	void Build();
+	uint Depth(BVHNode );
+	std::vector<BVHNode> bvhNode;
+	std::vector<uint> bvhIdx;
 
 private:
-	void UpdateNodeBounds(uint nodeIdx, std::vector<Primitive>& primitives);
+	void UpdateNodeBounds(uint nodeIdx);
 	void UpdateTriangleBounds( BVHNode& node, Triangle& triangle );
 	void UpdateSphereBounds( BVHNode& node, Sphere& sphere );
 	
-	float FindBestSplitPlane( BVHNode& node, int& axis, float& splitPos, vector<Primitive> primitives );
-	float CalculateNodeCost( BVHNode& node );
-		
-	void Subdivide(uint nodeIdx, std::vector<Primitive>& primitives);
+	float FindBestSplitPlane( BVHNode& node, int& axis, float& splitPos );
+	float CalculateNodeCost( BVHNode& node );		
+	void Subdivide(uint nodeIdx);
 
-	std::vector<BVHNode> bvhNode_;
-	std::vector<uint> primIdx_;
-	Buffer* bvhNodeBuffer_;
-	Buffer* primIdxBuffer_;
+	std::vector<Primitive>& primitives_;
 
 	uint rootNodeIdx_, nodesUsed_;
-	uint N_;
+	uint count_;
+	uint subdivisions_ = 0;
 	static const int bins__ = 8;
-};
-
-class TLAS
-{
-public:
-	TLAS( ) = default;
-	TLAS( std::vector<BVH>&& );
-	void Build( );
-
-private:
-	std::vector<TLASNode> tlasNode_;
-	std::vector<BVH> blas_;
-	uint nodesUsed_;
 };

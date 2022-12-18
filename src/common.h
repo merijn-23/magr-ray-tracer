@@ -8,7 +8,7 @@ typedef struct
 	// Index of primitive
 	int primIdx, bounces, pixelIdx;
 	bool inside;
-	float u, v, w; // barycenter, is calculated upon intersection
+	float u, v; // barycenter, is calculated upon intersection
 } Ray;
 
 typedef struct
@@ -83,11 +83,5 @@ typedef struct
 typedef struct
 {
 	float4 aabbMin, aabbMax;
-	uint first, count;
+	uint left, count;
 } BVHNode;
-
-typedef struct
-{
-	float4 aabbMin, aabbMax;
-	uint leftBLAS, isLeaf;
-} TLASNode;
