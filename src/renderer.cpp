@@ -13,7 +13,7 @@ void Renderer::Init()
 	settings = new Settings();
 	settings->tracerType = KAJIYA;
 	settings->antiAliasing = true;
-	bvh.BuildBVH( scene.primitives );
+	bvh = new BVH(scene.primitives );
 	InitKernels();
 }
 
@@ -166,12 +166,17 @@ void Renderer::InitKernels()
 	settings->numPrimitives = scene.primitives.size();
 	settings->numLights = scene.lights.size();
 
+	bvhNodeBuffer = new Buffer( sizeof( uint ) * bvh->bvhNode.size( ) );
+	bvhNodeBuffer->hostBuffer = (uint*)bvh->bvhNode.data( );
+	bvhIdxBuffer = new Buffer( sizeof( uint ) * bvh->bvhIdx.size( ) );
+	bvhIdxBuffer->hostBuffer = (uint*)bvh->bvhIdx.data( );
+
 	generateKernel->SetArgument( 1, settingsBuffer );
 	generateKernel->SetArgument( 2, seedBuffer );
 
 	extendKernel->SetArgument( 1, primBuffer );
-	extendKernel->SetArgument( 2, bvh.GetBVHNodeBuffer() );
-	extendKernel->SetArgument( 3, bvh.GetIdxBuffer() );
+	extendKernel->SetArgument( 2, bvhNodeBuffer );
+	extendKernel->SetArgument( 3, bvhIdxBuffer );
 	extendKernel->SetArgument( 4, settingsBuffer );
 
 	shadeKernel->SetArgument( 2, shadowRayBuffer );
@@ -189,7 +194,8 @@ void Renderer::InitKernels()
 	primBuffer->CopyToDevice();
 	texBuffer->CopyToDevice();
 	matBuffer->CopyToDevice();
-	bvh.CopyToDevice();
+	bvhNodeBuffer->CopyToDevice( );
+	bvhIdxBuffer->CopyToDevice( );
 }
 
 void Tmpl8::Renderer::CamToDevice()

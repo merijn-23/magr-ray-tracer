@@ -30,7 +30,7 @@ public:
 	Scene scene;
 	CameraManager camera;
 	Settings* settings;
-	BVH bvh;
+	BVH* bvh;
 
 	Kernel* resetKernel;
 	Kernel* post_prepKernel;
@@ -67,6 +67,10 @@ public:
 	Buffer* seedBuffer;
 	Buffer* primIdxBuffer;
 	Buffer* bvhTreeBuffer;
+
+	// BVH buffers
+	Buffer* bvhNodeBuffer;
+	Buffer* bvhIdxBuffer;
 };
 
 } // namespace Tmpl8

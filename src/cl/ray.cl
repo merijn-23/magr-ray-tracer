@@ -10,13 +10,12 @@ Ray initRay( float4 O, float4 D )
 	ray.N = (float4)(0);
 	ray.I = (float4)(0);
 	ray.intensity = (float4)(1);
-	ray.t = 1e34f;
+	ray.t = 1e30f;
 	ray.primIdx = -1;
 	ray.bounces = 0;
 	ray.inside = false;
 	return ray;
 }
-
 
 Ray reflect( Ray* ray )
 {

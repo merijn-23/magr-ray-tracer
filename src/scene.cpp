@@ -141,10 +141,8 @@ namespace Tmpl8
 		//LoadModel("assets/bunny_low_poly.obj", "white", float3(.5 + offset, 0, 0));
 
 #else
-
-
-		//LoadModel( "assets/cube.obj", "green-glass", float3( 0 ) );
-		int high = 30;
+		LoadModel( "assets/teapot.obj", "white", float3( 0 ) );
+		/*int high = 30;
 		int low = -high;
 
 		int tlow = -5;
@@ -170,16 +168,13 @@ namespace Tmpl8
 				float radius = Rand( 2 );
 				AddSphere( pos, radius, "white-light" );
 			}
-		}
+		}*/
 #endif
 
 		lights.resize( 3 );
 		lights[0] = Light{ float4( 2, 0, 3, 0 ), float4( 1, 1, .8f, 0 ), 2, -1 };
 		lights[1] = Light{ float4( 1, 0, -5, 0 ), float4( 1, 1, .8f, 0 ), 2, -1 };
 		lights[2] = Light{ float4( -2, 0, 0, 0 ), float4( 1, 1, .8f, 0 ), 1, -1 };
-
-
-
 		SetTime( 0 );
 		// Note: once we have triangle support we should get rid of the class
 		// hierarchy: virtuals reduce performance somewhat.
@@ -187,7 +182,6 @@ namespace Tmpl8
 
 	Scene::~Scene( )
 	{
-
 	}
 
 	void Scene::SetTime( float t )
@@ -197,7 +191,6 @@ namespace Tmpl8
 		animTime = t * .1f;
 		//lights[0].pos.x = sin(animTime) + 1;
 		//lights[0].pos.y = sin(animTime + PI * 0.5) * 0.5f;
-
 		// sphere animation: bounce
 		float tm = 1 - sqrf( fmodf( animTime, 2.0f ) - 1 );
 		//spheres[0].pos.y = -0.5f + tm;
@@ -214,7 +207,6 @@ namespace Tmpl8
 		default.texIdx = -1;
 		default.texH = 0;
 		default.texW = 0;
-
 		materials.push_back( default );
 		matMap_[name] = matIdx_;
 		matIdx_++;
@@ -245,12 +237,6 @@ namespace Tmpl8
 
 	void Scene::AddTriangle( float3 v0, float3 v1, float3 v2, float2 uv0, float2 uv1, float2 uv2, std::string material )
 	{
-		float3 v0v1 = v1 - v0;
-		float3 v0v2 = v2 - v0;
-		float3 N = normalize( cross( v0v1, v0v2 ) );
-		float3 centroid = ( v0 + v1 + v2 ) * 0.3333f;
-
-		// create primitive
 		Primitive prim;
 		prim.objType = TRIANGLE;
 		prim.objData.triangle.v0 = v0;
@@ -259,8 +245,8 @@ namespace Tmpl8
 		prim.objData.triangle.uv0 = uv0;
 		prim.objData.triangle.uv1 = uv1;
 		prim.objData.triangle.uv2 = uv2;
-		prim.objData.triangle.N = N;
-		prim.objData.triangle.centroid = centroid;
+		prim.objData.triangle.N = normalize( cross( v1 - v0, v2 - v0 ) );
+		prim.objData.triangle.centroid = ( v0 + v1 + v2 ) * 0.3333f;
 		prim.matIdx = matMap_[material];
 		primitives.push_back( prim );
 	}
@@ -270,21 +256,17 @@ namespace Tmpl8
 		cout << "Loading model: " << filename << "..." << endl;
 		tinyobj::ObjReaderConfig readerConfig;
 		tinyobj::ObjReader reader;
-
 		if ( !reader.ParseFromFile( filename, readerConfig ) )
 		{
 			if ( !reader.Error( ).empty( ) )
 				std::cerr << "E/TinyObjReader: " << reader.Error( ) << std::endl;
 			return;
 		}
-
 		if ( !reader.Warning( ).empty( ) )
 			std::cout << "W/TinyObjReader: " << reader.Warning( ) << std::endl;
-
 		auto& attrib = reader.GetAttrib( );
 		auto& shapes = reader.GetShapes( );
 		auto& materials = reader.GetMaterials( );
-
 		// loop over shapes
 		for ( size_t s = 0; s < shapes.size( ); s++ )
 		{
@@ -293,7 +275,6 @@ namespace Tmpl8
 			for ( size_t f = 0; f < shapes[s].mesh.num_face_vertices.size( ); f++ )
 			{
 				size_t fv = size_t( shapes[s].mesh.num_face_vertices[f] );
-
 				// loop over vertices in the face.
 				std::vector<float3> vertices;
 				std::vector<float2> texcoords;
@@ -316,16 +297,12 @@ namespace Tmpl8
 					}
 					texcoords.push_back( float2( tx, ty ) );
 				}
-
 				// reverse the vector to get the correct vertex order
 				std::reverse( vertices.begin( ), vertices.end( ) );
 
 				for ( size_t v = 0, t = 0; v < vertices.size( ); )
-					AddTriangle(
-						vertices[v++], vertices[v++], vertices[v++],
+					AddTriangle( vertices[v++], vertices[v++], vertices[v++],
 						texcoords[t++], texcoords[t++], texcoords[t++], material );
-
-
 				index_offset += fv;
 			}
 		}
@@ -337,10 +314,8 @@ namespace Tmpl8
 		int width, height, n;
 		float3* data = LoadImageF( filename.c_str( ), width, height, n );
 		int size = width * height;
-
 		int texIdx = textures.size( );
 		textures.insert( textures.end( ), &data[0], &data[size] );
-
 		auto& mat = AddMaterial( name );
 		mat.texIdx = texIdx;
 		mat.isDieletric = false;

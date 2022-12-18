@@ -1,63 +1,54 @@
 #include "precomp.h"
 
-#define DEBUG_BVH
+//#define DEBUG_BVH
 
-void BVH::BuildBVH( std::vector<Primitive>& primitives )
+BVH::BVH( std::vector<Primitive>& primitives ) : primitives_( primitives )
 {
 	rootNodeIdx_ = 0;
+	count_ = primitives_.size( );
+	bvhNode.resize( count_ * 2 );
+	bvhIdx.resize( count_ );
 	nodesUsed_ = 2; // 0 is root, 1 is for cache alignment
+	Build( );
+	printf( "Nodes used: %i\n", nodesUsed_ );
+	printf( "Depth: %i\n", Depth( bvhNode[0] ) );
+	for( auto& node : bvhNode ) if ( node.count > 0 ) cout << "node count " << node.count << endl;
+}
 
-	N_ = primitives.size( );
-	bvhNode_.resize( N_ * 2 );
-	primIdx_.resize( N_ );
-	printf( "Idx size: %i\n", N_ );
+uint BVH::Depth( BVHNode node )
+{
+	if ( node.count == 0 ) return 0;
+	else
+	{
+		uint lDepth = Depth( bvhNode[node.left] );
+		uint rDepth = Depth( bvhNode[node.left + 1] );
+		if ( lDepth > rDepth ) return ( lDepth + 1 );
+		else return ( rDepth + 1 );
+	}
+}
+
+void BVH::Build( )
+{	
 	// populate triangle index array
-	for ( int i = 0; i < N_; i++ ) primIdx_[i] = i;
-
+	for ( int i = 0; i < count_; i++ ) bvhIdx[i] = i;
 	printf( "Building BVH...\n" );
-	BVHNode& root = bvhNode_[rootNodeIdx_];
-	root.first = 0, root.count = N_;
-	UpdateNodeBounds( rootNodeIdx_, primitives );
+	BVHNode& root = bvhNode[rootNodeIdx_];
+	root.left = rootNodeIdx_, root.count = count_;
+	UpdateNodeBounds( rootNodeIdx_ );
 	// subdivide recursively
 	Timer t;
-	Subdivide( rootNodeIdx_, primitives );
+	Subdivide( rootNodeIdx_ );
 	printf( "BVH constructed in %.2fms.\n", t.elapsed( ) * 1000 );
 }
 
-void BVH::Refit( std::vector<Primitive>& primitives )
+void BVH::UpdateNodeBounds( uint nodeIdx )
 {
-	Timer t;
-	for ( int i = nodesUsed_ - 1; i >= 0; i-- ) if ( i != 1 )
-	{
-		BVHNode& node = bvhNode_[i];
-		if ( node.count > 0 )
-		{
-			// leaf node: adjust bounds to contained triangles
-			UpdateNodeBounds( i, primitives );
-			continue;
-		}
-		// interior node: adjust bounds to child node bounds
-		BVHNode& leftChild = bvhNode_[node.first];
-		BVHNode& rightChild = bvhNode_[node.first + 1];
-		node.aabbMin = fminf( leftChild.aabbMin, rightChild.aabbMin );
-		node.aabbMax = fmaxf( leftChild.aabbMax, rightChild.aabbMax );
-	}
-	printf( "BVH refitted in %.2fms  ", t.elapsed( ) * 1000 );
-}
-
-void BVH::UpdateNodeBounds( uint nodeIdx, std::vector<Primitive>& primitives )
-{
-#ifdef DEBUG_BVH
-	printf( "Updating node bounds: %i\n", nodeIdx );
-#endif
-
-	BVHNode& node = bvhNode_[nodeIdx];
+	BVHNode& node = bvhNode[nodeIdx];
 	node.aabbMin = float3( 1e30f );
 	node.aabbMax = float3( -1e30f );
-	for ( uint first = node.first, i = 0; i < node.count; i++ )
+	for ( uint left = node.left, i = 0; i < node.count; i++ )
 	{
-		uint leafPrimIdx = primIdx_[first + i];
-		Primitive& prim = primitives[leafPrimIdx];
+		Primitive& prim = primitives_[bvhIdx[left + i]];
 		switch ( prim.objType )
 		{
 			case TRIANGLE: UpdateTriangleBounds( node, prim.objData.triangle ); break;
@@ -68,9 +59,6 @@ void BVH::UpdateNodeBounds( uint nodeIdx, std::vector<Primitive>& primitives )
 
 void BVH::UpdateTriangleBounds( BVHNode& node, Triangle& triangle )
 {
-#ifdef DEBUG_BVH
-	printf( "Updating triangle bounds: %i\n", node.first );
-#endif
 	node.aabbMin = fminf( node.aabbMin, triangle.v0 );
 	node.aabbMin = fminf( node.aabbMin, triangle.v1 );
 	node.aabbMin = fminf( node.aabbMin, triangle.v2 );
@@ -81,50 +69,47 @@ void BVH::UpdateTriangleBounds( BVHNode& node, Triangle& triangle )
 
 void BVH::UpdateSphereBounds( BVHNode& node, Sphere& sphere )
 {
-#ifdef DEBUG_BVH
-	printf( "Updating sphere bounds: %i\n", node.first );
-#endif
 	node.aabbMin = sphere.pos - sphere.r;
 	node.aabbMax = sphere.pos + sphere.r;
 }
 
-float BVH::FindBestSplitPlane( BVHNode& node, int& axis, float& splitPos, vector<Primitive> primitives )
+float BVH::FindBestSplitPlane( BVHNode& node, int& axis, float& splitPos)
 {
 	float bestCost = 1e30f;
-	for ( int axis = 0; axis < 3; axis++ )
+	for ( int a = 0; a < 3; a++ )
 	{
 		float boundsMin = 1e30f, boundsMax = -1e30f;
 		for ( uint i = 0; i < node.count; i++ )
 		{
-			Primitive& prim = primitives[primIdx_[node.first + i]];
+			Primitive& prim = primitives_[bvhIdx[node.left + i]];
 			switch ( prim.objType )
 			{
 				case TRIANGLE:
 				{
-					boundsMin = min( boundsMin, prim.objData.triangle.centroid[axis] );
-					boundsMax = max( boundsMax, prim.objData.triangle.centroid[axis] );
+					boundsMin = min( boundsMin, prim.objData.triangle.centroid[a] );
+					boundsMax = max( boundsMax, prim.objData.triangle.centroid[a] );
 				} break;
 				case SPHERE:
 				{
-					boundsMin = min( boundsMin, prim.objData.sphere.pos[axis] );
-					boundsMax = max( boundsMax, prim.objData.sphere.pos[axis] );
+					boundsMin = min( boundsMin, prim.objData.sphere.pos[a] );
+					boundsMax = max( boundsMax, prim.objData.sphere.pos[a] );
 				} break;
 				default: continue;
 			}
 		}
 		if ( boundsMin == boundsMax ) continue;
 		// populate the bins
-		Bin bin[bins__];
+		struct Bin { aabb bounds; int count = 0; } bin[bins__];
 		float scale = bins__ / ( boundsMax - boundsMin );
 		for ( uint i = 0; i < node.count; i++ )
 		{
-			Primitive& prim = primitives[primIdx_[node.first + i]];
+			Primitive& prim = primitives_[bvhIdx[node.left + i]];
 			switch ( prim.objType )
 			{
 				case TRIANGLE:
 				{
 					Triangle& tri = prim.objData.triangle;
-					int binIdx = min( bins__ - 1, (int)( ( tri.centroid[axis] - boundsMin ) * scale ) );
+					int binIdx = min( bins__ - 1, (int)( ( tri.centroid[a] - boundsMin ) * scale ) );
 					bin[binIdx].count++;
 					bin[binIdx].bounds.Grow( tri.v0 );
 					bin[binIdx].bounds.Grow( tri.v1 );
@@ -133,7 +118,7 @@ float BVH::FindBestSplitPlane( BVHNode& node, int& axis, float& splitPos, vector
 				case SPHERE:
 				{
 					Sphere& sphere = prim.objData.sphere;
-					int binIdx = min( bins__ - 1, (int)( ( sphere.pos[axis] - boundsMin ) * scale ) );
+					int binIdx = min( bins__ - 1, (int)( ( sphere.pos[a] - boundsMin ) * scale ) );
 					bin[binIdx].count++;
 					bin[binIdx].bounds.Grow( sphere.pos - sphere.r );
 					bin[binIdx].bounds.Grow( sphere.pos + sphere.r );
@@ -162,7 +147,7 @@ float BVH::FindBestSplitPlane( BVHNode& node, int& axis, float& splitPos, vector
 		{
 			float planeCost = leftCount[i] * leftArea[i] + rightCount[i] * rightArea[i];
 			if ( planeCost < bestCost )
-				axis = axis, splitPos = boundsMin + scale * ( i + 1 ), bestCost = planeCost;
+				axis = a, splitPos = boundsMin + scale * ( i + 1 ), bestCost = planeCost;
 		}
 	}
 	return bestCost;
@@ -175,85 +160,53 @@ float BVH::CalculateNodeCost( BVHNode& node )
 	return node.count * surfaceArea;
 }
 
-void BVH::Subdivide( uint nodeIdx, std::vector<Primitive>& primitives )
+void BVH::Subdivide( uint nodeIdx)
 {
 #ifdef DEBUG_BVH
 	printf( "Subdividing: %i\n", nodeIdx );
+	printf( "Subdivisions: %i\n", subdivisions_++ );
 #endif
 	// terminate recursion
-	BVHNode& node = bvhNode_[nodeIdx];
+	BVHNode& node = bvhNode[nodeIdx];
 	// determine split axis using SAH
 	int axis;
 	float splitPos;
-	float splitCost = FindBestSplitPlane( node, axis, splitPos, primitives );
+	float splitCost = FindBestSplitPlane( node, axis, splitPos);
 	float nosplitCost = CalculateNodeCost( node );
 	if ( splitCost >= nosplitCost ) return;
 	// in-place partition
-	int i = node.first;
+	int i = node.left;
 	int j = i + node.count - 1;
+	cout << "SUBDIVIDE 195/ node.count = " << node.count << endl;
 	while ( i <= j )
 	{
 		float center = 0;
-		Primitive& prim = primitives[primIdx_[i]];
+		Primitive& prim = primitives_[bvhIdx[i]];
 		switch ( prim.objType )
 		{
 			case TRIANGLE: center = prim.objData.triangle.centroid[axis]; break;
 			case SPHERE: center = prim.objData.sphere.pos[axis]; break;
 			default: continue;
 		}
-
-		if ( center < splitPos )
-			i++;
-		else
-			swap( primIdx_[i], primIdx_[j--] );
+		if ( center < splitPos ) i++;
+		else swap( bvhIdx[i], bvhIdx[j--] );
 	}
 	// abort split if one of the sides is empty
-	int leftCount = i - node.first;
+	int leftCount = i - node.left;
 	if ( leftCount == 0 || leftCount == node.count ) return;
 	// create child nodes
 	int leftChildIdx = nodesUsed_++;
 	int rightChildIdx = nodesUsed_++;
-	bvhNode_[leftChildIdx].first = node.first;
-	bvhNode_[leftChildIdx].count = leftCount;
-	bvhNode_[rightChildIdx].first = i;
-	bvhNode_[rightChildIdx].count = node.count - leftCount;
-	node.first = leftChildIdx;
+	bvhNode[leftChildIdx].left = node.left;
+	bvhNode[leftChildIdx].count = leftCount;
+	bvhNode[rightChildIdx].left = i;
+	bvhNode[rightChildIdx].count = node.count - leftCount;
+	node.left = leftChildIdx;
+	cout << "SUBDIVIDE 222/ node.count = " << node.count << endl;
 	node.count = 0;
-	UpdateNodeBounds( leftChildIdx, primitives );
-	UpdateNodeBounds( rightChildIdx, primitives );
+	UpdateNodeBounds( leftChildIdx);
+	UpdateNodeBounds( rightChildIdx);
 	// recurse
-	Subdivide( leftChildIdx, primitives );
-	Subdivide( rightChildIdx, primitives );
-}
-
-Buffer* BVH::GetBVHNodeBuffer( )
-{
-	delete[] bvhNodeBuffer_;
-	bvhNodeBuffer_ = new Buffer( sizeof( uint ) * bvhNode_.size( ) );
-	bvhNodeBuffer_->hostBuffer = (uint*)bvhNode_.data( );
-	return bvhNodeBuffer_;
-}
-
-Buffer* BVH::GetIdxBuffer( )
-{
-	delete[] primIdxBuffer_;
-	primIdxBuffer_ = new Buffer( sizeof( uint ) * primIdx_.size( ) );
-	primIdxBuffer_->hostBuffer = (uint*)primIdx_.data( );
-	return primIdxBuffer_;
-}
-
-void BVH::CopyToDevice( )
-{
-	bvhNodeBuffer_->CopyToDevice( );
-	primIdxBuffer_->CopyToDevice( );
-}
-
-//----------------------------------------------------------------------------
-// TLAS
-//----------------------------------------------------------------------------
-
-TLAS::TLAS( std::vector<BVH>&& bvhList) : blas_(std::move(bvhList) )
-{
-	tlasNode_.resize( blas_.size( ) * 2 );
-	nodesUsed_ = 2;
+	Subdivide( leftChildIdx);
+	Subdivide( rightChildIdx);
 }
