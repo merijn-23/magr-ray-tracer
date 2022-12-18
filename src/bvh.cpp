@@ -1,13 +1,20 @@
 #include "precomp.h"
 
-void BVH::BuildBvh( std::vector<Primitive>& primitives )
+#define DEBUG_BVH
+
+void BVH::BuildBVH( std::vector<Primitive>& primitives )
 {
+	rootNodeIdx_ = 0;
+	nodesUsed_ = 2; // 0 is root, 1 is for cache alignment
+
 	N_ = primitives.size( );
 	bvhNode_.resize( N_ * 2 );
 	primIdx_.resize( N_ );
+	printf( "Idx size: %i\n", N_ );
 	// populate triangle index array
 	for ( int i = 0; i < N_; i++ ) primIdx_[i] = i;
 
+	printf( "Building BVH...\n" );
 	BVHNode& root = bvhNode_[rootNodeIdx_];
 	root.first = 0, root.count = N_;
 	UpdateNodeBounds( rootNodeIdx_, primitives );
@@ -17,8 +24,33 @@ void BVH::BuildBvh( std::vector<Primitive>& primitives )
 	printf( "BVH constructed in %.2fms.\n", t.elapsed( ) * 1000 );
 }
 
+void BVH::Refit( std::vector<Primitive>& primitives )
+{
+	Timer t;
+	for ( int i = nodesUsed_ - 1; i >= 0; i-- ) if ( i != 1 )
+	{
+		BVHNode& node = bvhNode_[i];
+		if ( node.count > 0 )
+		{
+			// leaf node: adjust bounds to contained triangles
+			UpdateNodeBounds( i, primitives );
+			continue;
+		}
+		// interior node: adjust bounds to child node bounds
+		BVHNode& leftChild = bvhNode_[node.first];
+		BVHNode& rightChild = bvhNode_[node.first + 1];
+		node.aabbMin = fminf( leftChild.aabbMin, rightChild.aabbMin );
+		node.aabbMax = fmaxf( leftChild.aabbMax, rightChild.aabbMax );
+	}
+	printf( "BVH refitted in %.2fms  ", t.elapsed( ) * 1000 );
+}
+
 void BVH::UpdateNodeBounds( uint nodeIdx, std::vector<Primitive>& primitives )
 {
+#ifdef DEBUG_BVH
+	printf( "Updating node bounds: %i\n", nodeIdx );
+#endif
+
 	BVHNode& node = bvhNode_[nodeIdx];
 	node.aabbMin = float3( 1e30f );
 	node.aabbMax = float3( -1e30f );
@@ -36,6 +68,9 @@ void BVH::UpdateNodeBounds( uint nodeIdx, std::vector<Primitive>& primitives )
 
 void BVH::UpdateTriangleBounds( BVHNode& node, Triangle& triangle )
 {
+#ifdef DEBUG_BVH
+	printf( "Updating triangle bounds: %i\n", node.first );
+#endif
 	node.aabbMin = fminf( node.aabbMin, triangle.v0 );
 	node.aabbMin = fminf( node.aabbMin, triangle.v1 );
 	node.aabbMin = fminf( node.aabbMin, triangle.v2 );
@@ -46,90 +81,113 @@ void BVH::UpdateTriangleBounds( BVHNode& node, Triangle& triangle )
 
 void BVH::UpdateSphereBounds( BVHNode& node, Sphere& sphere )
 {
+#ifdef DEBUG_BVH
+	printf( "Updating sphere bounds: %i\n", node.first );
+#endif
 	node.aabbMin = sphere.pos - sphere.r;
 	node.aabbMax = sphere.pos + sphere.r;
 }
 
-float BVH::EvaluateSAH( BVHNode& node, int axis, float pos, std::vector<Primitive>& primitives )
+float BVH::FindBestSplitPlane( BVHNode& node, int& axis, float& splitPos, vector<Primitive> primitives )
 {
-	// determine triangle counts and bounds for this split candidate
-	aabb leftBox, rightBox;
-	int leftCount = 0, rightCount = 0;
-	for ( uint i = 0; i < node.count; i++ )
+	float bestCost = 1e30f;
+	for ( int axis = 0; axis < 3; axis++ )
 	{
-		Primitive& prim = primitives[primIdx_[node.first + i]];
-		switch ( prim.objType )
+		float boundsMin = 1e30f, boundsMax = -1e30f;
+		for ( uint i = 0; i < node.count; i++ )
 		{
-			case TRIANGLE: 
+			Primitive& prim = primitives[primIdx_[node.first + i]];
+			switch ( prim.objType )
 			{
-				Triangle& tri = prim.objData.triangle;
-				if ( tri.centroid[axis] < pos )
+				case TRIANGLE:
 				{
-					leftCount++;
-					leftBox.Grow( tri.v0 );
-					leftBox.Grow( tri.v1 );
-					leftBox.Grow( tri.v2 );
-				}
-				else
+					boundsMin = min( boundsMin, prim.objData.triangle.centroid[axis] );
+					boundsMax = max( boundsMax, prim.objData.triangle.centroid[axis] );
+				} break;
+				case SPHERE:
 				{
-					rightCount++;
-					rightBox.Grow( tri.v0 );
-					rightBox.Grow( tri.v1 );
-					rightBox.Grow( tri.v2 );
-				}
-			} break;
-			case SPHERE:
-			{
-				Sphere& sphere = prim.objData.sphere;
-				if ( sphere.pos[axis] < pos )
-				{
-					leftCount++;
-					leftBox.Grow( sphere.pos - sphere.r );
-				}
-				else
-				{
-					rightCount++;
-					rightBox.Grow( sphere.pos + sphere.r );
-				}
-			}break;
-			default: continue;
+					boundsMin = min( boundsMin, prim.objData.sphere.pos[axis] );
+					boundsMax = max( boundsMax, prim.objData.sphere.pos[axis] );
+				} break;
+				default: continue;
+			}
 		}
-
-		
+		if ( boundsMin == boundsMax ) continue;
+		// populate the bins
+		Bin bin[bins__];
+		float scale = bins__ / ( boundsMax - boundsMin );
+		for ( uint i = 0; i < node.count; i++ )
+		{
+			Primitive& prim = primitives[primIdx_[node.first + i]];
+			switch ( prim.objType )
+			{
+				case TRIANGLE:
+				{
+					Triangle& tri = prim.objData.triangle;
+					int binIdx = min( bins__ - 1, (int)( ( tri.centroid[axis] - boundsMin ) * scale ) );
+					bin[binIdx].count++;
+					bin[binIdx].bounds.Grow( tri.v0 );
+					bin[binIdx].bounds.Grow( tri.v1 );
+					bin[binIdx].bounds.Grow( tri.v2 );
+				} break;
+				case SPHERE:
+				{
+					Sphere& sphere = prim.objData.sphere;
+					int binIdx = min( bins__ - 1, (int)( ( sphere.pos[axis] - boundsMin ) * scale ) );
+					bin[binIdx].count++;
+					bin[binIdx].bounds.Grow( sphere.pos - sphere.r );
+					bin[binIdx].bounds.Grow( sphere.pos + sphere.r );
+				}break;
+			}
+		}
+		// gather data for the 7 planes between the 8 bins
+		float leftArea[bins__ - 1], rightArea[bins__ - 1];
+		int leftCount[bins__ - 1], rightCount[bins__ - 1];
+		aabb leftBox, rightBox;
+		int leftSum = 0, rightSum = 0;
+		for ( int i = 0; i < bins__ - 1; i++ )
+		{
+			leftSum += bin[i].count;
+			leftCount[i] = leftSum;
+			leftBox.Grow( bin[i].bounds );
+			leftArea[i] = leftBox.Area( );
+			rightSum += bin[bins__ - 1 - i].count;
+			rightCount[bins__ - 2 - i] = rightSum;
+			rightBox.Grow( bin[bins__ - 1 - i].bounds );
+			rightArea[bins__ - 2 - i] = rightBox.Area( );
+		}
+		// calculate SAH cost for the 7 planes
+		scale = ( boundsMax - boundsMin ) / bins__;
+		for ( int i = 0; i < bins__ - 1; i++ )
+		{
+			float planeCost = leftCount[i] * leftArea[i] + rightCount[i] * rightArea[i];
+			if ( planeCost < bestCost )
+				axis = axis, splitPos = boundsMin + scale * ( i + 1 ), bestCost = planeCost;
+		}
 	}
-	float cost = leftCount * leftBox.Area( ) + rightCount * rightBox.Area( );
-	return cost > 0 ? cost : 1e30f;
+	return bestCost;
+}
+
+float BVH::CalculateNodeCost( BVHNode& node )
+{
+	float3 e = node.aabbMax - node.aabbMin; // extent of the node
+	float surfaceArea = e.x * e.y + e.y * e.z + e.z * e.x;
+	return node.count * surfaceArea;
 }
 
 void BVH::Subdivide( uint nodeIdx, std::vector<Primitive>& primitives )
 {
+#ifdef DEBUG_BVH
+	printf( "Subdividing: %i\n", nodeIdx );
+#endif
 	// terminate recursion
 	BVHNode& node = bvhNode_[nodeIdx];
-	if ( node.count <= 2 ) return;
 	// determine split axis using SAH
-	int bestAxis = -1;
-	float bestPos = 0, bestCost = 1e30f;
-	for ( int axis = 0; axis < 3; axis++ ) for ( uint i = 0; i < node.count; i++ )
-	{
-		Primitive& prim = primitives[primIdx_[node.first + i]];
-		float candidatePos;
-		switch ( prim.objType )
-		{
-			case TRIANGLE: candidatePos = prim.objData.triangle.centroid[axis]; break;
-			case SPHERE: candidatePos = prim.objData.sphere.pos[axis]; break;
-			default: continue;
-		}
-		
-		float cost = EvaluateSAH( node, axis, candidatePos, primitives );
-		if ( cost < bestCost )
-			bestPos = candidatePos, bestAxis = axis, bestCost = cost;
-	}
-	int axis = bestAxis;
-	float splitPos = bestPos;
-	float3 e = node.aabbMax - node.aabbMin; // extent of parent
-	float parentArea = e.x * e.y + e.y * e.z + e.z * e.x;
-	float parentCost = node.count * parentArea;
-	if ( bestCost >= parentCost ) return;
+	int axis;
+	float splitPos;
+	float splitCost = FindBestSplitPlane( node, axis, splitPos, primitives );
+	float nosplitCost = CalculateNodeCost( node );
+	if ( splitCost >= nosplitCost ) return;
 	// in-place partition
 	int i = node.first;
 	int j = i + node.count - 1;
@@ -141,7 +199,7 @@ void BVH::Subdivide( uint nodeIdx, std::vector<Primitive>& primitives )
 		{
 			case TRIANGLE: center = prim.objData.triangle.centroid[axis]; break;
 			case SPHERE: center = prim.objData.sphere.pos[axis]; break;
-			default: continue; 
+			default: continue;
 		}
 
 		if ( center < splitPos )
@@ -188,4 +246,14 @@ void BVH::CopyToDevice( )
 {
 	bvhNodeBuffer_->CopyToDevice( );
 	primIdxBuffer_->CopyToDevice( );
+}
+
+//----------------------------------------------------------------------------
+// TLAS
+//----------------------------------------------------------------------------
+
+TLAS::TLAS( std::vector<BVH>&& bvhList) : blas_(std::move(bvhList) )
+{
+	tlasNode_.resize( blas_.size( ) * 2 );
+	nodesUsed_ = 2;
 }

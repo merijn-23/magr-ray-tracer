@@ -80,16 +80,16 @@ void intersect( int primIdx, Primitive* prim, Ray* ray )
 {
 	switch ( prim->objType )
 	{
-		case SPHERE: 
+		case SPHERE:
 			intersectSphere( primIdx, prim->objData.sphere, ray ); break;
-		case PLANE: 
+		case PLANE:
 			intersectPlane( primIdx, prim->objData.plane, ray ); break;
-		case TRIANGLE: 
+		case TRIANGLE:
 			intersectTriangle( primIdx, prim->objData.triangle, ray ); break;
 	}
 }
 
-bool intersectAABB(Ray* ray, const float4 bmin, const float4 bmax)
+bool intersectAABB( Ray* ray, const float4 bmin, const float4 bmax )
 {
 	float tx1 = ( bmin.x - ray->O.x ) * ray->rD.x, tx2 = ( bmax.x - ray->O.x ) * ray->rD.x;
 	float tmin = min( tx1, tx2 ), tmax = max( tx1, tx2 );
@@ -100,13 +100,14 @@ bool intersectAABB(Ray* ray, const float4 bmin, const float4 bmax)
 	if ( tmax >= tmin && tmin < ray->t && tmax > 0 ) return tmin; else return 1e30f;
 }
 
-void intersectBVH(Ray* ray, BVHNode* bvhNode, uint* bvhIdx)
+void intersectBVH( Ray* ray, BVHNode* bvhNode, uint* bvhIdx )
 {
-	BVHNode* stack[64];
+	BVHNode* stack[32];
 	BVHNode* node = &bvhNode[0];
 	uint stackPtr = 0;
 
-	while (1) {
+	while ( 1 )
+	{
 		if ( node->count > 0 ) // isLeaf?
 		{
 			for ( uint i = 0; i < node->count; i++ )
@@ -115,11 +116,8 @@ void intersectBVH(Ray* ray, BVHNode* bvhNode, uint* bvhIdx)
 				intersect( index, &primitives[index], ray );
 			}
 			if ( stackPtr == 0 ) break;
-			else
-			{
-				node = stack[--stackPtr];
-				continue;
-			}
+			else node = stack[--stackPtr];
+			continue;
 		}
 
 		BVHNode* child1 = &bvhNode[node->first];
@@ -127,15 +125,11 @@ void intersectBVH(Ray* ray, BVHNode* bvhNode, uint* bvhIdx)
 		float dist1 = intersectAABB( ray, child1->aabbMin, child1->aabbMax );
 		float dist2 = intersectAABB( ray, child2->aabbMin, child2->aabbMax );
 
-		if ( dist1 > dist2 ) { 
+		if ( dist1 > dist2 )
+		{
 			// swap
-			float temp1 = dist1;
-			dist1 = dist2;
-			dist2 = temp1;
-
-			BVHNode* temp2 = child1;
-			child1 = child2;
-			child2 = temp2;
+			float temp1 = dist1; dist1 = dist2; dist2 = temp1;
+			BVHNode* temp2 = child1; child1 = child2; child2 = temp2;
 		}
 
 		if ( dist1 == 1e30f )
@@ -179,9 +173,9 @@ float4 getAlbedo( Ray* ray )
 			{
 				Triangle t = prim.objData.triangle;
 				float2 uv = ray->u * t.uv0 + ray->v * t.uv1 + ray->w * t.uv2;
-				uv = fmod(uv, (float2)(1.f, 1.f));
-				if (uv.x < 0) uv.x = 1 - uv.x;
-				if (uv.y < 0) uv.y = 1 - uv.y;
+				uv = fmod( uv, ( float2 )( 1.f, 1.f ) );
+				if ( uv.x < 0 ) uv.x = 1 - uv.x;
+				if ( uv.y < 0 ) uv.y = 1 - uv.y;
 
 				int x = (int)( uv.x * mat.texW );
 				int y = (int)( uv.y * mat.texH );
@@ -198,13 +192,13 @@ float4 getAlbedo( Ray* ray )
 			}break;
 			case PLANE:
 			{
-				float u = fmod(ray->u, 1.f);
-				float v = fmod(ray->v, 1.f);
-				if (u < 0) u = 1 - u;
-				if (v < 0) v = 1 - v;
-				int x = (int)( u * mat.texW);
-				int y = (int)( v * mat.texH);
-				albedo = textures[mat.texIdx + (x + y * mat.texW)];
+				float u = fmod( ray->u, 1.f );
+				float v = fmod( ray->v, 1.f );
+				if ( u < 0 ) u = 1 - u;
+				if ( v < 0 ) v = 1 - v;
+				int x = (int)( u * mat.texW );
+				int y = (int)( v * mat.texH );
+				albedo = textures[mat.texIdx + ( x + y * mat.texW )];
 			}break;
 		}
 	return albedo;

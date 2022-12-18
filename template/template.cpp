@@ -751,6 +751,15 @@ uint RandomUInt(uint& seed)
 }
 float RandomFloat(uint& seed) { return RandomUInt(seed) * 2.3283064365387e-10f; }
 
+std::random_device rd;
+std::mt19937 mt( rd() );
+
+int RandomRangeInt( int low, int high )
+{
+	std::uniform_int_distribution<> dist( low, high );
+	return dist( mt );
+}
+
 // Perlin noise implementation - https://stackoverflow.com/questions/29711668/perlin-noise-generation
 static int numX = 512, numY = 512, numOctaves = 7, primeIndex = 0;
 static float persistence = 0.5f;
