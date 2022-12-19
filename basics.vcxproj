@@ -180,6 +180,7 @@
     <ClInclude Include="src\scene.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="src\cl\bvh.cl" />
     <None Include="src\cl\camera.cl" />
     <None Include="src\cl\glass.cl" />
     <None Include="src\cl\light.cl" />

@@ -141,5 +141,8 @@
     <None Include="src\cl\shading.cl">
       <Filter>cl</Filter>
     </None>
+    <None Include="src\cl\bvh.cl">
+      <Filter>cl</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -1,6 +1,6 @@
 #pragma once
 
-typedef struct
+typedef struct Ray
 {
 	float4 O, D, rD; // 1 / D
 	float4 N, I, intensity;
@@ -11,7 +11,7 @@ typedef struct
 	float u, v; // barycenter, is calculated upon intersection
 } Ray;
 
-typedef struct
+typedef struct Material
 {
 	float4 color, absorption;
 	float specular, n1, n2;
@@ -24,26 +24,26 @@ typedef struct
 	float4 emittance; 
 } Material;
 
-typedef struct
+typedef struct Sphere
 {
 	float4 pos;
 	float r, r2, invr;
 } Sphere;
 
-typedef struct
+typedef struct Plane
 {
 	float4 N;
 	float d;
 } Plane;
 
-typedef struct
+typedef struct Triangle
 {
 	float4 v0, v1, v2;
 	float4 N, centroid;
 	float2 uv0, uv1, uv2;
 } Triangle;
 
-typedef struct
+typedef struct Primitive
 {
 	union
 	{
@@ -56,7 +56,7 @@ typedef struct
 	int matIdx;
 } Primitive;
 
-typedef struct
+typedef struct Light
 {
 	// Whitted
 	float4 pos, color;
@@ -66,7 +66,7 @@ typedef struct
 	int primIdx;
 } Light;
 
-typedef struct
+typedef struct Camera
 {
 	int type;
 	float fov, aperture, focalLength;
@@ -74,14 +74,21 @@ typedef struct
 	float4 origin, horizontal, vertical, topLeft;
 } Camera;
 
-typedef struct
+typedef struct Settings
 {
 	int numPrimitives, numLights, tracerType, frames, antiAliasing;
 	int numInRays, numOutRays;
+	int renderBVH;
 } Settings;
 
-typedef struct
+typedef struct BVHNode2
 {
 	float4 aabbMin, aabbMax;
 	uint left, count;
-} BVHNode;
+} BVHNode2;
+
+typedef struct BVHNode4
+{
+	float4 aabbMin[4], aabbMax[4];
+	uint left[4], count[4];
+} BVHNode4;

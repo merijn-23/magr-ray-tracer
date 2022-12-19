@@ -5,6 +5,7 @@
 #include "src/common.h"
 #include "src/cl/util.cl"
 #include "src/cl/primitives.cl"
+#include "src/cl/bvh.cl"
 #include "src/cl/ray.cl"
 #include "src/cl/camera.cl"
 #include "src/cl/glass.cl"
@@ -39,7 +40,7 @@ __kernel void generate(
 __kernel void extend(
 	__global Ray* rays,
 	__global Primitive* _primitives,
-	__global BVHNode* bvhNode,
+	__global BVHNode2* bvhNode,
 	__global uint* bvhIdx,
 	__global float4* accum,
 	__global Settings* settings
@@ -55,12 +56,11 @@ __kernel void extend(
 	for ( int i = 0; i < settings->numPrimitives; i++ )
 		intersect( i, primitives + i, ray );
 #else
-	uint steps = intersectBVH( ray, bvhNode, bvhIdx );
+	uint steps = intersectBVH2( ray, bvhNode, bvhIdx );
 #endif
-	//if (steps > 0) printf( "%i\n", steps );
-	accum[idx] = (float4)(steps / 32.f);
+	if ( settings->renderBVH ) accum[idx] = ( float4 )( steps / 32.f );
 	if ( ray->primIdx == -1 ) return;
-	//accum[idx] = (float4)(1);
+	if ( settings->renderBVH ) accum[idx] = (float4)(1);
 
 	intersectionPoint( ray );
 	ray->N = getNormal( primitives + ray->primIdx, ray->I );

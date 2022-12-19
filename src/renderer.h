@@ -30,7 +30,8 @@ public:
 	Scene scene;
 	CameraManager camera;
 	Settings* settings;
-	BVH* bvh;
+	BVH2* bvh2;
+	BVH4* bvh4;
 
 	Kernel* resetKernel;
 	Kernel* post_prepKernel;
