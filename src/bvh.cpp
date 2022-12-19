@@ -13,9 +13,11 @@ BVH::BVH( std::vector<Primitive>& primitives ) : primitives_( primitives )
 	Build( );
 	printf( "Nodes used: %i\n", nodesUsed_ );
 	printf( "Depth: %i\n", Depth( Root()));
-	printf( "Count after: %i\n", Count(Root()));
-	BVHNode left = bvhNode[bvhNode[Root().left + 1].left];
-	BVHNode right = bvhNode[bvhNode[Root().left + 1].left + 1];
+	printf( "Count after: %i\n", Count( Root() ) );
+	printf( "Count left after: %i\n", Count( Left(Root()) ) );
+	printf( "Count right after: %i\n", Count( Right(Root())));
+	BVHNode left = bvhNode[1];// bvhNode[bvhNode[Root().left + 1].left];
+	BVHNode right = bvhNode[2];// bvhNode[bvhNode[Root().left + 1].left + 1];
 	printf( "left aabb: min %f %f %f, max %f %f %f\n", left.aabbMin.x, left.aabbMin.y, left.aabbMin.z, left.aabbMax.x, left.aabbMax.y, left.aabbMax.z );
 	printf( "right aabb: min %f %f %f, max %f %f %f\n", right.aabbMin.x, right.aabbMin.y, right.aabbMin.z, right.aabbMax.x, right.aabbMax.y, right.aabbMax.z );
 	//for( auto& node : bvhNode ) if ( node.count > 0 ) cout << "node count " << node.count << endl;
