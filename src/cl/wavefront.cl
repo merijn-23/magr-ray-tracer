@@ -41,6 +41,7 @@ __kernel void extend(
 	__global Primitive* _primitives,
 	__global BVHNode* bvhNode,
 	__global uint* bvhIdx,
+	__global float4* accum,
 	__global Settings* settings
 )
 {
@@ -54,10 +55,12 @@ __kernel void extend(
 	for ( int i = 0; i < settings->numPrimitives; i++ )
 		intersect( i, primitives + i, ray );
 #else
-	intersectBVH( ray, bvhNode, bvhIdx );
+	uint steps = intersectBVH( ray, bvhNode, bvhIdx );
 #endif
-
+	//if (steps > 0) printf( "%i\n", steps );
+	accum[idx] = (float4)(steps / 32.f);
 	if ( ray->primIdx == -1 ) return;
+	//accum[idx] = (float4)(1);
 
 	intersectionPoint( ray );
 	ray->N = getNormal( primitives + ray->primIdx, ray->I );

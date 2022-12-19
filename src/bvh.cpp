@@ -6,24 +6,41 @@ BVH::BVH( std::vector<Primitive>& primitives ) : primitives_( primitives )
 {
 	rootNodeIdx_ = 0;
 	count_ = primitives_.size( );
+	printf( "Count before: %i\n", count_ );
 	bvhNode.resize( count_ * 2 );
 	bvhIdx.resize( count_ );
-	nodesUsed_ = 2; // 0 is root, 1 is for cache alignment
+	nodesUsed_ = 1; // 0 is root, 1 is for cache alignment
 	Build( );
 	printf( "Nodes used: %i\n", nodesUsed_ );
-	printf( "Depth: %i\n", Depth( bvhNode[0] ) );
-	for( auto& node : bvhNode ) if ( node.count > 0 ) cout << "node count " << node.count << endl;
+	printf( "Depth: %i\n", Depth( Root()));
+	printf( "Count after: %i\n", Count(Root()));
+	BVHNode left = bvhNode[bvhNode[Root().left + 1].left];
+	BVHNode right = bvhNode[bvhNode[Root().left + 1].left + 1];
+	printf( "left aabb: min %f %f %f, max %f %f %f\n", left.aabbMin.x, left.aabbMin.y, left.aabbMin.z, left.aabbMax.x, left.aabbMax.y, left.aabbMax.z );
+	printf( "right aabb: min %f %f %f, max %f %f %f\n", right.aabbMin.x, right.aabbMin.y, right.aabbMin.z, right.aabbMax.x, right.aabbMax.y, right.aabbMax.z );
+	//for( auto& node : bvhNode ) if ( node.count > 0 ) cout << "node count " << node.count << endl;
 }
 
 uint BVH::Depth( BVHNode node )
 {
-	if ( node.count == 0 ) return 0;
+	if ( node.count > 0 ) return 0;
 	else
 	{
 		uint lDepth = Depth( bvhNode[node.left] );
 		uint rDepth = Depth( bvhNode[node.left + 1] );
 		if ( lDepth > rDepth ) return ( lDepth + 1 );
 		else return ( rDepth + 1 );
+	}
+}
+
+uint BVH::Count( BVHNode node )
+{
+	if (node.count > 0) return node.count;
+	else
+	{
+		uint lcount = Count( bvhNode[node.left] );
+		uint rcount = Count( bvhNode[node.left+1] );
+		return lcount + rcount;
 	}
 }
 
@@ -69,8 +86,8 @@ void BVH::UpdateTriangleBounds( BVHNode& node, Triangle& triangle )
 
 void BVH::UpdateSphereBounds( BVHNode& node, Sphere& sphere )
 {
-	node.aabbMin = sphere.pos - sphere.r;
-	node.aabbMax = sphere.pos + sphere.r;
+	node.aabbMin = fminf( node.aabbMin, sphere.pos - sphere.r );
+	node.aabbMax = fmaxf( node.aabbMax, sphere.pos + sphere.r );
 }
 
 float BVH::FindBestSplitPlane( BVHNode& node, int& axis, float& splitPos)
@@ -177,7 +194,7 @@ void BVH::Subdivide( uint nodeIdx)
 	// in-place partition
 	int i = node.left;
 	int j = i + node.count - 1;
-	cout << "SUBDIVIDE 195/ node.count = " << node.count << endl;
+	//cout << "SUBDIVIDE 195/ node.count = " << node.count << endl;
 	while ( i <= j )
 	{
 		float center = 0;
@@ -202,7 +219,7 @@ void BVH::Subdivide( uint nodeIdx)
 	bvhNode[rightChildIdx].left = i;
 	bvhNode[rightChildIdx].count = node.count - leftCount;
 	node.left = leftChildIdx;
-	cout << "SUBDIVIDE 222/ node.count = " << node.count << endl;
+	//cout << "SUBDIVIDE 222/ node.count = " << node.count << endl;
 	node.count = 0;
 	UpdateNodeBounds( leftChildIdx);
 	UpdateNodeBounds( rightChildIdx);

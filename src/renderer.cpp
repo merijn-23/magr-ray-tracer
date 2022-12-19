@@ -41,6 +41,7 @@ void Renderer::Tick( float _deltaTime )
 		camera.moved = false;
 		settings->frames = 1;
 	}
+	settings->frames = 1;
 
 	RayTrace();
 	PostProc();
@@ -71,10 +72,13 @@ void Renderer::RayTrace()
 	clSetKernelArg( generateKernel->kernel, 3, sizeof( Camera ), &camera.cam );
 	generateKernel->Run( settings->numInRays );
 	
-	while (true)
-	{
+	//temp
 		extendKernel->SetArgument( 0, ray1Buffer );
 		extendKernel->Run( settings->numInRays );
+		return;
+	// end temp
+	while (true)
+	{
 
 		shadeKernel->SetArgument( 0, ray1Buffer );
 		shadeKernel->SetArgument( 1, ray2Buffer );
@@ -177,7 +181,8 @@ void Renderer::InitKernels()
 	extendKernel->SetArgument( 1, primBuffer );
 	extendKernel->SetArgument( 2, bvhNodeBuffer );
 	extendKernel->SetArgument( 3, bvhIdxBuffer );
-	extendKernel->SetArgument( 4, settingsBuffer );
+	extendKernel->SetArgument( 4, accumBuffer );
+	extendKernel->SetArgument( 5, settingsBuffer );
 
 	shadeKernel->SetArgument( 2, shadowRayBuffer );
 	shadeKernel->SetArgument( 3, primBuffer );
