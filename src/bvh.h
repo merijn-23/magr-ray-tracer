@@ -9,6 +9,8 @@ public:
 	uint Depth( BVHNode );
 	uint Count(BVHNode );
 	BVHNode Root() { return bvhNode[rootNodeIdx_]; }
+	BVHNode Left(BVHNode n) { return bvhNode[n.left]; }
+	BVHNode Right( BVHNode n ) { return bvhNode[n.left + 1]; }
 	std::vector<BVHNode> bvhNode;
 	uint rootNodeIdx_, nodesUsed_;
 	std::vector<uint> bvhIdx;
