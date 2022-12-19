@@ -60,7 +60,6 @@ __kernel void extend(
 #endif
 	if ( settings->renderBVH ) accum[idx] = ( float4 )( steps / 32.f );
 	if ( ray->primIdx == -1 ) return;
-	if ( settings->renderBVH ) accum[idx] = (float4)(1);
 
 	intersectionPoint( ray );
 	ray->N = getNormal( primitives + ray->primIdx, ray->I );
