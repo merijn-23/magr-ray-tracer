@@ -18,3 +18,4 @@
 #define WHITTED 0 
 #define KAJIYA 1
 
+#define INVALID -1

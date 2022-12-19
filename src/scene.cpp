@@ -139,10 +139,9 @@ namespace Tmpl8
 
 		LoadModel( "assets/cube.obj", "green-glass", float3( 5 * step + offset, 1.2f, .5f ) );
 		//LoadModel("assets/bunny_low_poly.obj", "white", float3(.5 + offset, 0, 0));
-
 #else
 		//AddSphere( float3( 0, 0, 0 ), .3f, "white" );
-		LoadModel( "assets/teapot.obj", "white", float3( 4, 0, 0 ) );
+		LoadModel( "assets/teapot.obj", "white", float3( 0, 0, 0 ) );
 		/*int high = 30;
 		int low = -high;
 
