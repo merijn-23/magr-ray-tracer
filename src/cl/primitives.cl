@@ -88,7 +88,7 @@ void intersect( int primIdx, Primitive* prim, Ray* ray )
 	}
 }
 
-bool intersectAABB( Ray* ray, const float4 bmin, const float4 bmax )
+float intersectAABB( Ray* ray, const float4 bmin, const float4 bmax )
 {
 	float tx1 = ( bmin.x - ray->O.x ) * ray->rD.x, tx2 = ( bmax.x - ray->O.x ) * ray->rD.x;
 	float tmin = min( tx1, tx2 ), tmax = max( tx1, tx2 );
@@ -99,12 +99,12 @@ bool intersectAABB( Ray* ray, const float4 bmin, const float4 bmax )
 	if ( tmax >= tmin && tmin < ray->t && tmax > 0 ) return tmin; else return 1e30f;
 }
 
-void intersectBVH( Ray* ray, BVHNode* bvhNode, uint* bvhIdx )
+int intersectBVH( Ray* ray, BVHNode* bvhNode, uint* bvhIdx )
 {
 	BVHNode* stack[64];
 	BVHNode* node = &bvhNode[0];
 	uint stackPtr = 0;
-
+	uint steps = 0;
 	while ( 1 )
 	{
 		if ( node->count > 0 ) // isLeaf?
@@ -133,16 +133,20 @@ void intersectBVH( Ray* ray, BVHNode* bvhNode, uint* bvhIdx )
 
 		if ( dist1 == 1e30f )
 		{
+			//printf( "decreasing stackptr" );
 			if ( stackPtr == 0 ) break;
 			else node = stack[--stackPtr];
 		}
 		else
 		{
+			steps++;
 			node = child1;
-			if ( stackPtr + 1 > 64 ) printf( "oops\n" );
+			if (stackPtr > 64) printf( "%i\n", stackPtr );
 			if ( dist2 != 1e30f ) stack[stackPtr++] = child2;
 		}
+
 	}
+	return steps;
 }
 
 float4 getNormal( Primitive* prim, float4 I )

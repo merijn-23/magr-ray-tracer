@@ -20,7 +20,7 @@ namespace Tmpl8
 		auto& blue = AddMaterial( "blue" );
 		blue.color = float3( 0, 0, 1 );
 		auto& white = AddMaterial( "white" );
-		white.color = float3( 1, 1, 1 );
+		white.color = float3( .9f );
 		auto& yellow = AddMaterial( "yellow" );
 		yellow.color = float3( 1, 1, 0 );
 		auto& magenta = AddMaterial( "magenta" );
@@ -141,7 +141,8 @@ namespace Tmpl8
 		//LoadModel("assets/bunny_low_poly.obj", "white", float3(.5 + offset, 0, 0));
 
 #else
-		LoadModel( "assets/teapot.obj", "white", float3( 0 ) );
+		//AddSphere( float3( 0, 0, 0 ), .3f, "white" );
+		LoadModel( "assets/teapot.obj", "white", float3( 4, 0, 0 ) );
 		/*int high = 30;
 		int low = -high;
 
@@ -246,7 +247,7 @@ namespace Tmpl8
 		prim.objData.triangle.uv1 = uv1;
 		prim.objData.triangle.uv2 = uv2;
 		prim.objData.triangle.N = normalize( cross( v1 - v0, v2 - v0 ) );
-		prim.objData.triangle.centroid = ( v0 + v1 + v2 ) * 0.3333f;
+		prim.objData.triangle.centroid = (v0 + v1 + v2) * (1 / 3.f);
 		prim.matIdx = matMap_[material];
 		primitives.push_back( prim );
 	}

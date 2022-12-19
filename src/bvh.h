@@ -6,8 +6,11 @@ class BVH {
 public:	
 	BVH(std::vector<Primitive>&);
 	void Build();
-	uint Depth(BVHNode );
+	uint Depth( BVHNode );
+	uint Count(BVHNode );
+	BVHNode Root() { return bvhNode[rootNodeIdx_]; }
 	std::vector<BVHNode> bvhNode;
+	uint rootNodeIdx_, nodesUsed_;
 	std::vector<uint> bvhIdx;
 
 private:
@@ -21,7 +24,6 @@ private:
 
 	std::vector<Primitive>& primitives_;
 
-	uint rootNodeIdx_, nodesUsed_;
 	uint count_;
 	uint subdivisions_ = 0;
 	static const int bins__ = 8;
