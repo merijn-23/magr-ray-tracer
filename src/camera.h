@@ -1,8 +1,5 @@
 #pragma once
 
-#include "constants.h"
-#include "common.h"
-
 #define DEG_TO_RAD PI / 180.0
 
 namespace Tmpl8

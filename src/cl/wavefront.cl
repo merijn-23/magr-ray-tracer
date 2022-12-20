@@ -17,8 +17,7 @@ __kernel void generate(
 	__global Settings* settings,
 	__global uint* seeds,
 	Camera _camera
-)
-{
+){
 	__local Camera camera;
 
 	// first thread of a warp can retrieve settings and camera into local memory, all other threads must wait
@@ -40,27 +39,31 @@ __kernel void generate(
 __kernel void extend(
 	__global Ray* rays,
 	__global Primitive* _primitives,
+#ifdef USE_BVH4
+	__global BVHNode4* bvhNode,
+#else
 	__global BVHNode2* bvhNode,
+#endif
 	__global uint* bvhIdx,
 	__global float4* accum,
 	__global Settings* settings
-)
-{
+){
 	int idx = get_global_id( 0 );
-
 	if ( idx == 0 ) primitives = _primitives;
 	work_group_barrier( CLK_GLOBAL_MEM_FENCE );
-
 	Ray* ray = rays + idx;
 #if 0
 	for ( int i = 0; i < settings->numPrimitives; i++ )
 		intersect( i, primitives + i, ray );
 #else
+#ifdef USE_BVH4
+	uint steps = intersectBVH4( ray, bvhNode, bvhIdx );
+#else 
 	uint steps = intersectBVH2( ray, bvhNode, bvhIdx );
 #endif
 	if ( settings->renderBVH ) accum[idx] = ( float4 )( steps / 32.f );
+#endif
 	if ( ray->primIdx == -1 ) return;
-
 	intersectionPoint( ray );
 	ray->N = getNormal( primitives + ray->primIdx, ray->I );
 	if ( ray->inside ) ray->N = -ray->N;
@@ -79,33 +82,24 @@ __kernel void shade(
 )
 {
 	int idx = get_global_id( 0 );
-	if ( idx == 0 )
-	{
+	if ( idx == 0 ) {
 		primitives = _primitives;
 		textures = _textures;
 		materials = _materials;
 	}
 	work_group_barrier( CLK_GLOBAL_MEM_FENCE );
-
 	uint* seed = seeds + idx;
-
 	Ray* ray = inputRays + idx;
-
 	// we did not hit anything, fall back to the skydome
-	if ( ray->primIdx == -1 )
-	{
+	if ( ray->primIdx == -1 ) {
 		accum[ray->pixelIdx] += ray->intensity * readSkydome( ray->D );
 		return;
 	}
-
 	Ray extensionRay = initRay( ( float4 )( 0 ), ( float4 )( 0 ) );
 	extensionRay.bounces = MAX_BOUNCES + 1;
-
 	float4 color = kajiyaShading( ray, &extensionRay, seed );
 	accum[ray->pixelIdx] += color;
-
-	if ( extensionRay.bounces <= MAX_BOUNCES )
-	{
+	if ( extensionRay.bounces <= MAX_BOUNCES ) {
 		// get atomic inc in settings->numOutRays and set extensionRay in _extensionRays on that idx 
 		int extensionIdx = atomic_inc( &( settings->numOutRays ) );
 		extensionRays[extensionIdx] = extensionRay;

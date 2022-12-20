@@ -1,6 +1,6 @@
 #pragma once
 
-#define SCRWIDTH 1280 //1280
+#define SCRWIDTH 1280
 #define SCRHEIGHT 720
 #define PIXELS SCRWIDTH * SCRHEIGHT
 
@@ -15,7 +15,8 @@
 #define PROJECTION	0
 #define FISHEYE		1
 
-#define WHITTED 0 
-#define KAJIYA 1
+#define WHITTED		0 
+#define KAJIYA		1
 
-#define INVALID -1
+#define INVALID	   -1
+#define USE_BVH4

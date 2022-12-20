@@ -929,7 +929,7 @@ public:
 			union { __m128 bmin4; float bmin[4]; struct { float3 bmin3; }; };
 			union { __m128 bmax4; float bmax[4]; struct { float3 bmax3; }; };
 		};
-		__m128 bounds[2] = { _mm_set_ps( 1e34f, 1e34f, 1e34f, 0 ), _mm_set_ps( -1e34f, -1e34f, -1e34f, 0 ) };
+		__m128 bounds[2] = { _mm_set_ps( 1e34f, 1e34f, 1e34f, 1e34f ), _mm_set_ps( -1e34f, -1e34f, -1e34f, -1e34f ) };
 	};
 	__inline void SetBounds( const __m128 min4, const __m128 max4 ) { bmin4 = min4; bmax4 = max4; }
 	__inline __m128 Center() const { return _mm_mul_ps( _mm_add_ps( bmin4, bmax4 ), _mm_set_ps1( 0.5f ) ); }
@@ -1659,10 +1659,11 @@ public:
 	Surface* screen = 0;
 };
 
-
 float3* LoadImageF( const char* file, int& width, int& height, int& channels );
 void SaveImageF(const char* file, int width, int height, float4* data);
 
+#include "constants.h"
+#include "common.h"
 #include "scene.h"
 #include "camera.h"
 #include "bvh.h"

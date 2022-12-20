@@ -21,7 +21,7 @@ typedef struct Material
 
 	// Kajiya
 	bool isLight;
-	float4 emittance; 
+	float4 emittance;
 } Material;
 
 typedef struct Sphere
@@ -89,6 +89,19 @@ typedef struct BVHNode2
 
 typedef struct BVHNode4
 {
-	float4 aabbMin[4], aabbMax[4];
-	uint left[4], count[4];
+	float4 aabbMin0, aabbMax0;
+	float4 aabbMin1, aabbMax1;
+	float4 aabbMin2, aabbMax2;
+	float4 aabbMin3, aabbMax3;
+	int left0, count0;
+	int left1, count1;
+	int left2, count2;
+	int left3, count3;
 } BVHNode4;
+
+typedef struct BVHNode4_Invalid
+{
+	float4 aabbMin[4], aabbMax[4];
+	int left[4] = { INVALID, INVALID, INVALID, INVALID };
+	int count[4] = { INVALID, INVALID, INVALID, INVALID };
+} BVHNode4_Invalid;
