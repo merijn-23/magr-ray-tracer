@@ -8,24 +8,23 @@ BVH2::BVH2( std::vector<Primitive>& primitives ) : primitives_( primitives )
 	count_ = primitives_.size( );
 	nodes.resize( count_ * 2 );
 	primIdx.resize( count_ );
-	nodesUsed_ = 1; 
+	nodesUsed_ = 1;
 	Build( );
 	printf( "Nodes used: %i\n", nodesUsed_ );
 	printf( "Depth: %i\n", Depth( Root( ) ) );
 	printf( "Count after: %i\n", Count( Root( ) ) );
 	printf( "Count left after: %i\n", Count( Left( Root( ) ) ) );
 	printf( "Count right after: %i\n", Count( Right( Root( ) ) ) );
-	BVHNode2 left = nodes[1]; 
+	BVHNode2 left = nodes[1];
 	BVHNode2 right = nodes[2];
 	printf( "left aabb: min %f %f %f, max %f %f %f\n", left.aabbMin.x, left.aabbMin.y, left.aabbMin.z, left.aabbMax.x, left.aabbMax.y, left.aabbMax.z );
 	printf( "right aabb: min %f %f %f, max %f %f %f\n", right.aabbMin.x, right.aabbMin.y, right.aabbMin.z, right.aabbMax.x, right.aabbMax.y, right.aabbMax.z );
 }
 
-uint BVH2::Depth( BVHNode2 node )
+uint BVH2::Depth( const BVHNode2& node )
 {
 	if ( node.count > 0 ) return 0;
-	else
-	{
+	else {
 		uint lDepth = Depth( nodes[node.left] );
 		uint rDepth = Depth( nodes[node.left + 1] );
 		if ( lDepth > rDepth ) return ( lDepth + 1 );
@@ -33,11 +32,10 @@ uint BVH2::Depth( BVHNode2 node )
 	}
 }
 
-uint BVH2::Count( BVHNode2 node )
+uint BVH2::Count( const BVHNode2& node )
 {
 	if ( node.count > 0 ) return node.count;
-	else
-	{
+	else {
 		uint lcount = Count( nodes[node.left] );
 		uint rcount = Count( nodes[node.left + 1] );
 		return lcount + rcount;
@@ -63,11 +61,9 @@ void BVH2::UpdateNodeBounds( uint nodeIdx )
 	BVHNode2& node = nodes[nodeIdx];
 	node.aabbMin = float3( 1e30f );
 	node.aabbMax = float3( -1e30f );
-	for ( uint left = node.left, i = 0; i < node.count; i++ )
-	{
+	for ( uint left = node.left, i = 0; i < node.count; i++ ) {
 		Primitive& prim = primitives_[primIdx[left + i]];
-		switch ( prim.objType )
-		{
+		switch ( prim.objType ) {
 			case TRIANGLE: UpdateTriangleBounds( node, prim.objData.triangle ); break;
 			case SPHERE: UpdateSphereBounds( node, prim.objData.sphere ); break;
 		}
@@ -93,14 +89,11 @@ void BVH2::UpdateSphereBounds( BVHNode2& node, Sphere& sphere )
 float BVH2::FindBestSplitPlane( BVHNode2& node, int& axis, float& splitPos )
 {
 	float bestCost = 1e30f;
-	for ( int a = 0; a < 3; a++ )
-	{
+	for ( int a = 0; a < 3; a++ ) {
 		float boundsMin = 1e30f, boundsMax = -1e30f;
-		for ( uint i = 0; i < node.count; i++ )
-		{
+		for ( uint i = 0; i < node.count; i++ ) {
 			Primitive& prim = primitives_[primIdx[node.left + i]];
-			switch ( prim.objType )
-			{
+			switch ( prim.objType ) {
 				case TRIANGLE:
 				{
 					boundsMin = min( boundsMin, prim.objData.triangle.centroid[a] );
@@ -118,11 +111,9 @@ float BVH2::FindBestSplitPlane( BVHNode2& node, int& axis, float& splitPos )
 		// populate the bins
 		struct Bin { aabb bounds; int count = 0; } bin[bins__];
 		float scale = bins__ / ( boundsMax - boundsMin );
-		for ( uint i = 0; i < node.count; i++ )
-		{
+		for ( uint i = 0; i < node.count; i++ ) {
 			Primitive& prim = primitives_[primIdx[node.left + i]];
-			switch ( prim.objType )
-			{
+			switch ( prim.objType ) {
 				case TRIANGLE:
 				{
 					Triangle& tri = prim.objData.triangle;
@@ -147,8 +138,7 @@ float BVH2::FindBestSplitPlane( BVHNode2& node, int& axis, float& splitPos )
 		int leftCount[bins__ - 1], rightCount[bins__ - 1];
 		aabb leftBox, rightBox;
 		int leftSum = 0, rightSum = 0;
-		for ( int i = 0; i < bins__ - 1; i++ )
-		{
+		for ( int i = 0; i < bins__ - 1; i++ ) {
 			leftSum += bin[i].count;
 			leftCount[i] = leftSum;
 			leftBox.Grow( bin[i].bounds );
@@ -160,8 +150,7 @@ float BVH2::FindBestSplitPlane( BVHNode2& node, int& axis, float& splitPos )
 		}
 		// calculate SAH cost for the 7 planes
 		scale = ( boundsMax - boundsMin ) / bins__;
-		for ( int i = 0; i < bins__ - 1; i++ )
-		{
+		for ( int i = 0; i < bins__ - 1; i++ ) {
 			float planeCost = leftCount[i] * leftArea[i] + rightCount[i] * rightArea[i];
 			if ( planeCost < bestCost )
 				axis = a, splitPos = boundsMin + scale * ( i + 1 ), bestCost = planeCost;
@@ -195,12 +184,10 @@ void BVH2::Subdivide( uint nodeIdx )
 	int i = node.left;
 	int j = i + node.count - 1;
 	//cout << "SUBDIVIDE 195/ node.count = " << node.count << endl;
-	while ( i <= j )
-	{
+	while ( i <= j ) {
 		float center = 0;
 		Primitive& prim = primitives_[primIdx[i]];
-		switch ( prim.objType )
-		{
+		switch ( prim.objType ) {
 			case TRIANGLE: center = prim.objData.triangle.centroid[axis]; break;
 			case SPHERE: center = prim.objData.sphere.pos[axis]; break;
 			default: continue;
@@ -230,154 +217,170 @@ void BVH2::Subdivide( uint nodeIdx )
 
 BVH4::BVH4( BVH2& _bvh2 ) : bvh2( _bvh2 )
 {
+	rootNodeIdx_ = 0;
 	Convert( );
+	MakeValidNodes( );
+}
+
+void BVH4::MakeValidNodes( )
+{
+	nodes.resize( invalidNodes_.size( ) );
+	for ( int i = 0; i < invalidNodes_.size( ); i++ ) {
+		nodes[i].aabbMin0 = invalidNodes_[i].aabbMin[0];
+		nodes[i].aabbMax0 = invalidNodes_[i].aabbMax[0];
+		nodes[i].aabbMin1 = invalidNodes_[i].aabbMin[1];
+		nodes[i].aabbMax1 = invalidNodes_[i].aabbMax[1];
+		nodes[i].aabbMin2 = invalidNodes_[i].aabbMin[2];
+		nodes[i].aabbMax2 = invalidNodes_[i].aabbMax[2];
+		nodes[i].aabbMin3 = invalidNodes_[i].aabbMin[3];
+		nodes[i].aabbMax3 = invalidNodes_[i].aabbMax[3];
+		nodes[i].left0 = invalidNodes_[i].left[0];
+		nodes[i].left1 = invalidNodes_[i].left[1];
+		nodes[i].left2 = invalidNodes_[i].left[2];
+		nodes[i].left3 = invalidNodes_[i].left[3];
+		nodes[i].count0 = invalidNodes_[i].count[0];
+		nodes[i].count1 = invalidNodes_[i].count[1];
+		nodes[i].count2 = invalidNodes_[i].count[2];
+		nodes[i].count3 = invalidNodes_[i].count[3];
+	}
+}
+
+uint BVH4::Depth( BVHNode4 node )
+{
+	return 0;
+	/*if ( node.count > 0 ) return 0;
+	else
+	{
+		uint lDepth = Depth( nodes[node.left] );
+		uint rDepth = Depth( nodes[node.left + 1] );
+		if ( lDepth > rDepth ) return ( lDepth + 1 );
+		else return ( rDepth + 1 );
+	}*/
+}
+
+uint BVH4::Count( BVHNode4 node )
+{
+	return 0;
+	/*int count = 0;
+	if ( node.count[0] > 0 ) return node.count[0];
+	else
+	{
+		uint lcount = Count( nodes[node.left[0]] );
+		uint rcount = Count( nodes[node.left[0] + 1] );
+		count += lcount + rcount;
+	}*/
 }
 
 // https://github.com/jan-van-bergen/GPU-Raytracer/blob/master/Src/BVH/Converters/BVH4Converter.cpp#L75
 void BVH4::Convert( )
 {
-	nodes.resize( bvh2.nodes.size( ) );
-	for ( size_t i = 0; i < nodes.size( ); i++ )
-	{
+	invalidNodes_.resize( bvh2.nodes.size( ) );
+	for ( size_t i = 0; i < nodes.size( ); i++ ) {
 		// We use index 1 as a starting point, such that it points to the first child of the root
-		if ( i == 1 )
-		{
-			nodes[i].left[0] = 0;
-			nodes[i].count[0] = 0;
+		if ( i == 1 ) {
+			invalidNodes_[i].left[0] = 0;
+			invalidNodes_[i].count[0] = 0;
 			continue;
 		}
-
-		if ( !nodes[i].count > 0 )
-		{
+		if ( !bvh2.nodes[i].count > 0 ) {
 			const BVHNode2& child_left = bvh2.nodes[bvh2.nodes[i].left];
 			const BVHNode2& child_right = bvh2.nodes[bvh2.nodes[i].left + 1];
-
-			nodes[i].aabbMin[0] = child_left.aabbMin;
-			nodes[i].aabbMax[0] = child_left.aabbMax;
-			nodes[i].aabbMin[1] = child_right.aabbMin;
-			nodes[i].aabbMax[1] = child_right.aabbMax;
-
-			if ( child_left.count > 0 )
-			{
-				nodes[i].left[0] = child_left.left;
-				nodes[i].count[0] = child_left.count;
+			invalidNodes_[i].aabbMin[0] = child_left.aabbMin;
+			invalidNodes_[i].aabbMax[0] = child_left.aabbMax;
+			invalidNodes_[i].aabbMin[1] = child_right.aabbMin;
+			invalidNodes_[i].aabbMax[1] = child_right.aabbMax;
+			if ( child_left.count > 0 ) {
+				invalidNodes_[i].left[0] = child_left.left;
+				invalidNodes_[i].count[0] = child_left.count;
+			} else {
+				invalidNodes_[i].left[0] = bvh2.nodes[i].left;
+				invalidNodes_[i].count[0] = 0;
 			}
-			else
-			{
-				nodes[i].left[0] = bvh2.nodes[i].left;
-				nodes[i].count[0] = 0;
+			if ( child_right.count > 0 ) {
+				invalidNodes_[i].left[1] = child_right.left;
+				invalidNodes_[i].count[1] = child_right.count;
+			} else {
+				invalidNodes_[i].left[1] = bvh2.nodes[i].left + 1;
+				invalidNodes_[i].count[1] = 0;
 			}
-
-			if ( child_right.count > 0 )
-			{
-				nodes[i].left[1] = child_right.left;
-				nodes[i].count[1] = child_right.count;
-			}
-			else
-			{
-				nodes[i].left[1] = bvh2.nodes[i].left + 1;
-				nodes[i].count[1] = 0;
-			}
-
 			// For now the tree is binary,
 			// so make the rest of the indices invalid
-			for ( int j = 2; j < 4; j++ )
-			{
-				nodes[i].left[j] = INVALID;
-				nodes[i].count[j] = INVALID;
+			for ( int j = 2; j < 4; j++ ) {
+				invalidNodes_[i].left[j] = INVALID;
+				invalidNodes_[i].count[j] = INVALID;
 			}
 		}
 	}
-
 	// Handle the special case where the root is a leaf
-	if ( nodes[0].count > 0 )
-	{
-		nodes[0].aabbMin[0] = bvh2.nodes[0].aabbMin;
-		nodes[0].aabbMax[0] = bvh2.nodes[0].aabbMax;
-		nodes[0].left[0] = bvh2.nodes[0].left;
-		nodes[0].count[0] = bvh2.nodes[0].count;
+	if ( bvh2.nodes[0].count > 0 ) {
+		invalidNodes_[0].aabbMin[0] = bvh2.nodes[0].aabbMin;
+		invalidNodes_[0].aabbMax[0] = bvh2.nodes[0].aabbMax;
+		invalidNodes_[0].left[0] = bvh2.nodes[0].left;
+		invalidNodes_[0].count[0] = bvh2.nodes[0].count;
 
-		for ( int i = 1; i < 4; i++ )
-		{
-			nodes[0].left[i] = INVALID;
-			nodes[0].count[i] = INVALID;
+		for ( int i = 1; i < 4; i++ ) {
+			invalidNodes_[0].left[i] = INVALID;
+			invalidNodes_[0].count[i] = INVALID;
 		}
-	}
-	else
-	{
+	} else {
 		// Collapse tree top-down, starting from the root
-		Collapse( 0);
+		Collapse( rootNodeIdx_ );
 	}
-
-	primIdx = primIdx; // NOTE: copy
+	primIdx = bvh2.primIdx;
 }
 
 void BVH4::Collapse( int index )
 {
-	BVHNode4& node = nodes[index];
-	while ( true )
-	{
+	BVHNode4_Invalid& node = invalidNodes_[index];
+	while ( true ) {
 		int child_count = GetChildCount( node );
-
 		// Look for adoptable child with the largest surface area
 		float max_area = -INFINITY;
 		int   max_index = INVALID;
-
-		for ( int i = 0; i < child_count; i++ )
-		{
-			if ( !node.count[i] > 0 )
-			{
-				int child_i_child_count = GetChildCount( nodes[node.left[i]] );
-
-				// Check if the current Node can adopt the children of child Node i
-				if ( child_count + child_i_child_count - 1 <= 4 )
-				{
-					float diff_x = node.aabbMax[i].x - node.aabbMin[i].x;
-					float diff_y = node.aabbMax[i].y - node.aabbMin[i].y;
-					float diff_z = node.aabbMax[i].z - node.aabbMin[i].z;
-
-					float half_area = diff_x * diff_y + diff_y * diff_z + diff_z * diff_x;
-
-					if ( half_area > max_area )
-					{
-						max_area = half_area;
-						max_index = i;
-					}
+		for ( int i = 0; i < child_count; i++ ) if ( !( node.count[i] > 0 ) ) {
+			int child_i_child_count = GetChildCount( invalidNodes_[node.left[i]] );
+			// Check if the current Node can adopt the children of child Node i
+			if ( child_count + child_i_child_count - 1 <= 4 ) {
+				float diff_x = node.aabbMax[i].x - node.aabbMin[i].x;
+				float diff_y = node.aabbMax[i].y - node.aabbMin[i].y;
+				float diff_z = node.aabbMax[i].z - node.aabbMin[i].z;
+				float half_area = diff_x * diff_y + diff_y * diff_z + diff_z * diff_x;
+				if ( half_area > max_area ) {
+					max_area = half_area;
+					max_index = i;
 				}
 			}
 		}
-
 		// No merge possible anymore, stop trying
 		if ( max_index == INVALID ) break;
-
-		const BVHNode4& max_child = nodes[node.left[max_index]];
-
+		const BVHNode4_Invalid& max_child = invalidNodes_[node.left[max_index]];
 		// Replace max child Node with its first child
 		node.aabbMin[max_index] = max_child.aabbMin[0];
 		node.aabbMax[max_index] = max_child.aabbMax[0];
 		node.left[max_index] = max_child.left[0];
 		node.count[max_index] = max_child.count[0];
-
 		int max_child_child_count = GetChildCount( max_child );
-
 		// Add the rest of max child Node's children after the current Node's own children
-		for ( int i = 1; i < max_child_child_count; i++ )
-		{
+		for ( int i = 1; i < max_child_child_count; i++ ) {
 			node.aabbMin[child_count + i - 1] = max_child.aabbMin[i];
 			node.aabbMax[child_count + i - 1] = max_child.aabbMax[i];
 			node.left[child_count + i - 1] = max_child.left[i];
 			node.count[child_count + i - 1] = max_child.count[i];
 		}
 	};
-
-	for ( int i = 0; i < 4; i++ )
-	{
+	for ( int i = 0; i < 4; i++ ) {
 		if ( node.count[i] == INVALID ) break;
-
 		// If child Node i is an internal node, recurse
-		if ( node.count[i] == 0 )
-		{
-			Collapse( node.left[i] );
-		}
+		if ( node.count[i] == 0 ) Collapse( node.left[i] );
 	}
+}
+
+int BVH4::GetChildCount( const BVHNode4_Invalid& node ) const
+{
+	int result = 0;
+	for ( int i = 0; i < 4; i++ ) {
+		if ( node.count[i] == INVALID ) break;
+		result++;
+	}
+	return result;
 }

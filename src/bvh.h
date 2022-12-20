@@ -5,11 +5,11 @@ class BVH2 {
 public:	
 	BVH2(std::vector<Primitive>&);
 	void Build();
-	uint Depth( BVHNode2 );
-	uint Count(BVHNode2 );
-	BVHNode2 Root( ) { return nodes[rootNodeIdx_]; }
-	BVHNode2 Left( BVHNode2 n ) { return nodes[n.left]; }
-	BVHNode2 Right( BVHNode2 n ) { return nodes[n.left + 1]; }
+	uint Depth( const BVHNode2& );
+	uint Count(const BVHNode2& );
+	const BVHNode2& Root( ) { return nodes[rootNodeIdx_]; }
+	const BVHNode2& Left( const BVHNode2& n ) { return nodes[n.left]; }
+	const BVHNode2& Right( const BVHNode2& n ) { return nodes[n.left + 1]; }
 	std::vector<BVHNode2> nodes;
 	std::vector<uint> primIdx;
 
@@ -29,6 +29,8 @@ private:
 	static const int bins__ = 8;
 };
 
+
+
 class BVH4
 {
 public:
@@ -36,19 +38,17 @@ public:
 	std::vector<BVHNode4> nodes;
 	std::vector<uint> primIdx;
 
+	uint Depth( BVHNode4 );
+	uint Count( BVHNode4 );
+	BVHNode4 Root( ) { return nodes[rootNodeIdx_]; }
+
 private:
 	BVH2& bvh2;
+	std::vector<BVHNode4_Invalid> invalidNodes_;
 	void Convert( );
 	void Collapse( int index ); // Collapse the binary tree to a qbvh
+	int GetChildCount( const BVHNode4_Invalid& node ) const;
+	void MakeValidNodes( );
 
-	inline int GetChildCount( const BVHNode4& node ) const
-	{
-		int result = 0;
-		for ( int i = 0; i < 4; i++ )
-		{
-			if ( node.count[i] == INVALID ) break;
-			result++;
-		}
-		return result;
-	}
+	uint rootNodeIdx_;
 };

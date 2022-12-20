@@ -14,61 +14,64 @@ float intersectAABB( Ray* ray, const float4 bmin, const float4 bmax )
 	if ( tmax >= tmin && tmin < ray->t && tmax > 0 ) return tmin; else return 1e30f;
 }
 
-int intersectBVH4( Ray* ray, BVHNode4* bvhNode, uint* bvhIdx )
+uint intersectBVH4( Ray* ray, BVHNode4* bvhNode, uint* primIdx )
 {
-	BVHNode4* stack[64];
+	BVHNode4* stack[128];
 	BVHNode4* node = &bvhNode[0];
 	uint stackPtr = 0;
 	uint steps = 0;
 	while ( 1 )
 	{
-		if ( node->count > 0 ) // isLeaf?
-		{
-			for ( uint i = 0; i < node->count; i++ )
-			{
-				int index = bvhIdx[node->left[i]];
-				if(index != INVALID ) intersect( index, &primitives[index], ray );
+		float dist[4];
+		int order[4] = { 1, 2, 3, 4 };
+		dist[0] = intersectAABB( ray, node->aabbMin0, node->aabbMax0 );
+		dist[1] = intersectAABB( ray, node->aabbMin1, node->aabbMax1 );
+		dist[2] = intersectAABB( ray, node->aabbMin2, node->aabbMax2 );
+		dist[3] = intersectAABB( ray, node->aabbMin3, node->aabbMax3 );
+		// sort
+		for ( int i = 0; i < 4; i++ ) for ( int j = 0; j < 3; j++ )
+			if ( dist[j] > dist[i] ) {	//swap them
+				float d = dist[i]; dist[i] = dist[j]; dist[j] = d;
+				int o = order[i]; order[i] = order[j]; order[j] = o;
 			}
-			if ( stackPtr == 0 ) break;
+
+		for ( int i = 0; i < 4; i++ ) {
+			int idx = order[i];
+
+		}
+
+		if ( node->count0 > 0 )
+		{
+			for ( uint i = 0; i < node->count0; i++ )
+			{
+				int index = primIdx[node->left0 + i];
+				if ( index != INVALID ) intersect( index, &primitives[index], ray );
+			}
+			/*if ( stackPtr == 0 ) break;
 			else node = stack[--stackPtr];
-			continue;
+			continue;*/
 		}
-
-		BVHNode4* child1 = &bvhNode[node->left[0]];
-		BVHNode4* child2 = &bvhNode[node->left[1]];
-		BVHNode4* child3 = &bvhNode[node->left[2]];
-		BVHNode4* child4 = &bvhNode[node->left[3]];
-
-		float dist1 = intersectAABB( ray, child1->aabbMin[0], child1->aabbMax[0] );
-		float dist2 = intersectAABB( ray, child2->aabbMin[1], child2->aabbMax[1] );
-
-		if ( dist1 > dist2 )
+		if ( dist[0] == 1e30f )
 		{
-			// swap
-			float d = dist1; dist1 = dist2; dist2 = d;
-			BVHNode4* c = child1; child1 = child2; child2 = c;
-		}
-
-		if ( dist1 == 1e30f )
-		{
-			//printf( "decreasing stackptr" );
 			if ( stackPtr == 0 ) break;
 			else node = stack[--stackPtr];
 		}
 		else
 		{
 			steps++;
-			node = child1;
+			node = child[0];
 			if ( stackPtr > 64 ) printf( "%i\n", stackPtr );
-			if ( dist2 != 1e30f ) stack[stackPtr++] = child2;
+			/*if ( dist[3] != 1e30f ) stack[stackPtr++] = child[3];
+			if ( dist[2] != 1e30f ) stack[stackPtr++] = child[2];
+			if ( dist[1] != 1e30f ) stack[stackPtr++] = child[1];*/
 		}
 	}
 	return steps;
 }
 
-int intersectBVH2( Ray* ray, BVHNode2* bvhNode, uint* bvhIdx )
+uint intersectBVH2( Ray* ray, BVHNode2* bvhNode, uint* primIdx )
 {
-	BVHNode2* stack[64];
+	BVHNode2* stack[32];
 	BVHNode2* node = &bvhNode[0];
 	uint stackPtr = 0;
 	uint steps = 0;
@@ -78,7 +81,7 @@ int intersectBVH2( Ray* ray, BVHNode2* bvhNode, uint* bvhIdx )
 		{
 			for ( uint i = 0; i < node->count; i++ )
 			{
-				int index = bvhIdx[node->left + i];
+				int index = primIdx[node->left + i];
 				intersect( index, &primitives[index], ray );
 			}
 			if ( stackPtr == 0 ) break;

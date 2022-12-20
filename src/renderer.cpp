@@ -17,6 +17,7 @@ void Renderer::Init( )
 	settings->renderBVH = false;
 	bvh2 = new BVH2( scene.primitives );
 	bvh4 = new BVH4( *bvh2 );
+
 	InitKernels( );
 }
 
@@ -170,13 +171,22 @@ void Renderer::InitKernels( )
 	settingsBuffer->hostBuffer = (uint*)settings;
 	seedBuffer->hostBuffer = new uint[PIXELS];
 
+	// settings
 	settings->numPrimitives = scene.primitives.size( );
 	settings->numLights = scene.lights.size( );
 
+	// BVH
+#ifdef USE_BVH4
+	bvhNodeBuffer = new Buffer( sizeof( BVHNode4 ) * bvh4->nodes.size( ) );
+	bvhNodeBuffer->hostBuffer = (uint*)bvh4->nodes.data( );
+	bvhIdxBuffer = new Buffer( sizeof( uint ) * bvh4->primIdx.size( ) );
+	bvhIdxBuffer->hostBuffer = (uint*)bvh4->primIdx.data( );
+#else 
 	bvhNodeBuffer = new Buffer( sizeof( BVHNode2 ) * bvh2->nodes.size( ) );
 	bvhNodeBuffer->hostBuffer = (uint*)bvh2->nodes.data( );
 	bvhIdxBuffer = new Buffer( sizeof( uint ) * bvh2->primIdx.size( ) );
 	bvhIdxBuffer->hostBuffer = (uint*)bvh2->primIdx.data( );
+#endif
 
 	generateKernel->SetArgument( 1, settingsBuffer );
 	generateKernel->SetArgument( 2, seedBuffer );
