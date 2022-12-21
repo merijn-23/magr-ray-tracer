@@ -115,7 +115,7 @@ float4 getAlbedo( Ray* ray )
 			case TRIANGLE:
 			{
 				Triangle t = prim.objData.triangle;
-				float2 uv = ray->u * t.uv0 + ray->v * t.uv1 + ( 1 - ray->u - ray->v) * t.uv2;
+				float2 uv = ray->u * t.uv1 + ray->v * t.uv2 + ( 1 - ray->u - ray->v) * t.uv0;
 				uv = fmod( uv, ( float2 )( 1.f, 1.f ) );
 				if ( uv.x < 0 ) uv.x = 1 - uv.x;
 				if ( uv.y < 0 ) uv.y = 1 - uv.y;

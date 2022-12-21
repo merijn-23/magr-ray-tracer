@@ -86,9 +86,9 @@ void BVH2::UpdateSphereBounds( BVHNode2& node, Sphere& sphere )
 
 float BVH2::FindBestSplitPlane( BVHNode2& node, int& axis, float& splitPos )
 {
-	float bestCost = REALYFAR;
+	float bestCost = REALLYFAR;
 	for ( int a = 0; a < 3; a++ ) {
-		float boundsMin = REALYFAR, boundsMax = -REALYFAR;
+		float boundsMin = REALLYFAR, boundsMax = -REALLYFAR;
 		for ( uint i = 0; i < node.count; i++ ) {
 			Primitive& prim = primitives_[primIdx[node.first + i]];
 			switch ( prim.objType ) {
@@ -275,25 +275,19 @@ BVH4::BVH4( BVH2& _bvh2 ) : bvh2( _bvh2 )
 	bvh2.nodes[12].count = 12;
 #endif
 	Convert( );
+
+	cout << "Depth: " << Depth( nodes[0] ) << endl;
+	cout << "Count: " << Count( nodes[0] ) << endl;
 }
 
 uint BVH4::Depth( BVHNode4 node )
 {
-	if ( node.count > 0 ) return 0;
-	else {
-		uint depth[4];
-		depth[0] = Depth( nodes[node.first[0]] );
-		depth[1] = Depth( nodes[node.first[1]] );
-		depth[2] = Depth( nodes[node.first[2]] );
-		depth[3] = Depth( nodes[node.first[3]] );
-		// sort from large to small
-		for ( int i = 0; i < 4; i++ ) for ( int j = 0; j < 3; j++ )
-			if ( depth[j] < depth[i] ) {
-				float d = depth[i]; depth[i] = depth[j]; depth[j] = d;
-			}
-		// get largerst depth
-		return depth[0];
-	}
+	uint maxDepth = 0;
+	if ( node.count[0] == 0 ) maxDepth = max( maxDepth, Depth( nodes[node.first[0]] ) + 1 );
+	if ( node.count[1] == 0 ) maxDepth = max( maxDepth, Depth( nodes[node.first[1]] ) + 1 );
+	if ( node.count[2] == 0 ) maxDepth = max( maxDepth, Depth( nodes[node.first[2]] ) + 1 );
+	if ( node.count[3] == 0 ) maxDepth = max( maxDepth, Depth( nodes[node.first[3]] ) + 1 );
+	return maxDepth;
 }
 
 uint BVH4::Count( BVHNode4 node )
@@ -301,7 +295,7 @@ uint BVH4::Count( BVHNode4 node )
 	int count = 0;
 	for ( size_t i = 0; i < 4; i++ )
 		if ( node.count[i] > 0 ) count += node.count[i];
-		else count += Count( nodes[node.first[i]] );
+		else if ( node.count[i] == 0 ) count += Count( nodes[node.first[i]] );
 	return count;
 }
 
