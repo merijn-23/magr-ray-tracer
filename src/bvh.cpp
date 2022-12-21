@@ -86,9 +86,9 @@ void BVH2::UpdateSphereBounds( BVHNode2& node, Sphere& sphere )
 
 float BVH2::FindBestSplitPlane( BVHNode2& node, int& axis, float& splitPos )
 {
-	float bestCost = 1e30f;
+	float bestCost = REALYFAR;
 	for ( int a = 0; a < 3; a++ ) {
-		float boundsMin = 1e30f, boundsMax = -1e30f;
+		float boundsMin = REALYFAR, boundsMax = -REALYFAR;
 		for ( uint i = 0; i < node.count; i++ ) {
 			Primitive& prim = primitives_[primIdx[node.first + i]];
 			switch ( prim.objType ) {
@@ -181,7 +181,6 @@ void BVH2::Subdivide( uint nodeIdx )
 	// in-place partition
 	int i = node.first;
 	int j = i + node.count - 1;
-	//cout << "SUBDIVIDE 195/ node.count = " << node.count << endl;
 	while ( i <= j ) {
 		float center = 0;
 		Primitive& prim = primitives_[primIdx[i]];
@@ -204,7 +203,6 @@ void BVH2::Subdivide( uint nodeIdx )
 	nodes[rightChildIdx].first = i;
 	nodes[rightChildIdx].count = node.count - leftCount;
 	node.first = leftChildIdx;
-	//cout << "SUBDIVIDE 222/ node.count = " << node.count << endl;
 	node.count = 0;
 	UpdateNodeBounds( leftChildIdx );
 	UpdateNodeBounds( rightChildIdx );
@@ -394,7 +392,6 @@ void BVH4::Collapse( int index )
 			node.count[N_n - 1 + i] = maxChild.count[i];
 		}
 	}
-
 	for ( size_t i = 0; i < 4; i++ ) {
 		if ( node.count[i] == INVALID ) break;
 		if ( node.count[i] == 0 ) Collapse( node.first[i] );
