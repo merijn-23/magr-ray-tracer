@@ -17,7 +17,6 @@ void Renderer::Init( )
 	settings->renderBVH = false;
 	bvh2 = new BVH2( scene.primitives );
 	bvh4 = new BVH4( *bvh2 );
-
 	InitKernels( );
 }
 
@@ -34,26 +33,19 @@ void Renderer::Tick( float _deltaTime )
 	scene.SetTime( animTime += deltaTime * 0.002f );
 	// pixel loop
 	Timer t;
-
 	//UpdateBuffers();
 	camera.UpdateCamVec( );
 	//CamToDevice();
-
-	if ( camera.moved )
-	{
+	if ( camera.moved ) {
 		resetKernel->Run( PIXELS );
 		camera.moved = false;
 		settings->frames = 1;
 	}
 	if ( settings->renderBVH ) settings->frames = 1;
-
 	RayTrace( );
 	PostProc( );
-
 	settings->frames++;
-
 	if ( !printPerformance ) return;
-
 	// performance report - running average - ms, MRays/s
 	static float avg = 10, alpha = 1;
 	avg = ( 1 - alpha ) * avg + alpha * t.elapsed( ) * 1000;
@@ -68,30 +60,26 @@ void Renderer::RayTrace( )
 	for ( int i = 0; i < SCRHEIGHT * SCRWIDTH; i++ )
 		seedBuffer->hostBuffer[i] = RandomUInt( );
 	seedBuffer->CopyToDevice( );
-
 	settings->numInRays = PIXELS;
 	settings->numOutRays = 0;
 	settingsBuffer->CopyToDevice( );
-
 	// generate initial primary rays
 	generateKernel->SetArgument( 0, ray1Buffer );
 	clSetKernelArg( generateKernel->kernel, 3, sizeof( Camera ), &camera.cam );
 	generateKernel->Run( settings->numInRays );
-
-	while ( true )
-	{
+	while ( true ) {
+		// extend
 		extendKernel->SetArgument( 0, ray1Buffer );
 		extendKernel->Run( settings->numInRays );
 		if ( settings->renderBVH ) break;
-
+		// shade
 		shadeKernel->SetArgument( 0, ray1Buffer );
 		shadeKernel->SetArgument( 1, ray2Buffer );
 		shadeKernel->Run( settings->numInRays );
-
+		// settings
 		settingsBuffer->CopyFromDevice( );
 		//printf( "%i\n", settings->numOutRays );
 		if ( settings->numOutRays < MAX_RAYS ) break;
-
 		settings->numInRays = settings->numOutRays;
 		settings->numOutRays = 0;
 		settingsBuffer->CopyToDevice( );
@@ -104,30 +92,24 @@ void Renderer::PostProc( )
 	// Post processing
 	Buffer* src = swap1Buffer;
 	Buffer* dst = swap2Buffer;
-
 	// Kernel takes values from pixelbuffer and puts them in src
 	post_prepKernel->SetArguments( accumBuffer, src, settingsBuffer );
 	post_prepKernel->Run( PIXELS );
-
-	if ( vignet_strength > 0 )
-	{
+	if ( vignet_strength > 0 ) {
 		post_vignetKernel->SetArguments( src, dst, vignet_strength );
 		post_vignetKernel->Run( PIXELS );
 		std::swap( src, dst );
 	}
-	if ( gamma_corr != 1 )
-	{
+	if ( gamma_corr != 1 ) {
 		post_gammaKernel->SetArguments( src, dst, gamma_corr );
 		post_gammaKernel->Run( PIXELS );
 		std::swap( src, dst );
 	}
-	if ( chromatic > 0 )
-	{
+	if ( chromatic > 0 ) {
 		post_chromaticKernel->SetArguments( src, dst, chromatic );
 		post_chromaticKernel->Run( PIXELS );
 		std::swap( src, dst );
 	}
-
 	// Kernel takes values from src and writes them to screen texture
 	displayKernel->SetArgument( 0, src );
 	displayKernel->Run( PIXELS );
@@ -135,27 +117,28 @@ void Renderer::PostProc( )
 
 void Renderer::InitKernels( )
 {
+	// wavefront
 	generateKernel = new Kernel( "src/cl/wavefront.cl", "generate" );
 	extendKernel = new Kernel( "src/cl/wavefront.cl", "extend" );
 	shadeKernel = new Kernel( "src/cl/wavefront.cl", "shade" );
 	resetKernel = new Kernel( "src/cl/wavefront.cl", "reset" );
-
+	// post
 	post_prepKernel = new Kernel( "src/cl/postproc.cl", "prep" );
 	post_vignetKernel = new Kernel( "src/cl/postproc.cl", "vignetting" );
 	post_gammaKernel = new Kernel( "src/cl/postproc.cl", "gammaCorr" );
 	post_chromaticKernel = new Kernel( "src/cl/postproc.cl", "chromatic" );
 	displayKernel = new Kernel( "src/cl/postproc.cl", "display" );
-
+	// screenshot
 	saveImageKernel = new Kernel( "src/cl/postproc.cl", "saveImage" );
-
+	// 
 	primBuffer = new Buffer( sizeof( Primitive ) * scene.primitives.size( ) );
 	texBuffer = new Buffer( sizeof( float4 ) * scene.textures.size( ) );
 	matBuffer = new Buffer( sizeof( Material ) * scene.materials.size( ) );
-
+	// rays
 	ray1Buffer = new Buffer( 2 * PIXELS * sizeof( Ray ) );
 	ray2Buffer = new Buffer( 2 * PIXELS * sizeof( Ray ) );
 	shadowRayBuffer = new Buffer( 2 * PIXELS * sizeof( Ray ) );
-
+	// util
 	swap1Buffer = new Buffer( 4 * 4 * PIXELS );
 	swap2Buffer = new Buffer( 4 * 4 * PIXELS );
 	accumBuffer = new Buffer( 4 * 4 * PIXELS );
@@ -164,7 +147,7 @@ void Renderer::InitKernels( )
 
 	seedBuffer = new Buffer( sizeof( uint ) * PIXELS );
 	settingsBuffer = new Buffer( sizeof( Settings ) );
-
+	// set data
 	primBuffer->hostBuffer = (uint*)scene.primitives.data( );
 	matBuffer->hostBuffer = (uint*)scene.materials.data( );
 	texBuffer->hostBuffer = (uint*)scene.textures.data( );
@@ -177,10 +160,10 @@ void Renderer::InitKernels( )
 
 	// BVH
 #ifdef USE_BVH4
-	bvhNodeBuffer = new Buffer( sizeof( BVHNode4 ) * bvh4->nodes.size( ) );
-	bvhNodeBuffer->hostBuffer = (uint*)bvh4->nodes.data( );
-	bvhIdxBuffer = new Buffer( sizeof( uint ) * bvh4->primIdx.size( ) );
-	bvhIdxBuffer->hostBuffer = (uint*)bvh4->primIdx.data( );
+	bvhNodeBuffer = new Buffer( sizeof( BVHNode4 ) * bvh4->Nodes( ).size( ) );
+	bvhNodeBuffer->hostBuffer = (uint*)bvh4->Nodes( ).data( );
+	bvhIdxBuffer = new Buffer( sizeof( uint ) * bvh4->Idx( ).size( ) );
+	bvhIdxBuffer->hostBuffer = (uint*)bvh4->Idx( ).data( );
 #else 
 	bvhNodeBuffer = new Buffer( sizeof( BVHNode2 ) * bvh2->nodes.size( ) );
 	bvhNodeBuffer->hostBuffer = (uint*)bvh2->nodes.data( );
@@ -253,18 +236,15 @@ void Renderer::Gui( )
 {
 	static char str0[128] = "";
 	ImGui::InputTextWithHint( "Screenshot", "filename", str0, IM_ARRAYSIZE( str0 ) );
-	if ( ImGui::Button( "Save Image" ) )
-	{
+	if ( ImGui::Button( "Save Image" ) ) {
 		std::string input( str0 );
 		SaveFrame( ( "screenshots/" + input + ".png" ).c_str( ) );
 	}
 	ImGui::Spacing( );
-	if ( ImGui::CollapsingHeader( "General" ) )
-	{
+	if ( ImGui::CollapsingHeader( "General" ) ) {
 		if ( ImGui::Checkbox( "Performance", &printPerformance ) );
 	}
-	if ( ImGui::CollapsingHeader( "Camera" ) )
-	{
+	if ( ImGui::CollapsingHeader( "Camera" ) ) {
 		ImGui::SliderFloat( "Speed", &camera.speed, .01f, 1, "%.2f" );
 		if ( ImGui::SliderFloat( "FOV", &camera.cam.fov, 30, 180, "%.2f" ) ) camera.moved = true;
 		if ( ImGui::SliderFloat( "Aperture", &camera.cam.aperture, 0, .2f, "%.2f" ) ) camera.moved = true;
@@ -272,15 +252,13 @@ void Renderer::Gui( )
 		if ( ImGui::RadioButton( "Projection", &camera.cam.type, PROJECTION ) ) camera.moved = true;
 		if ( ImGui::RadioButton( "FishEye", &camera.cam.type, FISHEYE ) ) camera.moved = true;
 	}
-	if ( ImGui::CollapsingHeader( "Render" ) )
-	{
+	if ( ImGui::CollapsingHeader( "Render" ) ) {
 		if ( ImGui::Checkbox( "Anti-Aliasing", (bool*)( &( settings->antiAliasing ) ) ) ) camera.moved = true;
 		if ( ImGui::Checkbox( "BVH", (bool*)( &( settings->renderBVH ) ) ) ) camera.moved = true;
 		if ( ImGui::RadioButton( "Whitted", &( settings->tracerType ), WHITTED ) ) camera.moved = true;
 		if ( ImGui::RadioButton( "Kajiya", &( settings->tracerType ), KAJIYA ) ) camera.moved = true;
 	}
-	if ( ImGui::CollapsingHeader( "Post Processing" ) )
-	{
+	if ( ImGui::CollapsingHeader( "Post Processing" ) ) {
 		ImGui::SliderFloat( "Vignetting", &vignet_strength, 0.0f, 1.0f, "%.2f" );
 		ImGui::SliderFloat( "Gamma Correction", &gamma_corr, 0.0f, 2.0f, "%.2f" );
 		ImGui::SliderFloat( "Chromatic Abberation", &chromatic, 0.0f, 1.0f, "%.2f" );

@@ -3121,7 +3121,7 @@ GLFWAPI void glfwGetFramebufferSize(GLFWwindow* window, int* width, int* height)
  *
  *  @ingroup window
  */
-GLFWAPI void glfwGetWindowFrameSize(GLFWwindow* window, int* left, int* top, int* right, int* bottom);
+GLFWAPI void glfwGetWindowFrameSize(GLFWwindow* window, int* first, int* top, int* right, int* bottom);
 
 /*! @brief Retrieves the content scale for the specified window.
  *
