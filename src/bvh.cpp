@@ -226,7 +226,7 @@ BVH4::BVH4( BVH2& _bvh2 ) : bvh2( _bvh2 )
 	bvh2.nodes[0].count = 0;
 	bvh2.nodes[0].first = 1;
 
-	int bb1 = 10;
+	int bb1 = 9;
 	bvh2.nodes[1].aabbMin = float3( -bb1 );
 	bvh2.nodes[1].aabbMax = float3( bb1 );
 	bvh2.nodes[1].count = 0;
@@ -250,7 +250,7 @@ BVH4::BVH4( BVH2& _bvh2 ) : bvh2( _bvh2 )
 	bvh2.nodes[5].count = 5;
 	bvh2.nodes[5].first = 5;
 
-	int bb6 = 9;
+	int bb6 = 10;
 	bvh2.nodes[6].aabbMin = float3( -bb6 );
 	bvh2.nodes[6].aabbMax = float3( bb6 );
 	bvh2.nodes[6].count = 0;
@@ -277,6 +277,7 @@ BVH4::BVH4( BVH2& _bvh2 ) : bvh2( _bvh2 )
 	bvh2.nodes[12].count = 12;
 #endif
 	Convert( );
+	int i = 0;
 }
 
 uint BVH4::Depth( BVHNode4 node )
@@ -361,9 +362,7 @@ void BVH4::Convert( )
 void BVH4::Collapse( int index )
 {
 	BVHNode4& node = nodes[index];
-	static int why = 0;
 	while ( true ) {
-		why++;
 		int N_n = GetChildCount( node );
 		float maxArea = -INFINITY;
 		int maxIndex = INVALID;
