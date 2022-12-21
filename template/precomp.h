@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <io.h>
 #include <random>
+#include <stack>
 
 // header for AVX, and every technology before it.
 // if your CPU does not support this (unlikely), include the appropriate header instead.
