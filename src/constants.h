@@ -20,4 +20,5 @@
 
 #define INVALID	   -1
 #define USE_BVH4
-#define REALYFAR	1e30f
+#define REALLYFAR	1e30f
+

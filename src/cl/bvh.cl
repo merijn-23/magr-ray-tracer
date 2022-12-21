@@ -11,12 +11,12 @@ float intersectAABB( Ray* ray, const float4 bmin, const float4 bmax )
 	tmin = max( tmin, min( ty1, ty2 ) ), tmax = min( tmax, max( ty1, ty2 ) );
 	float tz1 = ( bmin.z - ray->O.z ) * ray->rD.z, tz2 = ( bmax.z - ray->O.z ) * ray->rD.z;
 	tmin = max( tmin, min( tz1, tz2 ) ), tmax = min( tmax, max( tz1, tz2 ) );
-	if ( tmax >= tmin && tmin < ray->t && tmax > 0 ) return tmin; else return REALYFAR;
+	if ( tmax >= tmin && tmin < ray->t && tmax > 0 ) return tmin; else return REALLYFAR;
 }
 
 uint intersectBVH4( Ray* ray, BVHNode4* bvhNode, uint* primIdx )
 {
-	BVHNode4* stack[128];
+	BVHNode4* stack[64];
 	BVHNode4* node = &bvhNode[0];
 	uint stackPtr = 0;
 	uint steps = 0;
@@ -35,7 +35,7 @@ uint intersectBVH4( Ray* ray, BVHNode4* bvhNode, uint* primIdx )
 				int o = order[i]; order[i] = order[j]; order[j] = o;
 			}
 		for ( int i = 3; i >= 0; i-- ) {
-			if ( dist[i] == REALYFAR ) continue;
+			if ( dist[i] == REALLYFAR ) continue;
 			int index = order[i];
 			if ( node->count[index] > 0 ) {
 				for ( uint j = 0; j < node->count[index]; j++ ) {
@@ -79,14 +79,14 @@ uint intersectBVH2( Ray* ray, BVHNode2* bvhNode, uint* primIdx )
 			float d = dist1; dist1 = dist2; dist2 = d;
 			BVHNode2* c = child1; child1 = child2; child2 = c;
 		}
-		if ( dist1 == REALYFAR ) {
+		if ( dist1 == REALLYFAR ) {
 			//printf( "decreasing stackptr" );
 			if ( stackPtr == 0 ) break;
 			else node = stack[--stackPtr];
 		} else {
 			steps++;
 			node = child1;
-			if ( dist2 != REALYFAR ) {
+			if ( dist2 != REALLYFAR ) {
 				stack[stackPtr++] = child2;
 				steps++;
 			}
