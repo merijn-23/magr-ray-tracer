@@ -277,12 +277,10 @@ BVH4::BVH4( BVH2& _bvh2 ) : bvh2( _bvh2 )
 	bvh2.nodes[12].count = 12;
 #endif
 	Convert( );
-	int i = 0;
 }
 
 uint BVH4::Depth( BVHNode4 node )
 {
-	return 0;
 	if ( node.count > 0 ) return 0;
 	else {
 		uint depth[4];
@@ -290,11 +288,12 @@ uint BVH4::Depth( BVHNode4 node )
 		depth[1] = Depth( nodes[node.first[1]] );
 		depth[2] = Depth( nodes[node.first[2]] );
 		depth[3] = Depth( nodes[node.first[3]] );
-
+		// sort from large to small
 		for ( int i = 0; i < 4; i++ ) for ( int j = 0; j < 3; j++ )
 			if ( depth[j] < depth[i] ) {
 				float d = depth[i]; depth[i] = depth[j]; depth[j] = d;
 			}
+		// get largerst depth
 		return depth[0];
 	}
 }
@@ -313,9 +312,6 @@ void BVH4::Convert( )
 {
 	nodes.resize( bvh2.nodes.size( ) );
 	for ( size_t i = 0; i < nodes.size( ); i++ ) {
-		int _acurr = i;
-		int _childl = bvh2.nodes[i].first;
-		int _childr = bvh2.nodes[i].first + 1;
 		if ( bvh2.nodes[i].count > 0 )  continue;
 		const BVHNode2& childLeft = bvh2.nodes[bvh2.nodes[i].first];
 		const BVHNode2& childRight = bvh2.nodes[bvh2.nodes[i].first + 1];
