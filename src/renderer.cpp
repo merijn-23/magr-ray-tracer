@@ -241,14 +241,6 @@ void Renderer::KeyInput( std::map<int, int> keyMap )
 
 void Renderer::Gui( )
 {
-	static char str0[128] = "";
-	ImGui::InputTextWithHint( "Screenshot", "filename", str0, IM_ARRAYSIZE( str0 ) );
-	if ( ImGui::Button( "Save Image" ) )
-	{
-		std::string input( str0 );
-		SaveFrame( ( "screenshots/" + input + ".png" ).c_str( ) );
-	}
-	ImGui::Spacing( );
 	if ( ImGui::CollapsingHeader( "General" ) )
 	{
 		if ( ImGui::Checkbox( "Performance", &printPerformance ) );
@@ -265,15 +257,43 @@ void Renderer::Gui( )
 	if ( ImGui::CollapsingHeader( "Render" ) )
 	{
 		if ( ImGui::Checkbox( "Anti-Aliasing", (bool*)( &( settings->antiAliasing ) ) ) ) camera.moved = true;
-		if ( ImGui::Checkbox( "BVH", (bool*)( &( settings->renderBVH ) ) ) ) camera.moved = true;
 		if ( ImGui::RadioButton( "Whitted", &( settings->tracerType ), WHITTED ) ) camera.moved = true;
 		if ( ImGui::RadioButton( "Kajiya", &( settings->tracerType ), KAJIYA ) ) camera.moved = true;
+	}
+	if (ImGui::CollapsingHeader( "BVH", ImGuiTreeNodeFlags_DefaultOpen ))
+	{
+		ImGui::Text( "(S)BVH surface overlap constant" );
+		ImGui::SliderFloat( "Alpha", &(bvh2->alpha), 0, 1, "%.4f" );
+		if (ImGui::Button( "Rebuild BVH" ))
+		{
+			// rebuild bvh with new alpha value
+		}
+		ImGui::Spacing();
+		if (ImGui::TreeNodeEx( "Statistics", ImGuiTreeNodeFlags_DefaultOpen ))
+		{
+			if ( ImGui::Checkbox( "Visualize BVH traversal", (bool*)( &( settings->renderBVH ) ) ) ) camera.moved = true;
+			ImGui::Text( "Building time: %.2fms", bvh2->stat_build_time );
+			ImGui::Text( "Node count: %i", bvh2->stat_node_count );
+			ImGui::Text( "Tree depth: %i", bvh2->stat_depth );
+			ImGui::Text( "Total SAH cost: %.2f", bvh2->stat_sah_cost );
+			ImGui::TreePop();
+		}
 	}
 	if ( ImGui::CollapsingHeader( "Post Processing" ) )
 	{
 		ImGui::SliderFloat( "Vignetting", &vignet_strength, 0.0f, 1.0f, "%.2f" );
 		ImGui::SliderFloat( "Gamma Correction", &gamma_corr, 0.0f, 2.0f, "%.2f" );
 		ImGui::SliderFloat( "Chromatic Abberation", &chromatic, 0.0f, 1.0f, "%.2f" );
+	}
+	if (ImGui::CollapsingHeader( "Screenshotting" ))
+	{
+		static char str0[128] = "";
+		ImGui::InputTextWithHint( "Screenshot", "filename", str0, IM_ARRAYSIZE( str0 ) );
+		if (ImGui::Button( "Save Image" ))
+		{
+			std::string input( str0 );
+			SaveFrame( ("screenshots/" + input + ".png").c_str() );
+		}
 	}
 
 	//ImGui::ShowDemoWindow();

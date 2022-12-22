@@ -926,10 +926,10 @@ public:
 	{
 		struct
 		{
-			union { __m128 bmin4; float bmin[4]; struct { float3 bmin3; }; };
-			union { __m128 bmax4; float bmax[4]; struct { float3 bmax3; }; };
+			union { __m128 bmin4; float bmin[4]; struct { float3 bmin3; }; struct { float4 bmin4f; }; };
+			union { __m128 bmax4; float bmax[4]; struct { float3 bmax3; }; struct { float4 bmax4f; }; };
 		};
-		__m128 bounds[2] = { _mm_set_ps( 1e34f, 1e34f, 1e34f, 0 ), _mm_set_ps( -1e34f, -1e34f, -1e34f, 0 ) };
+		__m128 bounds[2] = { _mm_setr_ps( 1e34f, 1e34f, 1e34f, 0 ), _mm_setr_ps( -1e34f, -1e34f, -1e34f, 0 ) };
 	};
 	__inline void SetBounds( const __m128 min4, const __m128 max4 ) { bmin4 = min4; bmax4 = max4; }
 	__inline __m128 Center() const { return _mm_mul_ps( _mm_add_ps( bmin4, bmax4 ), _mm_set_ps1( 0.5f ) ); }
