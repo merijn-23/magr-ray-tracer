@@ -141,7 +141,11 @@ namespace Tmpl8
 		//LoadModel("assets/bunny_low_poly.obj", "white", float3(.5 + offset, 0, 0));
 #else
 		//AddSphere( float3( 0, 0, 0 ), .3f, "white" );
-		LoadModel( "assets/teapot.obj", "white", float3( 0, 0, 0 ) );
+		for (int x = 0; x < 1; x++)
+			for (int y = 0; y < 1; y++)
+				LoadModel( "assets/teapot.obj", "white", float3( 4*x, 4*y, 0 ) );
+
+		//LoadModel( "assets/bunny.obj", "white", float3( 0, 0, 0 ) );
 		/*int high = 30;
 		int low = -high;
 

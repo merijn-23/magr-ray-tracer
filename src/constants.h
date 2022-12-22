@@ -19,3 +19,5 @@
 #define KAJIYA 1
 
 #define INVALID -1
+
+#define BVH_BINS 8
