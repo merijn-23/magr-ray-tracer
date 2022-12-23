@@ -19,10 +19,8 @@
 #define KAJIYA		1
 
 #define INVALID	   -1
-#define USE_BVH4
+//#define USE_BVH4
 #define REALLYFAR	1e30f
-
-#define INVALID -1
 
 #define BVH_BINS 8
 #define MIN_LEAF_PRIMS 2
