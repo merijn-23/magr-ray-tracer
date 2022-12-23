@@ -1,6 +1,8 @@
 #pragma once
 #include "common.h"
 
+struct BVHPrimData { aabb box; uint idx; };
+
 class BVH2
 {
 public:
@@ -8,6 +10,7 @@ public:
 	void Build( bool statistics );
 	uint Depth( uint nodeIdx = -1 );
 	uint Count( uint nodeIdx = -1 );
+	//bool CheckBBs( uint nodeIdx = -1 );
 	float TotalCost( uint nodeIdx = -1 );
 	BVHNode2 Root() { return nodes[rootNodeIdx_]; }
 	BVHNode2 Left( BVHNode2 n ) { return nodes[n.left]; }
@@ -23,27 +26,26 @@ public:
 	float stat_build_time;
 
 private:
-	void UpdateNodeBounds( uint nodeIdx );
+	void BuildBVH( uint root, std::vector<BVHPrimData> data );
+	void UpdateNodeBounds( uint nodeIdx, std::vector<BVHPrimData> prims );
 	void UpdateTriangleBounds( BVHNode2& node, Triangle& triangle );
 	void UpdateSphereBounds( BVHNode2& node, Sphere& sphere );
 
-	void CreateBoundingBoxes();
+	std::vector<BVHPrimData> CreateBVHPrimData();
 	void Subdivide( uint nodeIdx );
-	float CalculateNodeCost( BVHNode2& node );
+	float CalculateNodeCost( BVHNode2& node, uint count );
 
-	float FindBestObjectSplitPlane( BVHNode2& node, int& axis, float& splitPos, float& overlap );
-	void ObjectSplit( BVHNode2& node, int axis, float splitPos );
+	float FindBestObjectSplitPlane( BVHNode2& node, int& axis, float& splitPos, float& overlap, std::vector<BVHPrimData> prims );
+	std::pair<std::vector<BVHPrimData>, std::vector<BVHPrimData>> ObjectSplit( BVHNode2& node, int axis, float splitPos, std::vector<BVHPrimData> prims );
 
-	float FindBestSpatialSplitPlane( BVHNode2& node, int& axis, float& splitPos );
-	void SpatialSplit( BVHNode2& node, int axis, float splitPos );
+	float FindBestSpatialSplitPlane( BVHNode2& node, int& axis, float& splitPos, std::vector<BVHPrimData> prims );
+	std::pair<std::vector<BVHPrimData>, std::vector<BVHPrimData>> SpatialSplit( BVHNode2& node, int axis, float splitPos, std::vector<BVHPrimData> prims );
 	bool clipTriangleToAABB( aabb bounds, float3 v0, float3 v1, float3 v2, aabb& outBounds );
 	bool clipSphereToAABB( aabb bounds, float3 pos, float r, aabb& outBounds );
 	float3 lineAAPlaneIntersection( float3 v1, float3 v2, int axis, float plane );
 	std::vector<float3> sphereAAPlaneIntersection( float3 pos, float d, int axis, float plane );
 
 	std::vector<Primitive>& primitives_;
-	std::vector<aabb> bbs_;
-	uint count_;
 	uint subdivisions_ = 0;
 	uint rootNodeIdx_, nodesUsed_;
 };
