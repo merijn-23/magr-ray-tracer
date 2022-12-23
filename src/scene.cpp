@@ -159,23 +159,18 @@ namespace Tmpl8
 			AddTriangle( float3( 0 + x, 0, 1 ), float3( 0 + x, 0, 0 ), float3( 1 + x, 0, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "mosaic" );
 		}*/
 
-		AddPlane( float3( 0, 1, 0 ), -1, "white" );
-		for ( int i = 0; i < 50; i++) {
-			for ( int j = 0; j < 50; j++ ) {
-				AddTriangle( float3( i, j, 1 ), float3( i, j + 1, 0 ), float3( i + 1, j, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "mosaic" );
-			}
-		}
+		//AddPlane( float3( 0, 1, 0 ), -1, "white" );
+		//for ( int i = 0; i < 50; i++) {
+		//	for ( int j = 0; j < 50; j++ ) {
+		//		AddTriangle( float3( i, j, 1 ), float3( i, j + 1, 0 ), float3( i + 1, j, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "mosaic" );
+		//	}
+		//}
 
 		
 #endif
+		LoadModel("assets/dragon.obj", "red-glass", float3(0));
 
-		lights.resize( 3 );
-		lights[0] = Light{ float4( 2, 0, 3, 0 ), float4( 1, 1, .8f, 0 ), 2, -1 };
-		lights[1] = Light{ float4( 1, 0, -5, 0 ), float4( 1, 1, .8f, 0 ), 2, -1 };
-		lights[2] = Light{ float4( -2, 0, 0, 0 ), float4( 1, 1, .8f, 0 ), 1, -1 };
 		SetTime( 0 );
-		// Note: once we have triangle support we should get rid of the class
-		// hierarchy: virtuals reduce performance somewhat.
 	}
 
 	Scene::~Scene( )
@@ -187,11 +182,6 @@ namespace Tmpl8
 		// default time for the scene is simply 0. Updating/ the time per frame
 		// enables animation. Updating it per ray can be used for motion blur.
 		animTime = t * .1f;
-		//lights[0].pos.x = sin(animTime) + 1;
-		//lights[0].pos.y = sin(animTime + PI * 0.5) * 0.5f;
-		// sphere animation: bounce
-		float tm = 1 - sqrf( fmodf( animTime, 2.0f ) - 1 );
-		//spheres[0].pos.y = -0.5f + tm;
 	}
 
 	Material& Scene::AddMaterial( std::string name )

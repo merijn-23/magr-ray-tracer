@@ -123,9 +123,6 @@
     <None Include="src\cl\ray.cl">
       <Filter>cl</Filter>
     </None>
-    <None Include="src\cl\trace.cl">
-      <Filter>cl</Filter>
-    </None>
     <None Include="src\cl\skydome.cl">
       <Filter>cl</Filter>
     </None>

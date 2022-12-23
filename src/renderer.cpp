@@ -192,6 +192,8 @@ void Renderer::InitKernels( )
 
 	displayKernel->SetArguments( accumBuffer, screenBuffer );
 
+	saveImageKernel->SetArguments( screenBuffer, swap1Buffer );
+
 	primBuffer->CopyToDevice( );
 	texBuffer->CopyToDevice( );
 	matBuffer->CopyToDevice( );

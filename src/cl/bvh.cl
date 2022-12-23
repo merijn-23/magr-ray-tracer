@@ -80,7 +80,6 @@ uint intersectBVH2( Ray* ray, BVHNode2* bvhNode, uint* primIdx )
 			BVHNode2* c = child1; child1 = child2; child2 = c;
 		}
 		if ( dist1 == REALLYFAR ) {
-			//printf( "decreasing stackptr" );
 			if ( stackPtr == 0 ) break;
 			else node = stack[--stackPtr];
 		} else {
@@ -93,6 +92,49 @@ uint intersectBVH2( Ray* ray, BVHNode2* bvhNode, uint* primIdx )
 		}
 	}
 	return steps;
+}
+
+bool intersectBVH2Occlusion( Ray* ray, BVHNode2* bvhNode, uint* primIdx )
+{
+	float light_t = ray->t;
+	BVHNode2* stack[32];
+	BVHNode2* node = &bvhNode[0];
+	uint stackPtr = 0;
+	uint steps = 0;
+	while ( 1 ) {
+		if ( node->count > 0 ) // isLeaf?
+		{
+			for ( uint i = 0; i < node->count; i++ ) {
+				int index = primIdx[node->first + i];
+				intersect( index, &primitives[index], ray );
+				if(ray->t < light_t) return true;
+			}
+			if ( stackPtr == 0 ) break;
+			else node = stack[--stackPtr];
+			continue;
+		}
+		BVHNode2* child1 = &bvhNode[node->first];
+		BVHNode2* child2 = &bvhNode[node->first + 1];
+		float dist1 = intersectAABB( ray, child1->aabbMin, child1->aabbMax );
+		float dist2 = intersectAABB( ray, child2->aabbMin, child2->aabbMax );
+		if ( dist1 > dist2 ) {
+			// swap
+			float d = dist1; dist1 = dist2; dist2 = d;
+			BVHNode2* c = child1; child1 = child2; child2 = c;
+		}
+		if ( dist1 > light_t ) {
+			if ( stackPtr == 0 ) break;
+			else node = stack[--stackPtr];
+		} else {
+			steps++;
+			node = child1;
+			if ( dist2 < light_t ) {
+				stack[stackPtr++] = child2;
+				steps++;
+			}
+		}
+	}
+	return false;
 }
 
 #endif // __BVH_CL
