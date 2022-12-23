@@ -24,7 +24,7 @@ namespace Tmpl8
 		CameraManager(float vfov = 110, int type = PROJECTION)
 		{
 			cam.type = type;
-			cam.origin = float3(0, 1, 2);
+			cam.origin = float3(0, 5, 2);
 			cam.forward = float3(0, 0, 1);
 			cam.right = float3(1, 0, 0);
 			cam.up = float3(0, 1, 0);
