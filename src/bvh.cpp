@@ -5,12 +5,13 @@
 BVH2::BVH2( std::vector<Primitive>& primitives ) : primitives_( primitives )
 {
 	rootNodeIdx_ = 0;
-	nodes.resize( primitives_.size() * 5 );
+	nodes.resize( primitives_.size() * 8 );
 	nodesUsed_ = 1;
 
+	stat_spatial_splits = 0;
+	stat_prims_clipped = 0;
+
 	Build( true );
-	printf( "primitive count %i\n", primitives.size() );
-	printf( "tree count %i\n", Count() );
 }
 
 #pragma region bvh_statistics
@@ -184,8 +185,6 @@ void BVH2::BuildBVH( uint root, std::vector<BVHPrimData> data )
 		uint leftId = nodesUsed_++;
 		uint rightId = nodesUsed_++;
 			
-		// TODO
-		// update node bounds
 		UpdateNodeBounds( leftId, leftright.first );
 		UpdateNodeBounds( rightId, leftright.second );
 

@@ -21,7 +21,7 @@
   <PropertyGroup Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>NotSet</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -189,7 +189,6 @@
     <None Include="src\cl\ray.cl" />
     <None Include="src\cl\shading.cl" />
     <None Include="src\cl\skydome.cl" />
-    <None Include="src\cl\trace.cl" />
     <None Include="src\cl\util.cl" />
     <None Include="src\cl\wavefront.cl" />
     <None Include="template\LICENSE" />
