@@ -140,10 +140,17 @@ namespace Tmpl8
 		LoadModel( "assets/cube.obj", "green-glass", float3( 5 * step + offset, 1.2f, .5f ) );
 		//LoadModel("assets/bunny_low_poly.obj", "white", float3(.5 + offset, 0, 0));
 #else
+		int width = 5;
+		int depth = 4;
 		//AddSphere( float3( 0, 0, 0 ), .3f, "white" );
-		for (int x = 0; x < 1; x++)
-			for (int y = 0; y < 1; y++)
+		for (int x = 0; x < 10; x++)
+			for (int y = 0; y < 10; y++)
 				LoadModel( "assets/teapot.obj", "white", float3( 4*x, 4*y, 0 ) );
+		//		AddTriangle(
+		//			float3( -width+x, 0, -depth+y ), float3( -width+x, 2, depth+y ), float3( width+x, 0, -depth+y ),
+		//			float2( 2, .25 ), float2( 0, 0 ), float2( 2, 0 ), "stone" );
+		//LoadModel( "assets/teapot.obj", "white", float3( 0, 0, 0 ) );
+
 
 		//LoadModel( "assets/bunny.obj", "white", float3( 0, 0, 0 ) );
 		/*int high = 30;

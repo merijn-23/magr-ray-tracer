@@ -1,12 +1,14 @@
 #include "precomp.h"
+#include <stack>
 
+static int spatialSplits = 0;
+static int clips = 0;
 BVH2::BVH2( std::vector<Primitive>& primitives ) : primitives_( primitives )
 {
 	rootNodeIdx_ = 0;
-	count_ = primitives_.size();
-	nodes.resize( count_ * 2 );
-	primIdx.resize( count_ );
-	bbs_.resize( count_ );
+	nodes.resize( primitives_.size() * 5 );
+	//primIdx.resize( count_ );
+	//bbs_.resize( count_ );
 	nodesUsed_ = 1;
 
 
@@ -14,16 +16,22 @@ BVH2::BVH2( std::vector<Primitive>& primitives ) : primitives_( primitives )
 	//float r = 2;
 	//float d = pos.x * pos.x + pos.y * pos.y + pos.z * pos.z - r * r;
 	//auto points = sphereAAPlaneIntersection( pos, d, r, 2, -0.7f);
-	
+
 	//aabb bounds{ float3( 0 ), float3( 1 ) };
 	//aabb outBounds;
 	//clipTriangleToAABB( bounds, float3( -1, 0, .1f ), float3( -1, 1, .2f ), float3( 0.8f, 0.5f, 0.5f ), outBounds);
 
-	aabb bounds{ float3( 0 ), float3( 1 ) };
-	aabb outBounds;
-	bool intersected = clipSphereToAABB( bounds, float3( 2, 0.5f, 0 ), 0.5f, outBounds );
-
+	//aabb bounds{ float3( 0 ), float3( 1 ) };
+	//aabb outBounds;
+	//bool intersected = clipSphereToAABB( bounds, float3( 2, 0.5f, 0 ), 0.5f, outBounds );
+	printf( "primIdx size %i\n", primIdx.size() );
 	Build( true );
+	printf( "primIdx size %i\n", primIdx.size() );
+	//printf( "tree bounding box check: %i\n", CheckBBs() );
+	printf( "primitive count %i\n", primitives.size() );
+	printf( "tree count %i\n", Count() );
+	printf( "spatial splits done %i\n", spatialSplits );
+	printf( "primitives clipped %i\n", clips );
 }
 
 #pragma region bvh_statistics
@@ -33,7 +41,7 @@ float BVH2::TotalCost( uint nodeIdx )
 	BVHNode2 node = nodes[nodeIdx];
 
 	// node is leaf, return SAH cost
-	if (node.count > 0) return CalculateNodeCost( node );
+	if (node.count > 0) return CalculateNodeCost( node, node.count );
 	// node is interior node
 	else
 	{
@@ -69,19 +77,55 @@ uint BVH2::Count( uint nodeIdx )
 		return lcount + rcount;
 	}
 }
+
+//bool BVH2::CheckBBs( uint nodeIdx )
+//{
+//	if (nodeIdx == -1) nodeIdx = rootNodeIdx_;
+//	BVHNode2 node = nodes[nodeIdx];
+//	aabb nodeBox{ node.aabbMin, node.aabbMax };
+//	if (node.count == 0)
+//	{
+//		// interior node
+//		BVHNode2 left = nodes[node.left];
+//		BVHNode2 right = nodes[node.left + 1];
+//		if (!nodeBox.Contains( left.aabbMin ) || !nodeBox.Contains( left.aabbMax ))
+//		{
+//			printf( "Left child not contained\n" );
+//			return false;
+//		}
+//		if (!nodeBox.Contains( left.aabbMin ) || !nodeBox.Contains( left.aabbMax ))
+//		{
+//			printf( "Left child not contained\n" );
+//			return false;
+//		}
+//	}
+//	else
+//	{
+//		// leaf
+//		for (int i = 0; i < node.count; i++)
+//		{
+//			aabb primBox = bbs_[node.left + i];
+//			if (!nodeBox.Contains( primBox.bmin4) || !nodeBox.Contains(primBox.bmax4))
+//			{
+//				printf( "Leaf not contained\n" );
+//				return false;
+//			}
+//		}
+//	}
+//	return true;
+//}
 #pragma endregion bvh_statistics
 
 #pragma region bvh2
 void BVH2::Build( bool statistics )
 {
 	// populate triangle index array
-	CreateBoundingBoxes();
+	auto data = CreateBVHPrimData();
 	BVHNode2& root = nodes[rootNodeIdx_];
-	root.left = rootNodeIdx_, root.count = count_;
-	UpdateNodeBounds( rootNodeIdx_ );
+	UpdateNodeBounds( rootNodeIdx_, data );
 	// subdivide recursively
 	Timer t;
-	Subdivide( rootNodeIdx_ );
+	BuildBVH( rootNodeIdx_, data );
 
 	if (statistics)
 	{
@@ -92,14 +136,14 @@ void BVH2::Build( bool statistics )
 	}
 }
 
-void BVH2::UpdateNodeBounds( uint nodeIdx )
+void BVH2::UpdateNodeBounds( uint nodeIdx, std::vector<BVHPrimData> prims )
 {
 	BVHNode2& node = nodes[nodeIdx];
 	node.aabbMin = float3( 1e30f );
 	node.aabbMax = float3( -1e30f );
-	for (uint left = node.left, i = 0; i < node.count; i++)
+	for (int i = 0; i < prims.size(); i++)
 	{
-		aabb box = bbs_[left + i];
+		aabb box = prims[i].box;
 		node.aabbMin = fminf( node.aabbMin, box.bmin4f );
 		node.aabbMax = fmaxf( node.aabbMax, box.bmax4f );
 	}
@@ -121,42 +165,95 @@ void BVH2::UpdateSphereBounds( BVHNode2& node, Sphere& sphere )
 	node.aabbMax = fmaxf( node.aabbMax, sphere.pos + sphere.r );
 }
 
-
-
-float BVH2::CalculateNodeCost( BVHNode2& node )
+float BVH2::CalculateNodeCost( BVHNode2& node, uint count )
 {
 	float3 e = node.aabbMax - node.aabbMin; // extent of the node
 	float surfaceArea = e.x * e.y + e.y * e.z + e.z * e.x;
-	return node.count * surfaceArea;
+	return count * surfaceArea;
 }
 
-void BVH2::Subdivide( uint nodeIdx )
+void BVH2::BuildBVH( uint root, std::vector<BVHPrimData> data )
 {
-#ifdef DEBUG_BVH
-	printf( "Subdividing: %i\n", nodeIdx );
-	printf( "Subdivisions: %i\n", subdivisions_++ );
-#endif
-	// terminate recursion
-	BVHNode2& node = nodes[nodeIdx];
-	// determine split axis using SAH
-	int axis;
-	float objectSplitPos, overlap;
-	float objectSplitCost = FindBestObjectSplitPlane( node, axis, objectSplitPos, overlap );
-	float nosplitCost = CalculateNodeCost( node );
-	if (objectSplitCost >= nosplitCost) return;
+	std::stack<std::pair<uint, std::vector<BVHPrimData>>> stack;
+	stack.push( { root, data } );
 
-	ObjectSplit( node, axis, objectSplitPos );
+	while (!stack.empty())
+	{
+		std::pair<uint, std::vector<BVHPrimData>> pair = stack.top();
+		stack.pop();
+
+		BVHNode2& node = nodes[pair.first];
+		// determine split axis using SAH
+		int objectAxis;
+		float objectSplitPos, overlap;
+		float objectSplitCost = FindBestObjectSplitPlane( node, objectAxis, objectSplitPos, overlap, pair.second );
+
+		float noSplitCost = CalculateNodeCost( node, pair.second.size() );
+
+		int spatialAxis;
+		float spatialSplitCost = 1e30f;
+		float spatialSplitPos;
+
+		float3 rootDims = Root().aabbMax - Root().aabbMin;
+		float rootArea = max( 0.f, rootDims[0] * rootDims[1] + rootDims[0] * rootDims[2] + rootDims[1] * rootDims[2] );
+		if (overlap / rootArea > alpha)
+		{
+			// perform step 2: attempt a spatial split
+			spatialSplitCost = FindBestSpatialSplitPlane( node, spatialAxis, spatialSplitPos, pair.second );
+		}
+
+		if (pair.second.size() <= MIN_LEAF_PRIMS || (noSplitCost < objectSplitCost && noSplitCost < spatialSplitCost))
+		{
+			// make a leaf
+			BVHNode2& node = nodes[pair.first];
+			node.left = primIdx.size();
+			node.count = pair.second.size();
+			for (int i = 0; i < pair.second.size(); i++)
+			{
+				primIdx.push_back( pair.second[i].idx );
+			}
+			continue;
+		}
+		
+		// either object split or spatial split
+		std::pair<std::vector<BVHPrimData>, std::vector<BVHPrimData>> leftright;
+		bool x = objectSplitCost < spatialSplitCost;
+		if (objectSplitCost < spatialSplitCost)
+		{
+			leftright = ObjectSplit( node, objectAxis, objectSplitPos, pair.second );
+		}
+		else
+		{
+			spatialSplits++;
+			leftright = SpatialSplit( node, spatialAxis, spatialSplitPos, pair.second );
+		}
+
+		uint leftId = nodesUsed_++;
+		uint rightId = nodesUsed_++;
+			
+		// TODO
+		// update node bounds
+		UpdateNodeBounds( leftId, leftright.first );
+		UpdateNodeBounds( rightId, leftright.second );
+
+		node.left = leftId;
+		node.count = 0;
+
+		stack.push( { leftId, leftright.first } );
+		stack.push( { rightId, leftright.second } );
+	}
 }
+
 #pragma endregion bvh2
 
 #pragma region object_splits
-float BVH2::FindBestObjectSplitPlane( BVHNode2& node, int& axis, float& splitPos, float& overlap )
+float BVH2::FindBestObjectSplitPlane( BVHNode2& node, int& axis, float& splitPos, float& overlap, std::vector<BVHPrimData> prims )
 {
 	float bestCost = 1e30f;
 	for (int a = 0; a < 3; a++)
 	{
 		float boundsMin = 1e30f, boundsMax = -1e30f;
-		for (uint i = 0; i < node.count; i++)
+		for (uint i = 0; i < prims.size(); i++)
 		{
 #ifdef CENTROID
 
@@ -176,7 +273,7 @@ float BVH2::FindBestObjectSplitPlane( BVHNode2& node, int& axis, float& splitPos
 			default: continue;
 			}
 #else
-			aabb box = bbs_[node.left + i];
+			aabb box = prims[i].box;
 			boundsMin = min( boundsMin, box.Center( a ) );
 			boundsMax = max( boundsMax, box.Center( a ) );
 #endif
@@ -184,8 +281,8 @@ float BVH2::FindBestObjectSplitPlane( BVHNode2& node, int& axis, float& splitPos
 		if (boundsMin == boundsMax) continue;
 		// populate the bins
 		struct Bin { aabb bounds; int count = 0; } bin[BVH_BINS];
-		float scale = BVH_BINS / (boundsMax - boundsMin); node.aabbMax[a] - node.aabbMin[a];
-		for (uint i = 0; i < node.count; i++)
+		float scale = BVH_BINS / (boundsMax - boundsMin);
+		for (uint i = 0; i < prims.size(); i++)
 		{
 #ifdef CENTROID
 			Primitive& prim = primitives_[references_[node.left + i].primIdx];
@@ -210,7 +307,7 @@ float BVH2::FindBestObjectSplitPlane( BVHNode2& node, int& axis, float& splitPos
 			}break;
 			}
 #else
-			aabb box = bbs_[node.left + i];
+			aabb box = prims[i].box;
 			int binIdx = min( BVH_BINS - 1, (int)((box.Center( a ) - boundsMin) * scale) );
 			bin[binIdx].count++;
 			bin[binIdx].bounds.Grow( box );
@@ -253,48 +350,29 @@ float BVH2::FindBestObjectSplitPlane( BVHNode2& node, int& axis, float& splitPos
 	return bestCost;
 }
 
-void BVH2::ObjectSplit( BVHNode2& node, int axis, float splitPos )
+std::pair<std::vector<BVHPrimData>, std::vector<BVHPrimData>> BVH2::ObjectSplit( BVHNode2& node, int axis, float splitPos, std::vector<BVHPrimData> prims )
 {
 	// in-place partition
-	int i = node.left;
-	int j = i + node.count - 1;
-	while (i <= j)
+	std::vector<BVHPrimData> leftPrims, rightPrims;
+
+	for (int i = 0; i < prims.size(); i++)
 	{
-		aabb& box = bbs_[i];
+		aabb& box = prims[i].box;
 		float center = box.Center( axis );
-		if (center < splitPos) i++;
-		else
-		{
-			swap( bbs_[i], bbs_[j] );
-			swap( primIdx[i], primIdx[j--] );
-		}
+		if (center < splitPos) leftPrims.push_back( prims[i] );
+		else rightPrims.push_back( prims[i] );
 	}
-	// abort split if one of the sides is empty
-	int leftCount = i - node.left;
-	if (leftCount == 0 || leftCount == node.count) return;
-	// create child nodes
-	int leftChildIdx = nodesUsed_++;
-	int rightChildIdx = nodesUsed_++;
-	nodes[leftChildIdx].left = node.left;
-	nodes[leftChildIdx].count = leftCount;
-	nodes[rightChildIdx].left = i;
-	nodes[rightChildIdx].count = node.count - leftCount;
-	node.left = leftChildIdx;
-	node.count = 0;
-	UpdateNodeBounds( leftChildIdx );
-	UpdateNodeBounds( rightChildIdx );
-	// recurse
-	Subdivide( leftChildIdx );
-	Subdivide( rightChildIdx );
+
+	return { leftPrims, rightPrims };
 }
 #pragma endregion object_splits
 
 #pragma region spatial_splits
-void BVH2::CreateBoundingBoxes()
+std::vector<BVHPrimData> BVH2::CreateBVHPrimData()
 {
-	for (int i = 0; i < count_; i++) primIdx[i] = i;
+	std::vector<BVHPrimData> data;
+	//for (int i = 0; i < count_; i++) primIdx[i] = i;
 
-	bbs_.clear();
 	for (uint i = 0; i < primitives_.size(); i++)
 	{
 		aabb box;
@@ -311,8 +389,9 @@ void BVH2::CreateBoundingBoxes()
 			box.Grow( p.objData.sphere.pos - p.objData.sphere.r );
 			break;
 		}
-		bbs_.push_back( box );
+		data.push_back( { box, i } );
 	}
+	return data;
 }
 
 float3 BVH2::lineAAPlaneIntersection( float3 v1, float3 v2, int axis, float plane )
@@ -374,7 +453,6 @@ bool BVH2::clipTriangleToAABB( aabb bounds, float3 v0, float3 v1, float3 v2, aab
 
 				bool containsCur = (curVertex[a] - plane) * normal >= 0;
 				bool containsNext = (nextVertex[a] - plane) * normal >= 0;
-
 				if (containsCur) newVertices.push_back( curVertex );
 
 				// check if we are going in or out of the plane
@@ -431,10 +509,10 @@ bool BVH2::clipSphereToAABB( aabb bounds, float3 pos, float r, aabb& outBounds )
 
 					// construct tighter bounding box constrained by plane
 					aabb stricterBounds;
-					stricterBounds.Grow( points[0]);
+					stricterBounds.Grow( points[0] );
 					stricterBounds.Grow( points[1] );
 					stricterBounds.Grow( points[2] );
-					stricterBounds.Grow( points[3]);
+					stricterBounds.Grow( points[3] );
 					float3 farVec = pos;
 					farVec[a] = farPos;
 					stricterBounds.Grow( farVec );
@@ -477,7 +555,7 @@ std::vector<float3> BVH2::sphereAAPlaneIntersection( float3 pos, float d, int ax
 		// 'find' the axis that we are trying to solve
 		int axisF = 0;
 		while (axisF == axisL || axisF == axis) axisF++;
-		
+
 		float3 xyz;
 		xyz[axis] = plane;
 		xyz[axisL] = pos[axisL];
@@ -510,56 +588,209 @@ std::vector<float3> BVH2::sphereAAPlaneIntersection( float3 pos, float d, int ax
 	return points;
 }
 
-float BVH2::FindBestSpatialSplitPlane( BVHNode2& node, int& axis, float& splitPos )
+
+struct SpatialBin
+{
+	aabb bounds;
+	int entries = 0;
+	int exits = 0;
+	float left = 1e30f;
+	float right = -1e30f;
+
+	SpatialBin operator+( const SpatialBin& other ) const
+	{
+		return { bounds.Union( other.bounds ), entries + other.entries, exits + other.exits, min( left, other.left ), max( right, other.right ) };
+	}
+};
+
+float BVH2::FindBestSpatialSplitPlane( BVHNode2& node, int& axis, float& splitPos, std::vector<BVHPrimData> prims )
 {
 	float bestCost = 1e30f;
 	for (int a = 0; a < 3; a++)
 	{
 		float boundsMin = 1e30f, boundsMax = -1e30f;
-		for (uint i = 0; i < node.count; i++)
+		for (uint i = 0; i < prims.size(); i++)
 		{
-			aabb box = bbs_[node.left + i];
-			boundsMin = min( boundsMin, box.Center( a ) );
-			boundsMax = max( boundsMax, box.Center( a ) );
+			aabb box = prims[i].box;
+			boundsMin = min( boundsMin, box.bmin[a] );
+			boundsMax = max( boundsMax, box.bmax[a] );
 		}
 		if (boundsMin == boundsMax) continue;
 
 		// populate the bins
-		struct Bin { aabb bounds; int entries = 0; int exits = 0; } bin[BVH_BINS];
+		SpatialBin bins[BVH_BINS];
 		float scale = BVH_BINS / (boundsMax - boundsMin);
-
-		for (uint i = 0; i < node.count; i++)
+		for (int b = 0; b < BVH_BINS; b++)
 		{
-			aabb box = bbs_[node.left + i];
+			bins[b].left = boundsMin + b * (1 / scale);
+			bins[b].right = (b == BVH_BINS - 1) ? boundsMax : boundsMin + (b + 1) * (1 / scale);
+		}
+
+		for (uint i = 0; i < prims.size(); i++)
+		{
+			aabb box = prims[i].box;
 			int leftBin = min( int( scale * (box.bmin[a] - boundsMin) ), BVH_BINS - 1 );
 			int rightBin = min( int( scale * (box.bmax[a] - boundsMin) ), BVH_BINS - 1 );
 
+			while (box.bmin[a] <= bins[leftBin].left && leftBin > 0)
+				leftBin--; 
+			while (box.bmin[a] > bins[leftBin].right && leftBin != BVH_BINS - 1)
+				leftBin++;
+			while (box.bmax[a] < bins[rightBin].left && rightBin > 0)
+				rightBin--;
+			while (box.bmax[a] >= bins[rightBin].right && rightBin != BVH_BINS - 1)
+				rightBin++;
+			
+
 			assert( leftBin <= rightBin );
-			assert( leftBin >= 0 && rightBin >= 0 );
+			assert( leftBin >= 0 && rightBin >= 0 && leftBin < BVH_BINS&& rightBin < BVH_BINS );
 
 			if (leftBin == rightBin)
 			{
-				// Primitive is completely contained in a single bin
-				bin[leftBin].entries++;
-				bin[rightBin].exits++;
-				bin[leftBin].bounds.Grow( box );
+				bins[leftBin].entries++;
+				bins[rightBin].exits++;
+				bins[leftBin].bounds.Grow( box );
 			}
 			else
 			{
 				// Primitive spans at least 2 bins
 				int left = BVH_BINS;
 				int right = -1;
-				
+
+				Primitive prim = primitives_[prims[i].idx];
+
+				for (int bin = leftBin; bin <= rightBin; bin++)
+				{
+					bool intersection;
+					aabb outBounds;
+					// create a quick bounding box for the bin
+					aabb binBounds = box;
+					binBounds.bmin[a] = bins[bin].left;
+					binBounds.bmax[a] = bins[bin].right;
+
+					// if we have planes in our bvh, we messed up somewhere
+					assert( prim.objType == TRIANGLE || prim.objType == SPHERE );
+					switch (prim.objType)
+					{
+					case TRIANGLE:
+						Triangle t = prim.objData.triangle;
+						intersection = clipTriangleToAABB( binBounds, t.v0, t.v1, t.v2, outBounds );
+						break;
+					case SPHERE:
+						Sphere s = prim.objData.sphere;
+						intersection = clipSphereToAABB( binBounds, s.pos, s.r, outBounds );
+						break;
+					}
+
+					if (intersection)
+					{
+						left = min( left, bin );
+						right = max( right, bin );
+						// grow the bounding box of the bin which contains the so far seen primitives
+						bins[bin].bounds.Grow( outBounds );
+					}
+				}
+
+				if (left <= right)
+				{
+					bins[left].entries++;
+					bins[right].exits++;
+				}
 			}
 		}
 
+		// now that we have the bins, we can figure out which split is the best for this axis
+		SpatialBin leftBins[BVH_BINS];
+		SpatialBin rightBins[BVH_BINS];
+		SpatialBin leftBinSum, rightBinSum;
+		for (int i = 0; i < BVH_BINS; i++)
+		{
+			leftBinSum = leftBinSum + bins[i];
+			leftBins[i] = leftBinSum;
+
+			rightBinSum = rightBinSum + bins[BVH_BINS - 1 - i];
+			rightBins[BVH_BINS - 1 - i] = rightBinSum;
+		}
+
+		// loop over the split planes and check the left and right cumulative bins
+		for (int i = 0; i < BVH_BINS - 1; i++)
+		{
+			SpatialBin leftBin = leftBins[i];
+			SpatialBin rightBin = rightBins[i + 1];
+
+			if (leftBin.entries == 0 || rightBin.exits == 0)
+				continue;
+
+			// calculate SAH
+			float planeCost = leftBin.entries * leftBin.bounds.Area() + rightBin.exits * rightBin.bounds.Area();
+			if (planeCost < bestCost)
+			{
+				bestCost = planeCost;
+				axis = a;
+				splitPos = leftBin.right;
+			}
+		}
 	}
 	return bestCost;
 }
 
-void BVH2::SpatialSplit( BVHNode2& node, int axis, float splitPos )
+std::pair<std::vector<BVHPrimData>, std::vector<BVHPrimData>> BVH2::SpatialSplit( BVHNode2& node, int axis, float splitPos, std::vector<BVHPrimData> prims )
 {
+	std::vector<BVHPrimData> leftPrims, rightPrims;
 
+	for (int i = 0; i < prims.size(); i++)
+	{
+		aabb& box = prims[i].box;
+		float min = box.bmin[axis];
+		float max = box.bmax[axis];
+
+		if (min < splitPos && max > splitPos)
+		{
+			// split
+			aabb leftClip = box;
+			aabb rightClip = box;
+			leftClip.bmax[axis] = splitPos;
+			rightClip.bmin[axis] = splitPos;
+
+			bool leftsuccess, rightsuccess;
+			aabb leftClipped, rightClipped;
+
+			uint index = prims[i].idx;
+			Primitive prim = primitives_[index];
+			switch (prim.objType)
+			{
+			case TRIANGLE:
+				Triangle t = prim.objData.triangle;
+				leftsuccess = clipTriangleToAABB( leftClip, t.v0, t.v1, t.v2, leftClipped );
+				rightsuccess = clipTriangleToAABB( rightClip, t.v0, t.v1, t.v2, rightClipped );
+				break;
+			case SPHERE:
+				Sphere s = prim.objData.sphere;
+				leftsuccess = clipSphereToAABB( leftClip, s.pos, s.r, leftClipped );
+				rightsuccess = clipSphereToAABB( rightClip, s.pos, s.r, rightClipped );
+				break;
+			}
+
+			clips++;
+			// update left split primitive
+			if (leftsuccess)
+				leftPrims.push_back( { leftClipped, index } );		
+			if (rightsuccess)
+				rightPrims.push_back( { rightClipped, index } );
+
+		}
+		else if (max < splitPos)
+		{
+			// fully left of split
+			leftPrims.push_back( prims[i] );
+		}
+		else
+		{
+			rightPrims.push_back( prims[i] );
+		}
+	}
+
+	return { leftPrims, rightPrims };
 }
 #pragma endregion spatial_splits
 

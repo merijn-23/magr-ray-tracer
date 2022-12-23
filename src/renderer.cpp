@@ -16,7 +16,7 @@ void Renderer::Init( )
 	settings->antiAliasing = true;
 	settings->renderBVH = false;
 	bvh2 = new BVH2( scene.primitives );
-	bvh4 = new BVH4( *bvh2 );
+	//bvh4 = new BVH4( *bvh2 );
 	InitKernels( );
 }
 
@@ -267,6 +267,9 @@ void Renderer::Gui( )
 		if (ImGui::Button( "Rebuild BVH" ))
 		{
 			// rebuild bvh with new alpha value
+			/*bvh2->Build( true );
+			bvhNodeBuffer->CopyToDevice();
+			bvhIdxBuffer->CopyToDevice();*/
 		}
 		ImGui::Spacing();
 		if (ImGui::TreeNodeEx( "Statistics", ImGuiTreeNodeFlags_DefaultOpen ))
@@ -275,7 +278,7 @@ void Renderer::Gui( )
 			ImGui::Text( "Building time: %.2fms", bvh2->stat_build_time );
 			ImGui::Text( "Node count: %i", bvh2->stat_node_count );
 			ImGui::Text( "Tree depth: %i", bvh2->stat_depth );
-			ImGui::Text( "Total SAH cost: %.2f", bvh2->stat_sah_cost );
+			ImGui::Text( "Total SAH cost: %.5f", bvh2->stat_sah_cost );
 			ImGui::TreePop();
 		}
 	}
