@@ -21,6 +21,7 @@ uint intersectBVH4( Ray* ray, BVHNode4* bvhNode, uint* primIdx )
 	uint stackPtr = 0;
 	uint steps = 0;
 	while ( 1 ) {
+		steps++;
 		float dist[4];
 		int order[4] = { 0, 1, 2, 3 };
 		dist[0] = intersectAABB( ray, node->aabbMin[0], node->aabbMax[0] );
@@ -34,16 +35,15 @@ uint intersectBVH4( Ray* ray, BVHNode4* bvhNode, uint* primIdx )
 				float d = dist[i]; dist[i] = dist[j]; dist[j] = d;
 				int o = order[i]; order[i] = order[j]; order[j] = o;
 			}
-		for ( int i = 3; i >= 0; i-- ) {
-			if ( dist[i] == REALLYFAR ) continue;
+		for ( int i = 0; i < 4; i++ ) {
 			int index = order[i];
+			if ( dist[i] == REALLYFAR || node->count[index] == INVALID ) continue;
 			if ( node->count[index] > 0 ) {
 				for ( uint j = 0; j < node->count[index]; j++ ) {
 					int index = primIdx[node->first[index] + j];
 					intersect( index, &primitives[index], ray );
 				}
 			} else {
-				steps++;
 				stack[stackPtr++] = &bvhNode[node->first[index]];
 			}
 		}

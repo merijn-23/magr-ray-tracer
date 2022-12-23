@@ -16,7 +16,7 @@ void Renderer::Init( )
 	settings->antiAliasing = true;
 	settings->renderBVH = false;
 	bvh2 = new BVH2( scene.primitives );
-	//bvh4 = new BVH4( *bvh2 );
+	bvh4 = new BVH4( *bvh2 );
 	InitKernels( );
 }
 
@@ -253,23 +253,26 @@ void Renderer::Gui( )
 	}
 	if (ImGui::CollapsingHeader( "BVH", ImGuiTreeNodeFlags_DefaultOpen ))
 	{
-		ImGui::Text( "(S)BVH surface overlap constant" );
-		ImGui::SliderFloat( "Alpha", &(bvh2->alpha), 0, 1, "%.4f" );
-		if (ImGui::Button( "Rebuild BVH" ))
-		{
-			// rebuild bvh with new alpha value
-			/*bvh2->Build( true );
-			bvhNodeBuffer->CopyToDevice();
-			bvhIdxBuffer->CopyToDevice();*/
-		}
-		ImGui::Spacing();
+		// ImGui::Text( "(S)BVH surface overlap constant" );
+		// ImGui::SliderFloat( "Alpha", &(bvh2->alpha), 0, 1, "%.4f" );
+		// if (ImGui::Button( "Rebuild BVH" ))
+		// {
+		// 	// rebuild bvh with new alpha value
+		// 	/*bvh2->Build( true );
+		// 	bvhNodeBuffer->CopyToDevice();
+		// 	bvhIdxBuffer->CopyToDevice();*/
+		// }
+		// ImGui::Spacing();
 		if (ImGui::TreeNodeEx( "Statistics", ImGuiTreeNodeFlags_DefaultOpen ))
 		{
 			if ( ImGui::Checkbox( "Visualize BVH traversal", (bool*)( &( settings->renderBVH ) ) ) ) camera.moved = true;
 			ImGui::Text( "Building time: %.2fms", bvh2->stat_build_time );
+			ImGui::Text( "Primitive count: %i", bvh2->stat_prim_count );
 			ImGui::Text( "Node count: %i", bvh2->stat_node_count );
 			ImGui::Text( "Tree depth: %i", bvh2->stat_depth );
 			ImGui::Text( "Total SAH cost: %.5f", bvh2->stat_sah_cost );
+			ImGui::Text( "# of spatial splits: %i", bvh2->stat_spatial_splits );
+			ImGui::Text( "# of primitives clipped: %i", bvh2->stat_prims_clipped );
 			ImGui::TreePop();
 		}
 	}

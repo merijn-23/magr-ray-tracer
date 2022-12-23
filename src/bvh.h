@@ -20,10 +20,8 @@ public:
 	float alpha = 1;
 
 	// statistics
-	uint stat_depth;
-	uint stat_node_count;
-	float stat_sah_cost;
-	float stat_build_time;
+	uint stat_depth, stat_node_count, stat_spatial_splits, stat_prims_clipped, stat_prim_count;
+	float stat_sah_cost, stat_build_time;
 
 private:
 	void BuildBVH( uint root, std::vector<BVHPrimData> data );
@@ -31,7 +29,7 @@ private:
 	void UpdateTriangleBounds( BVHNode2& node, Triangle& triangle );
 	void UpdateSphereBounds( BVHNode2& node, Sphere& sphere );
 
-	std::vector<BVHPrimData> CreateBVHPrimData();
+	std::vector<BVHPrimData> CreateBVHPrimData(uint& planes);
 	void Subdivide( uint nodeIdx );
 	float CalculateNodeCost( BVHNode2& node, uint count );
 

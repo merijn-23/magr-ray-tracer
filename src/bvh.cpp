@@ -1,37 +1,16 @@
 #include "precomp.h"
 #include <stack>
 
-static int spatialSplits = 0;
-static int clips = 0;
+
 BVH2::BVH2( std::vector<Primitive>& primitives ) : primitives_( primitives )
 {
 	rootNodeIdx_ = 0;
 	nodes.resize( primitives_.size() * 5 );
-	//primIdx.resize( count_ );
-	//bbs_.resize( count_ );
 	nodesUsed_ = 1;
 
-
-	//float3 pos = float3( -1, -2, 1 );
-	//float r = 2;
-	//float d = pos.x * pos.x + pos.y * pos.y + pos.z * pos.z - r * r;
-	//auto points = sphereAAPlaneIntersection( pos, d, r, 2, -0.7f);
-
-	//aabb bounds{ float3( 0 ), float3( 1 ) };
-	//aabb outBounds;
-	//clipTriangleToAABB( bounds, float3( -1, 0, .1f ), float3( -1, 1, .2f ), float3( 0.8f, 0.5f, 0.5f ), outBounds);
-
-	//aabb bounds{ float3( 0 ), float3( 1 ) };
-	//aabb outBounds;
-	//bool intersected = clipSphereToAABB( bounds, float3( 2, 0.5f, 0 ), 0.5f, outBounds );
-	printf( "primIdx size %i\n", primIdx.size() );
 	Build( true );
-	printf( "primIdx size %i\n", primIdx.size() );
-	//printf( "tree bounding box check: %i\n", CheckBBs() );
 	printf( "primitive count %i\n", primitives.size() );
 	printf( "tree count %i\n", Count() );
-	printf( "spatial splits done %i\n", spatialSplits );
-	printf( "primitives clipped %i\n", clips );
 }
 
 #pragma region bvh_statistics
@@ -80,12 +59,24 @@ uint BVH2::Count( uint nodeIdx )
 
 void BVH2::Build( bool statistics )
 {
-	// populate triangle index array
-	auto data = CreateBVHPrimData();
-	BVHNode2& root = nodes[rootNodeIdx_];
-	UpdateNodeBounds( rootNodeIdx_, data );
-	// subdivide recursively
 	Timer t;
+
+	// populate triangle index array
+	uint planes = 0;
+	auto data = CreateBVHPrimData(planes);
+
+	// root node
+	nodes[rootNodeIdx_] = BVHNode2{float4( -REALLYFAR ), float4( REALLYFAR ), 1, 0 };
+	nodesUsed_++;
+	if(planes > 0)
+	{
+		// left child, plane node
+		nodes[1] = BVHNode2{ float4( -50 ), float4( 50 ), 0, (uint)primIdx.size( ) };
+		nodesUsed_ += 2;
+		rootNodeIdx_ = 2;
+	}
+	nodes[rootNodeIdx_].count = data.size();
+	UpdateNodeBounds( rootNodeIdx_, data );
 	BuildBVH( rootNodeIdx_, data );
 
 	if (statistics)
@@ -94,6 +85,7 @@ void BVH2::Build( bool statistics )
 		stat_node_count = nodesUsed_;
 		stat_depth = Depth();
 		stat_sah_cost = TotalCost();
+		stat_prim_count = primitives_.size();
 	}
 }
 
@@ -185,7 +177,7 @@ void BVH2::BuildBVH( uint root, std::vector<BVHPrimData> data )
 		}
 		else
 		{
-			spatialSplits++;
+			stat_spatial_splits++;
 			leftright = SpatialSplit( node, spatialAxis, spatialSplitPos, pair.second );
 		}
 
@@ -329,9 +321,10 @@ std::pair<std::vector<BVHPrimData>, std::vector<BVHPrimData>> BVH2::ObjectSplit(
 #pragma endregion object_splits
 
 #pragma region spatial_splits
-std::vector<BVHPrimData> BVH2::CreateBVHPrimData()
+std::vector<BVHPrimData> BVH2::CreateBVHPrimData(uint& planes)
 {
 	std::vector<BVHPrimData> data;
+
 	//for (int i = 0; i < count_; i++) primIdx[i] = i;
 
 	for (uint i = 0; i < primitives_.size(); i++)
@@ -348,6 +341,10 @@ std::vector<BVHPrimData> BVH2::CreateBVHPrimData()
 		case SPHERE:
 			box.Grow( p.objData.sphere.pos + p.objData.sphere.r );
 			box.Grow( p.objData.sphere.pos - p.objData.sphere.r );
+			break;
+		case PLANE:
+			primIdx.push_back(i);			 
+			planes++;
 			break;
 		}
 		data.push_back( { box, i } );
@@ -549,7 +546,6 @@ std::vector<float3> BVH2::sphereAAPlaneIntersection( float3 pos, float d, int ax
 	return points;
 }
 
-
 struct SpatialBin
 {
 	aabb bounds;
@@ -602,7 +598,6 @@ float BVH2::FindBestSpatialSplitPlane( BVHNode2& node, int& axis, float& splitPo
 			while (box.bmax[a] >= bins[rightBin].right && rightBin != BVH_BINS - 1)
 				rightBin++;
 			
-
 			assert( leftBin <= rightBin );
 			assert( leftBin >= 0 && rightBin >= 0 && leftBin < BVH_BINS&& rightBin < BVH_BINS );
 
@@ -732,7 +727,7 @@ std::pair<std::vector<BVHPrimData>, std::vector<BVHPrimData>> BVH2::SpatialSplit
 				break;
 			}
 
-			clips++;
+			stat_prims_clipped++;
 			// update left split primitive
 			if (leftsuccess)
 				leftPrims.push_back( { leftClipped, index } );		
@@ -820,7 +815,6 @@ BVH4::BVH4( BVH2& _bvh2 ) : bvh2( _bvh2 )
 	bvh2.nodes[12].count = 12;
 #endif
 	Convert( );
-
 	cout << "Depth: " << Depth( nodes[0] ) << endl;
 	cout << "Count: " << Count( nodes[0] ) << endl;
 }
@@ -932,7 +926,7 @@ void BVH4::Collapse( int index )
 		}
 	}
 	for ( size_t i = 0; i < 4; i++ ) {
-		if ( node.count[i] == INVALID ) break;
+		//if ( node.count[i] == INVALID ) break;
 		if ( node.count[i] == 0 ) Collapse( node.first[i] );
 	}
 }
