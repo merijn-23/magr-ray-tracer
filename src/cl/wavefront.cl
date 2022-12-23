@@ -52,17 +52,12 @@ __kernel void extend(
 	if ( idx == 0 ) primitives = _primitives;
 	work_group_barrier( CLK_GLOBAL_MEM_FENCE );
 	Ray* ray = rays + idx;
-#if 0
-	for ( int i = 0; i < settings->numPrimitives; i++ )
-		intersect( i, primitives + i, ray );
-#else
 #ifdef USE_BVH4
 	uint steps = intersectBVH4( ray, bvhNode, bvhIdx );
 #else 
 	uint steps = intersectBVH2( ray, bvhNode, bvhIdx );
 #endif
 	if ( settings->renderBVH ) accum[idx] = ( float4 )( steps / 32.f );
-#endif
 	if ( ray->primIdx == -1 ) return;
 	intersectionPoint( ray );
 	ray->N = getNormal( primitives + ray->primIdx, ray->I );

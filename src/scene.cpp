@@ -141,8 +141,8 @@ namespace Tmpl8
 		//LoadModel("assets/bunny_low_poly.obj", "white", float3(.5 + offset, 0, 0));
 #else
 		//AddSphere( float3( 0, 0, 0 ), .3f, "white" );
-		LoadModel( "assets/bunny.obj", "white", float3( 0, 0, 0 ) );
-	/*	int x = 0;
+		//LoadModel( "assets/bunny.obj", "white", float3( 0, 0, 0 ) );
+		/*int x = 0;
 		AddTriangle( float3( 0 + x, 0, 1 ), float3( 0 + x, 0, 0 ), float3( 1 + x, 0, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "red" );
 		x++;
 		AddTriangle( float3( 0 + x, 0, 1 ), float3( 0 + x, 0, 0 ), float3( 1 + x, 0, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "green" );
@@ -153,11 +153,19 @@ namespace Tmpl8
 		x++;
 		AddTriangle( float3( 0 + x, 0, 1 ), float3( 0 + x, 0, 0 ), float3( 1 + x, 0, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "yellow" );
 		x++;
-		AddTriangle( float3( 0 + x, 0, 1 ), float3( 0 + x, 0, 0 ), float3( 1 + x, 0, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "cyan" );*/
-		/*for ( int i = 0; i < 50; i ++ ) {
+		AddTriangle( float3( 0 + x, 0, 1 ), float3( 0 + x, 0, 0 ), float3( 1 + x, 0, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "cyan" );
+		for ( int i = 0; i < 50; i ++ ) {
 			x++;
 			AddTriangle( float3( 0 + x, 0, 1 ), float3( 0 + x, 0, 0 ), float3( 1 + x, 0, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "mosaic" );
 		}*/
+
+		AddPlane( float3( 0, 1, 0 ), -1, "white" );
+		for ( int i = 0; i < 50; i++) {
+			for ( int j = 0; j < 50; j++ ) {
+				AddTriangle( float3( i, j, 1 ), float3( i, j + 1, 0 ), float3( i + 1, j, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "mosaic" );
+			}
+		}
+
 		
 #endif
 
