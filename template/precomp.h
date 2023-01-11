@@ -1666,9 +1666,10 @@ void SaveImageF(const char* file, int width, int height, float4* data);
 
 #include "constants.h"
 #include "common.h"
+#include "bvh.h"
 #include "scene.h"
 #include "camera.h"
-#include "bvh.h"
+#include "tlas.h"
 #include "renderer.h"
 
 // EOF

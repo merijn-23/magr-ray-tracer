@@ -93,3 +93,17 @@ typedef struct BVHNode4
 	int first[4];
 	int count[4];
 } BVHNode4;
+
+typedef struct BLASNode
+{
+	uint bvhIdx;	// point to root of BVHNode2 tree
+	uint primIdx;
+	uint primCount;
+} BLASNode;
+
+typedef struct TLASNode
+{
+	float4 aabbMin, aabbMax;
+	uint leftRight; // 2x16 bits, is leaf when leftRight == 0
+	uint BLASidx;
+} TLASNode;
