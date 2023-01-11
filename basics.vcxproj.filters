@@ -34,6 +34,9 @@
     <ClCompile Include="src\bvh.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\tlas.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="template\common.h">
@@ -89,6 +92,9 @@
     <ClInclude Include="src\bvh.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\tlas.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="template">
@@ -139,6 +145,9 @@
       <Filter>cl</Filter>
     </None>
     <None Include="src\cl\bvh.cl">
+      <Filter>cl</Filter>
+    </None>
+    <None Include="src\cl\tlas.cl">
       <Filter>cl</Filter>
     </None>
   </ItemGroup>

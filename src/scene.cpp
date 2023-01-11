@@ -1,17 +1,17 @@
 #include "precomp.h"
-
 #define TINYOBJLOADER_IMPLEMENTATION
-// Optional. define TINYOBJLOADER_USE_MAPBOX_EARCUT gives robust trinagulation. Requires C++11
+//Optional. define TINYOBJLOADER_USE_MAPBOX_EARCUT gives robust triangulation. Requires C++11
 //#define TINYOBJLOADER_USE_MAPBOX_EARCUT
 #include "tiny_obj_loader.h"
-
 namespace Tmpl8
 {
 	Scene::Scene( )
 	{
+		bvh2 = new BVH2( primitives );
+		//bvh4 = new BVH4( *bvh2 );
 		// load skydome first
 		LoadTexture( "assets/office.hdr", "skydome" );
-
+		// materials
 		auto& red = AddMaterial( "red" );
 		red.color = float3( 1, 0, 0 );
 		auto& green = AddMaterial( "green" );
@@ -31,7 +31,7 @@ namespace Tmpl8
 		mirror.specular = .5f;
 		auto& cyan = AddMaterial( "cyan" );
 		cyan.color = float3( 0, 1, 1 );
-
+		// red glass
 		auto& redglass = AddMaterial( "red-glass" );
 		redglass.color = float3( 1 );
 		redglass.isDieletric = true;
@@ -39,15 +39,15 @@ namespace Tmpl8
 		redglass.n2 = 1.5f;
 		redglass.specular = 0.03f;
 		redglass.absorption = float3( 0, 1, 1 );
-
+		// green glass
 		auto& greenglass = AddMaterial( "green-glass" );
 		greenglass = redglass;
 		greenglass.absorption = float3( 0, 1, 0 );
-
+		// white glass
 		auto& whiteglass = AddMaterial( "white-glass" );
 		whiteglass = redglass;
 		whiteglass.absorption = float3( .1f, .1f, .1f );
-
+		// white light
 		auto& whiteLight = AddMaterial( "white-light" );
 		whiteLight.isLight = true;
 		whiteLight.color = float4( 1 );
@@ -56,22 +56,21 @@ namespace Tmpl8
 		greenLight.isLight = true;
 		greenLight.color = float4( .1f, 1, .1f, 0 );
 		greenLight.emittance = float4( .1f, 1, .1f, 0 ) * 10;
-
+		// blue light
 		auto& blueLight = AddMaterial( "blue-light" );
 		blueLight.isLight = true;
 		blueLight.color = float4( .1f, .1f, 1, 0 );
 		blueLight.emittance = float4( .1f, .1f, 1, 0 ) * 5;
-
+		// yellow light
 		auto& yellowLight = AddMaterial( "yellow-light" );
 		yellowLight.isLight = true;
 		yellowLight.color = float4( 1.f, .6f, 0, 0 );
 		yellowLight.emittance = float4( 1.f, .6f, 0, 0 ) * 5;
-
+		// textures
 		LoadTexture( "assets/cash_money.png", "cash" );
 		LoadTexture( "assets/suprised_pikachu.png", "pika" );
 		LoadTexture( "assets/mosaic.png", "mosaic" );
 		LoadTexture( "assets/stone.jpg", "stone" );
-
 #if 0
 		int width = 15;
 		int height = 2;
@@ -90,8 +89,7 @@ namespace Tmpl8
 		int size = 2;
 		float step = 5;
 		float offset = -10;
-		for ( int i = 0; i < 5; i++ )
-		{
+		for ( int i = 0; i < 5; i++ ) {
 			AddTriangle(
 				float3( -size + i * step + offset, lamp_y, 0 ), float3( size + i * step + offset, lamp_y, 0 ), float3( -size + i * step + offset, lamp_y, depth ),
 				float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "white-light" );
@@ -137,9 +135,9 @@ namespace Tmpl8
 		LoadModel( "assets/cube.obj", "green-glass", float3( 5 * step + offset, 1.2f, .5f ) );
 		//LoadModel("assets/bunny_low_poly.obj", "white", float3(.5 + offset, 0, 0));
 #else
-		//AddSphere( float3( 0, 0, 0 ), .3f, "white" );
-		//LoadModel( "assets/bunny.obj", "white", float3( 0, 0, 0 ) );
-		/*int x = 0;
+		/*AddSphere( float3( 0, 0, 0 ), .3f, "white" );
+		LoadModel( "assets/bunny.obj", "white", float3( 0, 0, 0 ) );
+		int x = 0;
 		AddTriangle( float3( 0 + x, 0, 1 ), float3( 0 + x, 0, 0 ), float3( 1 + x, 0, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "red" );
 		x++;
 		AddTriangle( float3( 0 + x, 0, 1 ), float3( 0 + x, 0, 0 ), float3( 1 + x, 0, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "green" );
@@ -151,32 +149,31 @@ namespace Tmpl8
 		AddTriangle( float3( 0 + x, 0, 1 ), float3( 0 + x, 0, 0 ), float3( 1 + x, 0, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "yellow" );
 		x++;
 		AddTriangle( float3( 0 + x, 0, 1 ), float3( 0 + x, 0, 0 ), float3( 1 + x, 0, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "cyan" );
-		for ( int i = 0; i < 50; i ++ ) {
+		for ( int i = 0; i < 50; i++ ) {
 			x++;
 			AddTriangle( float3( 0 + x, 0, 1 ), float3( 0 + x, 0, 0 ), float3( 1 + x, 0, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "mosaic" );
-		}*/
-		//AddPlane( float3( 0, 1, 0 ), -1, "white" );
-		for ( int i = 0; i < 50; i++) {
+		}
+		for ( int i = 0; i < 50; i++ ) {
 			for ( int j = 0; j < 50; j++ ) {
 				AddTriangle( float3( i, j, 1 ), float3( i, j + 1, 0 ), float3( i + 1, j, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "mosaic" );
 			}
-		}
+		}*/
 #endif
-		//LoadModel("assets/teapot.obj", "white", float3(0));
+		//AddSphere( float3( 0, 0, 0 ), .3f, "white" );
+		LoadModel( "assets/cube.obj", "white", float3( 0, .5, 0 ) );
+		LoadModel( "assets/cube.obj", "white", float3( 0 ) );
+		bvh2->BuildBLAS( true, 0, primitives.size( ) );
 		SetTime( 0 );
 	}
-
 	Scene::~Scene( )
 	{
 	}
-
 	void Scene::SetTime( float t )
 	{
 		// default time for the scene is simply 0. Updating/ the time per frame
 		// enables animation. Updating it per ray can be used for motion blur.
 		animTime = t * .1f;
 	}
-
 	Material& Scene::AddMaterial( std::string name )
 	{
 		Material default;
@@ -193,7 +190,6 @@ namespace Tmpl8
 		matIdx_++;
 		return materials[matIdx_ - 1];
 	}
-
 	void Scene::AddSphere( float3 pos, float radius, std::string material )
 	{
 		Primitive prim;
@@ -215,7 +211,6 @@ namespace Tmpl8
 		prim.matIdx = matMap_[material];
 		primitives.push_back( prim );
 	}
-
 	void Scene::AddTriangle( float3 v0, float3 v1, float3 v2, float2 uv0, float2 uv1, float2 uv2, std::string material )
 	{
 		Primitive prim;
@@ -227,18 +222,16 @@ namespace Tmpl8
 		prim.objData.triangle.uv1 = uv1;
 		prim.objData.triangle.uv2 = uv2;
 		prim.objData.triangle.N = normalize( cross( v1 - v0, v2 - v0 ) );
-		prim.objData.triangle.centroid = (v0 + v1 + v2) * (1 / 3.f);
+		prim.objData.triangle.centroid = ( v0 + v1 + v2 ) * ( 1 / 3.f );
 		prim.matIdx = matMap_[material];
 		primitives.push_back( prim );
 	}
-
 	void Scene::LoadModel( std::string filename, std::string material, float3 pos )
 	{
 		cout << "Loading model: " << filename << "..." << endl;
 		tinyobj::ObjReaderConfig readerConfig;
 		tinyobj::ObjReader reader;
-		if ( !reader.ParseFromFile( filename, readerConfig ) )
-		{
+		if ( !reader.ParseFromFile( filename, readerConfig ) ) {
 			if ( !reader.Error( ).empty( ) )
 				std::cerr << "E/TinyObjReader: " << reader.Error( ) << std::endl;
 			return;
@@ -248,31 +241,28 @@ namespace Tmpl8
 		auto& attrib = reader.GetAttrib( );
 		auto& shapes = reader.GetShapes( );
 		auto& materials = reader.GetMaterials( );
+		// start primitive index
+		int primIdx = primitives.size( ) == 0 ? 0 : primitives.size( );
 		// loop over shapes
-		for ( size_t s = 0; s < shapes.size( ); s++ )
-		{
+		for ( size_t s = 0; s < shapes.size( ); s++ ) {
 			// loop over faces(polygon)
 			size_t index_offset = 0;
-			for ( size_t f = 0; f < shapes[s].mesh.num_face_vertices.size( ); f++ )
-			{
+			for ( size_t f = 0; f < shapes[s].mesh.num_face_vertices.size( ); f++ ) {
 				size_t fv = size_t( shapes[s].mesh.num_face_vertices[f] );
 				// loop over vertices in the face.
 				std::vector<float3> vertices;
 				std::vector<float2> texcoords;
-				for ( size_t v = 0; v < fv; v++ )
-				{
+				for ( size_t v = 0; v < fv; v++ ) {
 					// access to vertex
 					tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
-
 					tinyobj::real_t vx = attrib.vertices[3 * size_t( idx.vertex_index ) + 0];
 					tinyobj::real_t vy = attrib.vertices[3 * size_t( idx.vertex_index ) + 1];
 					tinyobj::real_t vz = attrib.vertices[3 * size_t( idx.vertex_index ) + 2];
-
+					// add vertex
 					vertices.push_back( float3( vx, vy, vz ) + pos );
-
+					// check texcoords
 					tinyobj::real_t tx = 0, ty = 0;
-					if ( idx.texcoord_index >= 0 )
-					{
+					if ( idx.texcoord_index >= 0 ) {
 						tx = attrib.texcoords[2 * size_t( idx.texcoord_index ) + 0];
 						ty = attrib.texcoords[2 * size_t( idx.texcoord_index ) + 1];
 					}
@@ -280,16 +270,16 @@ namespace Tmpl8
 				}
 				// reverse the vector to get the correct vertex order
 				std::reverse( vertices.begin( ), vertices.end( ) );
-
 				for ( size_t v = 0, t = 0; v < vertices.size( ); )
 					AddTriangle( vertices[v++], vertices[v++], vertices[v++],
 						texcoords[t++], texcoords[t++], texcoords[t++], material );
 				index_offset += fv;
 			}
 		}
+		//bvh2->BuildBLAS( true, primIdx, primitives.size( ) - primIdx );
+		
 		printf( "...Finished loading model\n" );
 	}
-
 	void Scene::LoadTexture( std::string filename, std::string name )
 	{
 		int width, height, n;

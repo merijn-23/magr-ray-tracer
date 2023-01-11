@@ -1,25 +1,18 @@
 #include "precomp.h"
 #include <stack>
-
-
 BVH2::BVH2( std::vector<Primitive>& primitives ) : primitives_( primitives )
 {
 	rootNodeIdx_ = 0;
-	nodes.resize( primitives_.size( ) * 8 );
-	nodesUsed_ = 1;
-
+	nodesUsed_ = 0;
+	// stats
 	stat_spatial_splits = 0;
 	stat_prims_clipped = 0;
-
-	Build( true );
 }
-
 #pragma region bvh_statistics
 float BVH2::TotalCost( uint nodeIdx )
 {
 	if ( nodeIdx == -1 ) nodeIdx = rootNodeIdx_;
-	BVHNode2 node = nodes[nodeIdx];
-
+	BVHNode2 node = bvhNodes[nodeIdx];
 	// node is leaf, return SAH cost
 	if ( node.count > 0 ) return CalculateNodeCost( node, node.count );
 	// node is interior node
@@ -29,11 +22,10 @@ float BVH2::TotalCost( uint nodeIdx )
 		return lCost + rCost;
 	}
 }
-
 uint BVH2::Depth( uint nodeIdx )
 {
 	if ( nodeIdx == -1 ) nodeIdx = rootNodeIdx_;
-	BVHNode2 node = nodes[nodeIdx];
+	BVHNode2 node = bvhNodes[nodeIdx];
 	if ( node.count > 0 ) return 0;
 	else {
 		uint lDepth = Depth( node.first );
@@ -42,11 +34,10 @@ uint BVH2::Depth( uint nodeIdx )
 		else return ( rDepth + 1 );
 	}
 }
-
 uint BVH2::Count( uint nodeIdx )
 {
 	if ( nodeIdx == -1 ) nodeIdx = rootNodeIdx_;
-	BVHNode2 node = nodes[nodeIdx];
+	BVHNode2 node = bvhNodes[nodeIdx];
 	if ( node.count > 0 ) return node.count;
 	else {
 		uint lcount = Count( node.first );
@@ -54,19 +45,27 @@ uint BVH2::Count( uint nodeIdx )
 		return lcount + rcount;
 	}
 }
-
-void BVH2::Build( bool statistics )
+#pragma endregion bvh_statistics
+#pragma region bvh2
+void BVH2::BuildBLAS( bool _statistics, int _startIdx, int _count )
 {
 	Timer t;
+	BLASNode blas;
+	blas.bvhIdx = nodesUsed_ + 1;
+	blas.primIdx = _startIdx;
+	blas.primCount = _count;
+	blasNodes.push_back( blas );
 	// populate triangle index array
-	auto data = CreateBVHPrimData(  );
+	auto data = CreateBVHPrimData( _startIdx, _count );
 	// root node
-	nodes[rootNodeIdx_] = BVHNode2{ float4( -REALLYFAR ), float4( REALLYFAR ), 1, 0 };
+	bvhNodes.resize( bvhNodes.size() + _count * 8 );
+	bvhNodes[rootNodeIdx_].count = data.size( );
 	nodesUsed_++;
-	nodes[rootNodeIdx_].count = data.size( );
 	UpdateNodeBounds( rootNodeIdx_, data );
 	BuildBVH( rootNodeIdx_, data );
-	if ( statistics ) {
+
+	rootNodeIdx_ = nodesUsed_ + 1;
+	if ( _statistics ) {
 		stat_build_time = t.elapsed( ) * 1000;
 		stat_node_count = nodesUsed_;
 		stat_depth = Depth( );
@@ -74,19 +73,17 @@ void BVH2::Build( bool statistics )
 		stat_prim_count = primitives_.size( );
 	}
 }
-
 void BVH2::UpdateNodeBounds( uint nodeIdx, std::vector<BVHPrimData> prims )
 {
-	BVHNode2& node = nodes[nodeIdx];
-	node.aabbMin = float3( 1e30f );
-	node.aabbMax = float3( -1e30f );
+	BVHNode2& node = bvhNodes[nodeIdx];
+	node.aabbMin = float3( REALLYFAR );
+	node.aabbMax = float3( -REALLYFAR );
 	for ( int i = 0; i < prims.size( ); i++ ) {
 		aabb box = prims[i].box;
 		node.aabbMin = fminf( node.aabbMin, box.bmin4f );
 		node.aabbMax = fmaxf( node.aabbMax, box.bmax4f );
 	}
 }
-
 void BVH2::UpdateTriangleBounds( BVHNode2& node, Triangle& triangle )
 {
 	node.aabbMin = fminf( node.aabbMin, triangle.v0 );
@@ -96,20 +93,17 @@ void BVH2::UpdateTriangleBounds( BVHNode2& node, Triangle& triangle )
 	node.aabbMax = fmaxf( node.aabbMax, triangle.v1 );
 	node.aabbMax = fmaxf( node.aabbMax, triangle.v2 );
 }
-
 void BVH2::UpdateSphereBounds( BVHNode2& node, Sphere& sphere )
 {
 	node.aabbMin = fminf( node.aabbMin, sphere.pos - sphere.r );
 	node.aabbMax = fmaxf( node.aabbMax, sphere.pos + sphere.r );
 }
-
 float BVH2::CalculateNodeCost( BVHNode2& node, uint count )
 {
 	float3 e = node.aabbMax - node.aabbMin; // extent of the node
 	float surfaceArea = e.x * e.y + e.y * e.z + e.z * e.x;
 	return count * surfaceArea;
 }
-
 void BVH2::BuildBVH( uint root, std::vector<BVHPrimData> data )
 {
 	std::stack<std::pair<uint, std::vector<BVHPrimData>>> stack;
@@ -117,15 +111,15 @@ void BVH2::BuildBVH( uint root, std::vector<BVHPrimData> data )
 	while ( !stack.empty( ) ) {
 		std::pair<uint, std::vector<BVHPrimData>> pair = stack.top( );
 		stack.pop( );
-		BVHNode2& node = nodes[pair.first];
+		BVHNode2& node = bvhNodes[pair.first];
 		// determine split axis using SAH
 		int objectAxis;
 		float objectSplitPos, overlap;
 		float objectSplitCost = FindBestObjectSplitPlane( node, objectAxis, objectSplitPos, overlap, pair.second );
 		float noSplitCost = CalculateNodeCost( node, pair.second.size( ) );
-		int spatialAxis;
+		int spatialAxis = -1;
 		float spatialSplitCost = REALLYFAR;
-		float spatialSplitPos;
+		float spatialSplitPos = REALLYFAR;
 		float3 rootDims = Root( ).aabbMax - Root( ).aabbMin;
 		float rootArea = max( 0.f, rootDims[0] * rootDims[1] + rootDims[0] * rootDims[2] + rootDims[1] * rootDims[2] );
 		if ( overlap / rootArea > alpha ) {
@@ -134,12 +128,11 @@ void BVH2::BuildBVH( uint root, std::vector<BVHPrimData> data )
 		}
 		if ( pair.second.size( ) <= MIN_LEAF_PRIMS || ( noSplitCost < objectSplitCost && noSplitCost < spatialSplitCost ) ) {
 			// make a leaf
-			BVHNode2& node = nodes[pair.first];
+			BVHNode2& node = bvhNodes[pair.first];
 			node.first = primIdx.size( );
 			node.count = pair.second.size( );
-			for ( int i = 0; i < pair.second.size( ); i++ ) {
+			for ( int i = 0; i < pair.second.size( ); i++ ) 
 				primIdx.push_back( pair.second[i].idx );
-			}
 			continue;
 		}
 		// either object split or spatial split
@@ -161,9 +154,7 @@ void BVH2::BuildBVH( uint root, std::vector<BVHPrimData> data )
 		stack.push( { rightId, leftright.second } );
 	}
 }
-
 #pragma endregion bvh2
-
 #pragma region object_splits
 float BVH2::FindBestObjectSplitPlane( BVHNode2& node, int& axis, float& splitPos, float& overlap, std::vector<BVHPrimData> prims )
 {
@@ -273,13 +264,11 @@ std::pair<std::vector<BVHPrimData>, std::vector<BVHPrimData>> BVH2::ObjectSplit(
 	return { leftPrims, rightPrims };
 }
 #pragma endregion object_splits
-
 #pragma region spatial_splits
-std::vector<BVHPrimData> BVH2::CreateBVHPrimData( )
+std::vector<BVHPrimData> BVH2::CreateBVHPrimData( int _startIdx, int _count )
 {
 	std::vector<BVHPrimData> data;
-	//for (int i = 0; i < count_; i++) primIdx[i] = i;
-	for ( uint i = 0; i < primitives_.size( ); i++ ) {
+	for ( uint i = _startIdx; i < _count; i++ ) {
 		aabb box;
 		Primitive p = primitives_[i];
 		switch ( p.objType ) {
@@ -300,18 +289,15 @@ std::vector<BVHPrimData> BVH2::CreateBVHPrimData( )
 float3 BVH2::LineAAPlaneIntersection( float3 v1, float3 v2, int axis, float plane )
 {
 	assert( v1[axis] != v2[axis] );
-
 	float3 start, end;
 	if ( v1[axis] < v2[axis] ) {
 		start = v1; end = v2;
 	} else {
 		start = v2; end = v1;
 	}
-
 	float3 edge = end - start;
 	float intersect = ( plane - start[axis] ) / edge[axis];
 	assert( intersect >= 0 && intersect <= 1 );
-
 	return start + edge * intersect;
 }
 // https://www.wikiwand.com/en/Sutherland%E2%80%93Hodgman_algorithm
@@ -335,18 +321,14 @@ bool BVH2::ClipTriangleToAABB( aabb bounds, float3 v0, float3 v1, float3 v2, aab
 				plane = bounds.bmax[a];
 				normal = -1.0f;
 			}
-
 			std::vector<float3> newVertices;
-
 			// loop through all vertices, keeping track of which ones leave or enter the bounding box / plane
 			for ( int i = 0; i < vertices.size( ); i++ ) {
 				float3 curVertex = vertices[i];
 				float3 nextVertex = vertices[( i + 1 ) % vertices.size( )];
-
 				bool containsCur = ( curVertex[a] - plane ) * normal >= 0;
 				bool containsNext = ( nextVertex[a] - plane ) * normal >= 0;
 				if ( containsCur ) newVertices.push_back( curVertex );
-
 				// check if we are going in or out of the plane
 				if ( containsCur != containsNext ) {
 					float3 intersect = LineAAPlaneIntersection( curVertex, nextVertex, a, plane );
@@ -356,20 +338,16 @@ bool BVH2::ClipTriangleToAABB( aabb bounds, float3 v0, float3 v1, float3 v2, aab
 			vertices = newVertices;
 		}
 	}
-
 	if ( vertices.size( ) < 3 ) return false;
-
 	for ( int i = 0; i < vertices.size( ); i++ )
 		outBounds.Grow( vertices[i] );
 	return true;
 }
-
 bool BVH2::ClipSphereToAABB( aabb bounds, float3 pos, float r, aabb& outBounds )
 {
 	// initial bounds equal to sphere
 	outBounds.Grow( pos + r );
 	outBounds.Grow( pos - r );
-
 	// for each axis
 	for ( int a = 0; a < 3; a++ ) {
 		// for each side of the box
@@ -382,7 +360,6 @@ bool BVH2::ClipSphereToAABB( aabb bounds, float3 pos, float r, aabb& outBounds )
 				plane = bounds.bmax[a];
 				normal = -1.0f;
 			}
-
 			float farPos = pos[a] + r * normal;
 			if ( farPos * normal > plane * normal ) {
 				float nearPos = pos[a] - r * normal;
@@ -390,7 +367,6 @@ bool BVH2::ClipSphereToAABB( aabb bounds, float3 pos, float r, aabb& outBounds )
 					// we have an intersection (line segment from center to boundary of sphere going through the plane)
 					float d = pos.x * pos.x + pos.y * pos.y + pos.z * pos.z - r * r;
 					auto points = SphereAAPlaneIntersection( pos, d, a, plane );
-
 					// construct tighter bounding box constrained by plane
 					aabb stricterBounds;
 					stricterBounds.Grow( points[0] );
@@ -400,7 +376,6 @@ bool BVH2::ClipSphereToAABB( aabb bounds, float3 pos, float r, aabb& outBounds )
 					float3 farVec = pos;
 					farVec[a] = farPos;
 					stricterBounds.Grow( farVec );
-
 					outBounds = outBounds.Intersection( stricterBounds );
 				}
 			} else {
@@ -411,7 +386,6 @@ bool BVH2::ClipSphereToAABB( aabb bounds, float3 pos, float r, aabb& outBounds )
 	}
 	return true;
 }
-
 std::vector<float3> BVH2::SphereAAPlaneIntersection( float3 pos, float d, int axis, float plane )
 {
 	// Sphere equation is:
@@ -432,11 +406,9 @@ std::vector<float3> BVH2::SphereAAPlaneIntersection( float3 pos, float d, int ax
 	std::vector<float3> points;
 	for ( int axisL = 0; axisL < 3; axisL++ ) {
 		if ( axisL == axis ) continue;
-
 		// 'find' the axis that we are trying to solve
 		int axisF = 0;
 		while ( axisF == axisL || axisF == axis ) axisF++;
-
 		float3 xyz;
 		xyz[axis] = plane;
 		xyz[axisL] = pos[axisL];
@@ -445,7 +417,6 @@ std::vector<float3> BVH2::SphereAAPlaneIntersection( float3 pos, float d, int ax
 		float cz = -2 * pos[axis] * xyz[axis];
 		float y2 = xyz[axisL] * xyz[axisL];
 		float z2 = xyz[axis] * xyz[axis];
-
 		// w/o loss of generality this example works when solving for x, same applies when solving for y and z
 		// Ax^2 + Bx + C = 0
 		// x^2 + ax + ( y^2 + z^2 + by + cz + ( x+_c^2 + y_c^2 + z_c^2 - r^2 ))
@@ -462,11 +433,9 @@ std::vector<float3> BVH2::SphereAAPlaneIntersection( float3 pos, float d, int ax
 		points.push_back( xyz );
 		xyz[axisF] = ( -a - sqrtD ) * 0.5f;
 		points.push_back( xyz );
-
 	}
 	return points;
 }
-
 struct SpatialBin
 {
 	aabb bounds;
@@ -480,7 +449,6 @@ struct SpatialBin
 		return { bounds.Union( other.bounds ), entries + other.entries, exits + other.exits, min( left, other.left ), max( right, other.right ) };
 	}
 };
-
 float BVH2::FindBestSpatialSplitPlane( BVHNode2& node, int& axis, float& splitPos, std::vector<BVHPrimData> prims )
 {
 	float bestCost = 1e30f;
@@ -596,7 +564,6 @@ float BVH2::FindBestSpatialSplitPlane( BVHNode2& node, int& axis, float& splitPo
 	}
 	return bestCost;
 }
-
 std::pair<std::vector<BVHPrimData>, std::vector<BVHPrimData>> BVH2::SpatialSplit( BVHNode2& node, int axis, float splitPos, std::vector<BVHPrimData> prims )
 {
 	std::vector<BVHPrimData> leftPrims, rightPrims;
@@ -643,7 +610,6 @@ std::pair<std::vector<BVHPrimData>, std::vector<BVHPrimData>> BVH2::SpatialSplit
 	return { leftPrims, rightPrims };
 }
 #pragma endregion spatial_splits
-
 #pragma region bvh4
 BVH4::BVH4( BVH2& _bvh2 ) : bvh2( _bvh2 )
 {
@@ -708,74 +674,70 @@ BVH4::BVH4( BVH2& _bvh2 ) : bvh2( _bvh2 )
 	bvh2.nodes[12].count = 12;
 	bvh2.nodes[12].count = 12;
 #endif
-
 	Timer t;
 	Convert( );
 	bvh2.stat_build_time = t.elapsed( ) * 1000;
-	bvh2.stat_node_count = Count( nodes[0] );
-	bvh2.stat_depth = Depth( nodes[0] );
+	bvh2.stat_node_count = Count( bvhNodes[0] );
+	bvh2.stat_depth = Depth( bvhNodes[0] );
 }
-
 uint BVH4::Depth( BVHNode4 node )
 {
 	uint maxDepth = 0;
-	if ( node.count[0] == 0 ) maxDepth = max( maxDepth, Depth( nodes[node.first[0]] ) + 1 );
-	if ( node.count[1] == 0 ) maxDepth = max( maxDepth, Depth( nodes[node.first[1]] ) + 1 );
-	if ( node.count[2] == 0 ) maxDepth = max( maxDepth, Depth( nodes[node.first[2]] ) + 1 );
-	if ( node.count[3] == 0 ) maxDepth = max( maxDepth, Depth( nodes[node.first[3]] ) + 1 );
+	if ( node.count[0] == 0 ) maxDepth = max( maxDepth, Depth( bvhNodes[node.first[0]] ) + 1 );
+	if ( node.count[1] == 0 ) maxDepth = max( maxDepth, Depth( bvhNodes[node.first[1]] ) + 1 );
+	if ( node.count[2] == 0 ) maxDepth = max( maxDepth, Depth( bvhNodes[node.first[2]] ) + 1 );
+	if ( node.count[3] == 0 ) maxDepth = max( maxDepth, Depth( bvhNodes[node.first[3]] ) + 1 );
 	return maxDepth;
 }
-
 uint BVH4::Count( BVHNode4 node )
 {
 	int count = 0;
 	for ( size_t i = 0; i < 4; i++ )
 		if ( node.count[i] > 0 ) count += node.count[i];
-		else if ( node.count[i] == 0 ) count += Count( nodes[node.first[i]] );
+		else if ( node.count[i] == 0 ) count += Count( bvhNodes[node.first[i]] );
 	return count;
 }
-
 // https://github.com/jan-van-bergen/GPU-Raytracer/blob/master/Src/BVH/Converters/BVH4Converter.cpp
 void BVH4::Convert( )
 {
-	nodes.resize( bvh2.nodes.size( ) );
-	for ( size_t i = 0; i < nodes.size( ); i++ ) {
-		if ( bvh2.nodes[i].count > 0 )  continue;
-		const BVHNode2& childLeft = bvh2.nodes[bvh2.nodes[i].first];
-		const BVHNode2& childRight = bvh2.nodes[bvh2.nodes[i].first + 1];
-		nodes[i].aabbMin[0] = childLeft.aabbMin;
-		nodes[i].aabbMax[0] = childLeft.aabbMax;
-		nodes[i].aabbMin[1] = childRight.aabbMin;
-		nodes[i].aabbMax[1] = childRight.aabbMax;
-		if ( childLeft.count > 0 ) { 
-			nodes[i].first[0] = childLeft.first;
-			nodes[i].count[0] = childLeft.count;
+	bvhNodes.resize( bvh2.bvhNodes.size( ) );
+	for ( size_t i = 0; i < bvhNodes.size( ); i++ ) {
+		if ( bvh2.bvhNodes[i].count > 0 )  continue;
+		const BVHNode2& childLeft = bvh2.bvhNodes[bvh2.bvhNodes[i].first];
+		const BVHNode2& childRight = bvh2.bvhNodes[bvh2.bvhNodes[i].first + 1];
+		bvhNodes[i].aabbMin[0] = childLeft.aabbMin;
+		bvhNodes[i].aabbMax[0] = childLeft.aabbMax;
+		bvhNodes[i].aabbMin[1] = childRight.aabbMin;
+		bvhNodes[i].aabbMax[1] = childRight.aabbMax;
+		if ( childLeft.count > 0 ) {
+			bvhNodes[i].first[0] = childLeft.first;
+			bvhNodes[i].count[0] = childLeft.count;
 		} else {
-			nodes[i].first[0] = bvh2.nodes[i].first;
-			nodes[i].count[0] = 0;
+			bvhNodes[i].first[0] = bvh2.bvhNodes[i].first;
+			bvhNodes[i].count[0] = 0;
 		}
 		if ( childRight.count > 0 ) {
-			nodes[i].first[1] = childRight.first;
-			nodes[i].count[1] = childRight.count;
+			bvhNodes[i].first[1] = childRight.first;
+			bvhNodes[i].count[1] = childRight.count;
 		} else {
-			nodes[i].first[1] = bvh2.nodes[i].first + 1;
-			nodes[i].count[1] = 0;
+			bvhNodes[i].first[1] = bvh2.bvhNodes[i].first + 1;
+			bvhNodes[i].count[1] = 0;
 		}
 		// fill the other two nodes
 		for ( size_t j = 2; j < 4; j++ ) {
-			nodes[i].first[j] = INVALID;
-			nodes[i].count[j] = INVALID;
+			bvhNodes[i].first[j] = INVALID;
+			bvhNodes[i].count[j] = INVALID;
 		}
 	}
 	// handle special case where the root is a leaf
-	if ( bvh2.nodes[0].count > 0 ) {
-		nodes[0].aabbMin[0] = bvh2.nodes[0].aabbMin;
-		nodes[0].aabbMax[0] = bvh2.nodes[0].aabbMax;
-		nodes[0].first[0] = bvh2.nodes[0].first;
-		nodes[0].count[0] = bvh2.nodes[0].count;
+	if ( bvh2.bvhNodes[0].count > 0 ) {
+		bvhNodes[0].aabbMin[0] = bvh2.bvhNodes[0].aabbMin;
+		bvhNodes[0].aabbMax[0] = bvh2.bvhNodes[0].aabbMax;
+		bvhNodes[0].first[0] = bvh2.bvhNodes[0].first;
+		bvhNodes[0].count[0] = bvh2.bvhNodes[0].count;
 		for ( size_t i = 0; i < 4; i++ ) {
-			nodes[0].first[0] = INVALID;
-			nodes[0].count[0] = INVALID;
+			bvhNodes[0].first[0] = INVALID;
+			bvhNodes[0].count[0] = INVALID;
 		}
 	} else {
 		//Collapse( 0 );
@@ -784,14 +746,14 @@ void BVH4::Convert( )
 // https://github.com/jan-van-bergen/GPU-Raytracer/blob/master/Src/BVH/Converters/BVH4Converter.cpp
 void BVH4::Collapse( int index )
 {
-	BVHNode4& node = nodes[index];
+	BVHNode4& node = bvhNodes[index];
 	while ( true ) {
 		int N_n = GetChildCount( node );
 		float maxArea = -INFINITY;
 		int maxIndex = INVALID;
 		for ( size_t i = 0; i < N_n; i++ ) {
 			if ( node.count[i] > 0 ) continue;
-			int N_ci = GetChildCount( nodes[node.first[i]] );
+			int N_ci = GetChildCount( bvhNodes[node.first[i]] );
 			// check if the current can adopt the children of child node i
 			if ( !( N_n - 1 + N_ci <= 4 ) ) continue;
 			float diffX = node.aabbMax[i].x - node.aabbMin[i].x;
@@ -806,7 +768,7 @@ void BVH4::Collapse( int index )
 		if ( maxIndex == INVALID ) {
 			break;
 		}
-		const BVHNode4& maxChild = nodes[node.first[maxIndex]];
+		const BVHNode4& maxChild = bvhNodes[node.first[maxIndex]];
 		// replace max child with its first child
 		node.aabbMin[maxIndex] = maxChild.aabbMin[0];
 		node.aabbMax[maxIndex] = maxChild.aabbMax[0];
@@ -826,7 +788,6 @@ void BVH4::Collapse( int index )
 		if ( node.count[i] == 0 ) Collapse( node.first[i] );
 	}
 }
-
 int BVH4::GetChildCount( const BVHNode4& node ) const
 {
 	int result = 0;

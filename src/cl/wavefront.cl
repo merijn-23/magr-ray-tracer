@@ -1,11 +1,11 @@
 #ifndef __WAVEFRONT_CL
 #define __WAVEFRONT_CL
-
 #include "src/constants.h"
 #include "src/common.h"
 #include "src/cl/util.cl"
 #include "src/cl/primitives.cl"
 #include "src/cl/bvh.cl"
+#include "src/cl/tlas.cl"
 #include "src/cl/ray.cl"
 #include "src/cl/camera.cl"
 #include "src/cl/glass.cl"
@@ -39,12 +39,14 @@ __kernel void generate(
 __kernel void extend(
 	__global Ray* rays,
 	__global Primitive* _primitives,
+	__global TLASNode* tlasNodes,
+	__global BLASNode* blasNodes,
 #ifdef USE_BVH4
-	__global BVHNode4* bvhNode,
+	__global BVHNode4* bvhNodes,
 #else
-	__global BVHNode2* bvhNode,
+	__global BVHNode2* bvhNodes,
 #endif
-	__global uint* bvhIdx,
+	__global uint* primIdx,
 	__global float4* accum,
 	__global Settings* settings
 ){
@@ -53,9 +55,10 @@ __kernel void extend(
 	work_group_barrier( CLK_GLOBAL_MEM_FENCE );
 	Ray* ray = rays + idx;
 #ifdef USE_BVH4
-	uint steps = intersectBVH4( ray, bvhNode, bvhIdx );
+	uint steps = intersectBVH4( ray, bvhNodes, primIdx );
 #else 
-	uint steps = intersectBVH2( ray, bvhNode, bvhIdx );
+	//uint steps = intersectTLAS( ray, tlasNodes, blasNodes, bvhNodes, primIdx );
+	uint steps = intersectBVH2( ray, bvhNodes, primIdx );
 #endif
 	if ( settings->renderBVH ) accum[idx] = ( float4 )( steps / 32.f );
 	if ( ray->primIdx == -1 ) return;

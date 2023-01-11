@@ -153,6 +153,7 @@
     </ClCompile>
     <ClCompile Include="src\renderer.cpp" />
     <ClCompile Include="src\scene.cpp" />
+    <ClCompile Include="src\tlas.cpp" />
     <ClCompile Include="template\template.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -175,6 +176,7 @@
     <ClInclude Include="src\renderer.h" />
     <ClInclude Include="src\stb_image.h" />
     <ClInclude Include="src\tiny_obj_loader.h" />
+    <ClInclude Include="src\tlas.h" />
     <ClInclude Include="template\common.h" />
     <ClInclude Include="template\precomp.h" />
     <ClInclude Include="src\scene.h" />
@@ -189,6 +191,7 @@
     <None Include="src\cl\ray.cl" />
     <None Include="src\cl\shading.cl" />
     <None Include="src\cl\skydome.cl" />
+    <None Include="src\cl\tlas.cl" />
     <None Include="src\cl\util.cl" />
     <None Include="src\cl\wavefront.cl" />
     <None Include="template\LICENSE" />

@@ -5,16 +5,18 @@ class BVH2
 {
 public:
 	BVH2( std::vector<Primitive>& );
-	void Build( bool statistics );
+	void BuildBLAS( bool statistics, int startIdx, int endIdx );
+	void RefitBVH( );
 	uint Depth( uint nodeIdx = -1 );
 	uint Count( uint nodeIdx = -1 );
 	//bool CheckBBs( uint nodeIdx = -1 );
 	float TotalCost( uint nodeIdx = -1 );
-	BVHNode2 Root() { return nodes[rootNodeIdx_]; }
-	BVHNode2 Left( BVHNode2 n ) { return nodes[n.first]; }
-	BVHNode2 Right( BVHNode2 n ) { return nodes[n.first + 1]; }
-	std::vector<BVHNode2> nodes;
+	BVHNode2 Root() { return bvhNodes[rootNodeIdx_]; }
+	BVHNode2 Left( BVHNode2 n ) { return bvhNodes[n.first]; }
+	BVHNode2 Right( BVHNode2 n ) { return bvhNodes[n.first + 1]; }
+	std::vector<BVHNode2> bvhNodes;
 	std::vector<uint> primIdx;
+	std::vector<BLASNode> blasNodes;
 	float alpha = .001f;
 	// statistics
 	uint stat_depth, stat_node_count, stat_spatial_splits, stat_prims_clipped, stat_prim_count;
@@ -24,7 +26,7 @@ private:
 	void UpdateNodeBounds( uint nodeIdx, std::vector<BVHPrimData> prims );
 	void UpdateTriangleBounds( BVHNode2& node, Triangle& triangle );
 	void UpdateSphereBounds( BVHNode2& node, Sphere& sphere );
-	std::vector<BVHPrimData> CreateBVHPrimData();
+	std::vector<BVHPrimData> CreateBVHPrimData( int startIdx, int count );
 	void Subdivide( uint nodeIdx );
 	float CalculateNodeCost( BVHNode2& node, uint count );
 	float FindBestObjectSplitPlane( BVHNode2& node, int& axis, float& splitPos, float& overlap, std::vector<BVHPrimData> prims );
@@ -38,19 +40,20 @@ private:
 	std::vector<Primitive>& primitives_;
 	uint subdivisions_ = 0;
 	uint rootNodeIdx_, nodesUsed_;
+	uint tlasNodesUsed_;
 };
 class BVH4
 {
 public:
 	BVH4( BVH2& );
-	std::vector<BVHNode4>& Nodes( ) { return nodes; }
+	std::vector<BVHNode4>& Nodes( ) { return bvhNodes; }
 	std::vector<uint>& Idx( ) { return bvh2.primIdx; }
 	uint Depth( BVHNode4 );
 	uint Count( BVHNode4 );
-	BVHNode4 Root( ) { return nodes[rootNodeIdx_]; }
+	BVHNode4 Root( ) { return bvhNodes[rootNodeIdx_]; }
 private:
 	BVH2& bvh2;
-	std::vector<BVHNode4> nodes;
+	std::vector<BVHNode4> bvhNodes;
 	void Convert( );
 	void Collapse( int index ); 
 	int GetChildCount( const BVHNode4& node ) const;

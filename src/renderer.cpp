@@ -1,11 +1,9 @@
 #include "precomp.h"
-
 // ImGui variables
 static float vignet_strength = 0.f;
 static float chromatic = 0.f;
 static float gamma_corr = 1.f;
 static bool printPerformance = false;
-
 // -----------------------------------------------------------
 // Initialize the renderer
 // -----------------------------------------------------------
@@ -15,13 +13,11 @@ void Renderer::Init( )
 	settings->tracerType = KAJIYA;
 	settings->antiAliasing = true;
 	settings->renderBVH = false;
-	bvh2 = new BVH2( scene.primitives );
-	bvh4 = new BVH4( *bvh2 );
+	tlas = new TLAS( *scene.bvh2 );
+	tlas->Build( );
 	InitKernels( );
 }
-
 void Renderer::Shutdown( ) {}
-
 // -----------------------------------------------------------
 // Main application tick function - Executed once per frame
 // -----------------------------------------------------------
@@ -54,7 +50,6 @@ void Renderer::Tick( float _deltaTime )
 	float fps = 1000 / avg, rps = ( SCRWIDTH * SCRHEIGHT ) * fps;
 	printf( "%5.2fms (%.1f fps) - %.1fMrays/s\n", avg, fps, rps / 1000000 );
 }
-
 void Renderer::RayTrace( )
 {
 	for ( int i = 0; i < SCRHEIGHT * SCRWIDTH; i++ )
@@ -86,7 +81,6 @@ void Renderer::RayTrace( )
 		std::swap( ray1Buffer, ray2Buffer );
 	}
 }
-
 void Renderer::PostProc( )
 {
 	// Post processing
@@ -144,7 +138,7 @@ void Renderer::InitKernels( )
 	accumBuffer = new Buffer( 4 * 4 * PIXELS );
 	screenBuffer = new Buffer( GetRenderTarget( )->ID, 0, Buffer::TARGET );
 	screen = 0;
-
+	//
 	seedBuffer = new Buffer( sizeof( uint ) * PIXELS );
 	settingsBuffer = new Buffer( sizeof( Settings ) );
 	// set data
@@ -153,32 +147,36 @@ void Renderer::InitKernels( )
 	texBuffer->hostBuffer = (uint*)scene.textures.data( );
 	settingsBuffer->hostBuffer = (uint*)settings;
 	seedBuffer->hostBuffer = new uint[PIXELS];
-
 	// settings
 	settings->numPrimitives = scene.primitives.size( );
 	settings->numLights = scene.lights.size( );
-
 	// BVH
 #ifdef USE_BVH4
-	bvhNodeBuffer = new Buffer( sizeof( BVHNode4 ) * bvh4->Nodes( ).size( ) );
-	bvhNodeBuffer->hostBuffer = (uint*)bvh4->Nodes( ).data( );
-	bvhIdxBuffer = new Buffer( sizeof( uint ) * bvh4->Idx( ).size( ) );
-	bvhIdxBuffer->hostBuffer = (uint*)bvh4->Idx( ).data( );
+	bvhNodeBuffer = new Buffer( sizeof( BVHNode4 ) * scene.bvh4->Nodes( ).size( ) );
+	bvhNodeBuffer->hostBuffer = (uint*)scene.bvh4->Nodes( ).data( );
+	bvhIdxBuffer = new Buffer( sizeof( uint ) * scene.bvh4->Idx( ).size( ) );
+	bvhIdxBuffer->hostBuffer = (uint*)scene.bvh4->Idx( ).data( );
 #else 
-	bvhNodeBuffer = new Buffer( sizeof( BVHNode2 ) * bvh2->nodes.size( ) );
-	bvhNodeBuffer->hostBuffer = (uint*)bvh2->nodes.data( );
-	bvhIdxBuffer = new Buffer( sizeof( uint ) * bvh2->primIdx.size( ) );
-	bvhIdxBuffer->hostBuffer = (uint*)bvh2->primIdx.data( );
+	bvhNodeBuffer = new Buffer( sizeof( BVHNode2 ) * scene.bvh2->bvhNodes.size( ) );
+	bvhNodeBuffer->hostBuffer = (uint*)scene.bvh2->bvhNodes.data( );
+	bvhIdxBuffer = new Buffer( sizeof( uint ) * scene.bvh2->primIdx.size( ) );
+	bvhIdxBuffer->hostBuffer = (uint*)scene.bvh2->primIdx.data( );
+	blasNodeBuffer = new Buffer( sizeof( BLASNode ) * scene.bvh2->blasNodes.size( ) );
+	blasNodeBuffer->hostBuffer = (uint*)scene.bvh2->blasNodes.data( );
 #endif
+	tlasNodeBuffer = new Buffer( sizeof( TLASNode ) * tlas->tlasNodes.size( ) );
+	tlasNodeBuffer->hostBuffer = (uint*)tlas->tlasNodes.data( );
 
 	generateKernel->SetArgument( 1, settingsBuffer );
 	generateKernel->SetArgument( 2, seedBuffer );
 
 	extendKernel->SetArgument( 1, primBuffer );
-	extendKernel->SetArgument( 2, bvhNodeBuffer );
-	extendKernel->SetArgument( 3, bvhIdxBuffer );
-	extendKernel->SetArgument( 4, accumBuffer );
-	extendKernel->SetArgument( 5, settingsBuffer );
+	extendKernel->SetArgument( 2, tlasNodeBuffer );
+	extendKernel->SetArgument( 3, blasNodeBuffer );
+	extendKernel->SetArgument( 4, bvhNodeBuffer );
+	extendKernel->SetArgument( 5, bvhIdxBuffer );
+	extendKernel->SetArgument( 6, accumBuffer );
+	extendKernel->SetArgument( 7, settingsBuffer );
 
 	shadeKernel->SetArgument( 2, shadowRayBuffer );
 	shadeKernel->SetArgument( 3, primBuffer );
@@ -199,11 +197,6 @@ void Renderer::InitKernels( )
 	matBuffer->CopyToDevice( );
 	bvhNodeBuffer->CopyToDevice( );
 	bvhIdxBuffer->CopyToDevice( );
-}
-
-void Tmpl8::Renderer::CamToDevice( )
-{
-	//clSetKernelArg( traceKernel->kernel, 6, sizeof( Camera ), &camera.cam );
 }
 
 void Renderer::SaveFrame( const char* file )
@@ -236,8 +229,7 @@ void Renderer::KeyInput( std::map<int, int> keyMap )
 
 void Renderer::Gui( )
 {
-	if ( ImGui::CollapsingHeader( "General" ) )
-	{
+	if ( ImGui::CollapsingHeader( "General" ) ) {
 		if ( ImGui::Checkbox( "Performance", &printPerformance ) );
 	}
 	if ( ImGui::CollapsingHeader( "Camera" ) ) {
@@ -253,8 +245,7 @@ void Renderer::Gui( )
 		if ( ImGui::RadioButton( "Whitted", &( settings->tracerType ), WHITTED ) ) camera.moved = true;
 		if ( ImGui::RadioButton( "Kajiya", &( settings->tracerType ), KAJIYA ) ) camera.moved = true;
 	}
-	if (ImGui::CollapsingHeader( "BVH", ImGuiTreeNodeFlags_DefaultOpen ))
-	{
+	if ( ImGui::CollapsingHeader( "BVH", ImGuiTreeNodeFlags_DefaultOpen ) ) {
 		// ImGui::Text( "(S)BVH surface overlap constant" );
 		// ImGui::SliderFloat( "Alpha", &(bvh2->alpha), 0, 1, "%.4f" );
 		// if (ImGui::Button( "Rebuild BVH" ))
@@ -265,33 +256,29 @@ void Renderer::Gui( )
 		// 	bvhIdxBuffer->CopyToDevice();*/
 		// }
 		// ImGui::Spacing();
-		if (ImGui::TreeNodeEx( "Statistics", ImGuiTreeNodeFlags_DefaultOpen ))
-		{
+		if ( ImGui::TreeNodeEx( "Statistics", ImGuiTreeNodeFlags_DefaultOpen ) ) {
 			if ( ImGui::Checkbox( "Visualize BVH traversal", (bool*)( &( settings->renderBVH ) ) ) ) camera.moved = true;
-			ImGui::Text( "Building time: %.2fms", bvh2->stat_build_time );
-			ImGui::Text( "Primitive count: %i", bvh2->stat_prim_count );
-			ImGui::Text( "Node count: %i", bvh2->stat_node_count );
-			ImGui::Text( "Tree depth: %i", bvh2->stat_depth );
-			ImGui::Text( "Total SAH cost: %.5f", bvh2->stat_sah_cost );
-			ImGui::Text( "# of spatial splits: %i", bvh2->stat_spatial_splits );
-			ImGui::Text( "# of primitives clipped: %i", bvh2->stat_prims_clipped );
-			ImGui::TreePop();
+			ImGui::Text( "Building time: %.2fms", scene.bvh2->stat_build_time );
+			ImGui::Text( "Primitive count: %i", scene.bvh2->stat_prim_count );
+			ImGui::Text( "Node count: %i", scene.bvh2->stat_node_count );
+			ImGui::Text( "Tree depth: %i", scene.bvh2->stat_depth );
+			ImGui::Text( "Total SAH cost: %.5f", scene.bvh2->stat_sah_cost );
+			ImGui::Text( "# of spatial splits: %i", scene.bvh2->stat_spatial_splits );
+			ImGui::Text( "# of primitives clipped: %i", scene.bvh2->stat_prims_clipped );
+			ImGui::TreePop( );
 		}
 	}
-	if ( ImGui::CollapsingHeader( "Post Processing" ) )
-	{
+	if ( ImGui::CollapsingHeader( "Post Processing" ) ) {
 		ImGui::SliderFloat( "Vignetting", &vignet_strength, 0.0f, 1.0f, "%.2f" );
 		ImGui::SliderFloat( "Gamma Correction", &gamma_corr, 0.0f, 2.0f, "%.2f" );
 		ImGui::SliderFloat( "Chromatic Abberation", &chromatic, 0.0f, 1.0f, "%.2f" );
 	}
-	if (ImGui::CollapsingHeader( "Screenshotting" ))
-	{
+	if ( ImGui::CollapsingHeader( "Screenshotting" ) ) {
 		static char str0[128] = "";
 		ImGui::InputTextWithHint( "Screenshot", "filename", str0, IM_ARRAYSIZE( str0 ) );
-		if (ImGui::Button( "Save Image" ))
-		{
+		if ( ImGui::Button( "Save Image" ) ) {
 			std::string input( str0 );
-			SaveFrame( ("screenshots/" + input + ".png").c_str() );
+			SaveFrame( ( "screenshots/" + input + ".png" ).c_str( ) );
 		}
 	}
 

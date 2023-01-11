@@ -18,7 +18,6 @@ public:
 	void Gui( );
 
 	void InitKernels();
-	void CamToDevice( );
 	void PostProc( );
 	void RayTrace( );
 	void SaveFrame( const char* file );
@@ -30,8 +29,7 @@ public:
 	Scene scene;
 	CameraManager camera;
 	Settings* settings;
-	BVH2* bvh2;
-	BVH4* bvh4;
+	TLAS* tlas;
 
 	Kernel* resetKernel;
 	Kernel* post_prepKernel;
@@ -72,6 +70,8 @@ public:
 	// BVH buffers
 	Buffer* bvhNodeBuffer;
 	Buffer* bvhIdxBuffer;
+	Buffer* tlasNodeBuffer;
+	Buffer* blasNodeBuffer;
 };
 
 } // namespace Tmpl8
