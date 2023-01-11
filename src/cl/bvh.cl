@@ -1,8 +1,6 @@
 #ifndef __BVH_CL
 #define __BVH_CL
-
 #include "src/common.h"
-
 float intersectAABB( Ray* ray, const float4 bmin, const float4 bmax )
 {
 	float tx1 = ( bmin.x - ray->O.x ) * ray->rD.x, tx2 = ( bmax.x - ray->O.x ) * ray->rD.x;
@@ -13,7 +11,6 @@ float intersectAABB( Ray* ray, const float4 bmin, const float4 bmax )
 	tmin = max( tmin, min( tz1, tz2 ) ), tmax = min( tmax, max( tz1, tz2 ) );
 	if ( tmax >= tmin && tmin < ray->t && tmax > 0 ) return tmin; else return REALLYFAR;
 }
-
 uint intersectBVH4( Ray* ray, BVHNode4* bvhNode, uint* primIdx )
 {
 	BVHNode4* stack[64];
@@ -52,7 +49,6 @@ uint intersectBVH4( Ray* ray, BVHNode4* bvhNode, uint* primIdx )
 	}
 	return steps;
 }
-
 uint intersectBVH2( Ray* ray, BVHNode2* bvhNode, uint* primIdx )
 {
 	BVHNode2* stack[32];
@@ -93,7 +89,6 @@ uint intersectBVH2( Ray* ray, BVHNode2* bvhNode, uint* primIdx )
 	}
 	return steps;
 }
-
 bool intersectBVH2Occlusion( Ray* ray, BVHNode2* bvhNode, uint* primIdx )
 {
 	float light_t = ray->t;
@@ -136,5 +131,4 @@ bool intersectBVH2Occlusion( Ray* ray, BVHNode2* bvhNode, uint* primIdx )
 	}
 	return false;
 }
-
 #endif // __BVH_CL

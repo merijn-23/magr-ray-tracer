@@ -12,7 +12,6 @@ namespace Tmpl8
 		// load skydome first
 		LoadTexture( "assets/office.hdr", "skydome" );
 
-
 		auto& red = AddMaterial( "red" );
 		red.color = float3( 1, 0, 0 );
 		auto& green = AddMaterial( "green" );
@@ -101,8 +100,6 @@ namespace Tmpl8
 				float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "white-light" );
 		}
 
-
-
 		// Floor
 		AddTriangle(
 			float3( -width, 0, -depth ), float3( -width, 0, depth ), float3( width, 0, -depth ),
@@ -158,18 +155,14 @@ namespace Tmpl8
 			x++;
 			AddTriangle( float3( 0 + x, 0, 1 ), float3( 0 + x, 0, 0 ), float3( 1 + x, 0, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "mosaic" );
 		}*/
-
 		//AddPlane( float3( 0, 1, 0 ), -1, "white" );
-		//for ( int i = 0; i < 50; i++) {
-		//	for ( int j = 0; j < 50; j++ ) {
-		//		AddTriangle( float3( i, j, 1 ), float3( i, j + 1, 0 ), float3( i + 1, j, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "mosaic" );
-		//	}
-		//}
-
-		
+		for ( int i = 0; i < 50; i++) {
+			for ( int j = 0; j < 50; j++ ) {
+				AddTriangle( float3( i, j, 1 ), float3( i, j + 1, 0 ), float3( i + 1, j, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "mosaic" );
+			}
+		}
 #endif
-		LoadModel("assets/dragon.obj", "red-glass", float3(0));
-
+		//LoadModel("assets/teapot.obj", "white", float3(0));
 		SetTime( 0 );
 	}
 
