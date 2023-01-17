@@ -1617,6 +1617,7 @@ void Kernel::Run2D(const int2 count, const int2 lsize, cl_event* eventToWaitFor,
 
 float3* LoadImageF(const char* file, int& w, int& h, int& c)
 {
+	cout << "I/LoadImageF: " << file << endl;
 	float* data = stbi_loadf(file, &w, &h, &c, 0);
 	int s = w * h;
 	float3* result = new float3[s];

@@ -20,6 +20,7 @@
 #include <io.h>
 #include <random>
 #include <stack>
+#include <filesystem>
 
 // header for AVX, and every technology before it.
 // if your CPU does not support this (unlikely), include the appropriate header instead.
@@ -1664,6 +1665,7 @@ public:
 float3* LoadImageF( const char* file, int& width, int& height, int& channels );
 void SaveImageF(const char* file, int width, int height, float4* data);
 
+#include "util.h"
 #include "constants.h"
 #include "common.h"
 #include "bvh.h"

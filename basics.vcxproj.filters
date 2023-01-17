@@ -95,6 +95,9 @@
     <ClInclude Include="src\tlas.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\util.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="template">
