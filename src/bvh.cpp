@@ -2,11 +2,6 @@
 #include <stack>
 BVH2::BVH2( std::vector<Primitive>& primitives ) : primitives_( primitives )
 {
-	rootNodeIdx_ = 0;
-	nodesUsed_ = 0;
-	// stats
-	stat_spatial_splits = 0;
-	stat_prims_clipped = 0;
 }
 #pragma region bvh_statistics
 float BVH2::TotalCost( uint nodeIdx )
@@ -47,24 +42,21 @@ uint BVH2::Count( uint nodeIdx )
 }
 #pragma endregion bvh_statistics
 #pragma region bvh2
-void BVH2::BuildBLAS( bool _statistics, int _startIdx, int _count )
+void BVH2::BuildBLAS( bool _statistics, int _startIdx)
 {
 	Timer t;
+	// add blas node
 	BLASNode blas;
-	blas.bvhIdx = nodesUsed_ + 1;
-	blas.primIdx = _startIdx;
-	blas.primCount = _count;
+	blas.bvhIdx = rootNodeIdx_;
 	blasNodes.push_back( blas );
 	// populate triangle index array
-	auto data = CreateBVHPrimData( _startIdx, _count );
+	auto data = CreateBVHPrimData( _startIdx );
 	// root node
-	bvhNodes.resize( bvhNodes.size() + _count * 8 );
+	bvhNodes.resize( bvhNodes.size( ) + (primitives_.size() - _startIdx ) * 4 );
 	bvhNodes[rootNodeIdx_].count = data.size( );
 	nodesUsed_++;
 	UpdateNodeBounds( rootNodeIdx_, data );
 	BuildBVH( rootNodeIdx_, data );
-
-	rootNodeIdx_ = nodesUsed_ + 1;
 	if ( _statistics ) {
 		stat_build_time = t.elapsed( ) * 1000;
 		stat_node_count = nodesUsed_;
@@ -72,31 +64,19 @@ void BVH2::BuildBLAS( bool _statistics, int _startIdx, int _count )
 		stat_sah_cost = TotalCost( );
 		stat_prim_count = primitives_.size( );
 	}
+	bvhNodes.resize( nodesUsed_ );
+	rootNodeIdx_ = nodesUsed_;
 }
-void BVH2::UpdateNodeBounds( uint nodeIdx, std::vector<BVHPrimData> prims )
+void BVH2::UpdateNodeBounds( uint _nodeIdx, std::vector<BVHPrimData> _primData )
 {
-	BVHNode2& node = bvhNodes[nodeIdx];
+	BVHNode2& node = bvhNodes[_nodeIdx];
 	node.aabbMin = float3( REALLYFAR );
 	node.aabbMax = float3( -REALLYFAR );
-	for ( int i = 0; i < prims.size( ); i++ ) {
-		aabb box = prims[i].box;
+	for ( int i = 0; i < _primData.size( ); i++ ) {
+		aabb box = _primData[i].box;
 		node.aabbMin = fminf( node.aabbMin, box.bmin4f );
 		node.aabbMax = fmaxf( node.aabbMax, box.bmax4f );
 	}
-}
-void BVH2::UpdateTriangleBounds( BVHNode2& node, Triangle& triangle )
-{
-	node.aabbMin = fminf( node.aabbMin, triangle.v0 );
-	node.aabbMin = fminf( node.aabbMin, triangle.v1 );
-	node.aabbMin = fminf( node.aabbMin, triangle.v2 );
-	node.aabbMax = fmaxf( node.aabbMax, triangle.v0 );
-	node.aabbMax = fmaxf( node.aabbMax, triangle.v1 );
-	node.aabbMax = fmaxf( node.aabbMax, triangle.v2 );
-}
-void BVH2::UpdateSphereBounds( BVHNode2& node, Sphere& sphere )
-{
-	node.aabbMin = fminf( node.aabbMin, sphere.pos - sphere.r );
-	node.aabbMax = fmaxf( node.aabbMax, sphere.pos + sphere.r );
 }
 float BVH2::CalculateNodeCost( BVHNode2& node, uint count )
 {
@@ -131,7 +111,7 @@ void BVH2::BuildBVH( uint root, std::vector<BVHPrimData> data )
 			BVHNode2& node = bvhNodes[pair.first];
 			node.first = primIdx.size( );
 			node.count = pair.second.size( );
-			for ( int i = 0; i < pair.second.size( ); i++ ) 
+			for ( int i = 0; i < pair.second.size( ); i++ )
 				primIdx.push_back( pair.second[i].idx );
 			continue;
 		}
@@ -158,9 +138,9 @@ void BVH2::BuildBVH( uint root, std::vector<BVHPrimData> data )
 #pragma region object_splits
 float BVH2::FindBestObjectSplitPlane( BVHNode2& node, int& axis, float& splitPos, float& overlap, std::vector<BVHPrimData> prims )
 {
-	float bestCost = 1e30f;
+	float bestCost = REALLYFAR;
 	for ( int a = 0; a < 3; a++ ) {
-		float boundsMin = 1e30f, boundsMax = -1e30f;
+		float boundsMin = REALLYFAR, boundsMax = -REALLYFAR;
 		for ( uint i = 0; i < prims.size( ); i++ ) {
 #ifdef CENTROID
 
@@ -177,13 +157,13 @@ float BVH2::FindBestObjectSplitPlane( BVHNode2& node, int& axis, float& splitPos
 					boundsMax = max( boundsMax, prim.objData.sphere.pos[a] );
 				} break;
 				default: continue;
-			}
+	}
 #else
 			aabb box = prims[i].box;
 			boundsMin = min( boundsMin, box.Center( a ) );
 			boundsMax = max( boundsMax, box.Center( a ) );
 #endif
-		}
+}
 		if ( boundsMin == boundsMax ) continue;
 		// populate the bins
 		struct Bin { aabb bounds; int count = 0; } bin[BVH_BINS];
@@ -235,7 +215,6 @@ float BVH2::FindBestObjectSplitPlane( BVHNode2& node, int& axis, float& splitPos
 			rightArea[BVH_BINS - 2 - i] = rightBox.Area( );
 			rightBoxes[BVH_BINS - 2 - i] = rightBox;
 		}
-
 		// calculate SAH cost for the 7 planes
 		scale = ( boundsMax - boundsMin ) / BVH_BINS;
 		for ( int i = 0; i < BVH_BINS - 1; i++ ) {
@@ -250,7 +229,6 @@ float BVH2::FindBestObjectSplitPlane( BVHNode2& node, int& axis, float& splitPos
 	}
 	return bestCost;
 }
-
 std::pair<std::vector<BVHPrimData>, std::vector<BVHPrimData>> BVH2::ObjectSplit( BVHNode2& node, int axis, float splitPos, std::vector<BVHPrimData> prims )
 {
 	// in-place partition
@@ -265,10 +243,10 @@ std::pair<std::vector<BVHPrimData>, std::vector<BVHPrimData>> BVH2::ObjectSplit(
 }
 #pragma endregion object_splits
 #pragma region spatial_splits
-std::vector<BVHPrimData> BVH2::CreateBVHPrimData( int _startIdx, int _count )
+std::vector<BVHPrimData> BVH2::CreateBVHPrimData( int _startIdx )
 {
 	std::vector<BVHPrimData> data;
-	for ( uint i = _startIdx; i < _count; i++ ) {
+	for ( uint i = _startIdx; i < primitives_.size(); i++ ) {
 		aabb box;
 		Primitive p = primitives_[i];
 		switch ( p.objType ) {
@@ -282,7 +260,10 @@ std::vector<BVHPrimData> BVH2::CreateBVHPrimData( int _startIdx, int _count )
 				box.Grow( p.objData.sphere.pos - p.objData.sphere.r );
 				break;
 		}
-		data.push_back( { box, i } );
+		BVHPrimData prim;
+		prim.box = box;
+		prim.idx = i;
+		data.push_back( prim );
 	}
 	return data;
 }
@@ -441,8 +422,8 @@ struct SpatialBin
 	aabb bounds;
 	int entries = 0;
 	int exits = 0;
-	float left = 1e30f;
-	float right = -1e30f;
+	float left = REALLYFAR;
+	float right = -REALLYFAR;
 
 	SpatialBin operator+( const SpatialBin& other ) const
 	{
@@ -451,9 +432,9 @@ struct SpatialBin
 };
 float BVH2::FindBestSpatialSplitPlane( BVHNode2& node, int& axis, float& splitPos, std::vector<BVHPrimData> prims )
 {
-	float bestCost = 1e30f;
+	float bestCost = REALLYFAR;
 	for ( int a = 0; a < 3; a++ ) {
-		float boundsMin = 1e30f, boundsMax = -1e30f;
+		float boundsMin = REALLYFAR, boundsMax = -REALLYFAR;
 		for ( uint i = 0; i < prims.size( ); i++ ) {
 			aabb box = prims[i].box;
 			boundsMin = min( boundsMin, box.bmin[a] );

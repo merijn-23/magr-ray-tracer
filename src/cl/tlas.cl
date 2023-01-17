@@ -5,24 +5,23 @@ int intersectTLAS(
 	TLASNode* tlasNodes,
 	BLASNode* blasNodes,
 	BVHNode2* bvhNodes,
-	uint* primIdx
+	uint* primIdxs
 )
 {
 	TLASNode* node = &tlasNodes[0], * stack[32];
 	uint stackPtr = 0;
 	uint steps = 0;
 	while ( 1 ) {
-		if ( node->leftRight == 0 )
-		{
+		if ( node->leftRight == 0 ) {
 			BLASNode* blas = &blasNodes[node->BLASidx];
-			intersectBVH2( ray, &bvhNodes[blas->bvhIdx], primIdx );
+			steps += intersectBVH2( ray, bvhNodes, primIdxs, blas->bvhIdx );
 			if ( stackPtr == 0 ) break;
 			else node = stack[--stackPtr];
 			continue;
 		}
 		// current node is an interior node: visit child nodes, ordered
-		TLASNode* child1 = &tlasNodes[node->leftRight & 0xffff	];
-		TLASNode* child2 = &tlasNodes[node->leftRight >> 16		];
+		TLASNode* child1 = &tlasNodes[node->leftRight & 0xffff];
+		TLASNode* child2 = &tlasNodes[node->leftRight >> 16];
 		float dist1 = intersectAABB( ray, child1->aabbMin, child1->aabbMax );
 		float dist2 = intersectAABB( ray, child2->aabbMin, child2->aabbMax );
 		if ( dist1 > dist2 ) {
@@ -34,13 +33,11 @@ int intersectTLAS(
 			if ( stackPtr == 0 ) break;
 			else node = stack[--stackPtr];
 		} else {
-			steps++;
 			node = child1;
-			if ( dist2 != REALLYFAR ) {
+			if ( dist2 != REALLYFAR )
 				stack[stackPtr++] = child2;
-				steps++;
-			}
 		}
+		steps++;
 	}
 	return steps;
 }

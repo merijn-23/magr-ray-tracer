@@ -159,10 +159,15 @@ namespace Tmpl8
 			}
 		}*/
 #endif
-		//AddSphere( float3( 0, 0, 0 ), .3f, "white" );
-		LoadModel( "assets/cube.obj", "white", float3( 0, .5, 0 ) );
-		LoadModel( "assets/cube.obj", "white", float3( 0 ) );
-		bvh2->BuildBLAS( true, 0, primitives.size( ) );
+		LoadModel( "assets/teapot.obj", "red", float3( 0, 4, 0 ) );
+		LoadModel( "assets/teapot.obj", "white", float3( 0 ) );
+		/*int x = 0;
+		AddTriangle( float3( 0 + x, 0, 1 ), float3( 0 + x, 0, 0 ), float3( 1 + x, 0, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "green" );
+		bvh2->BuildBLAS( true, 0, 1 );
+		x++;
+		AddTriangle( float3( 0 + x, 0, 1 ), float3( 0 + x, 0, 0 ), float3( 1 + x, 0, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "red" );
+		bvh2->BuildBLAS( true, 1, 2 );*/
+
 		SetTime( 0 );
 	}
 	Scene::~Scene( )
@@ -242,14 +247,14 @@ namespace Tmpl8
 		auto& shapes = reader.GetShapes( );
 		auto& materials = reader.GetMaterials( );
 		// start primitive index
-		int primIdx = primitives.size( ) == 0 ? 0 : primitives.size( );
+		int primIdx = primitives.size( );
 		// loop over shapes
 		for ( size_t s = 0; s < shapes.size( ); s++ ) {
 			// loop over faces(polygon)
 			size_t index_offset = 0;
 			for ( size_t f = 0; f < shapes[s].mesh.num_face_vertices.size( ); f++ ) {
 				size_t fv = size_t( shapes[s].mesh.num_face_vertices[f] );
-				// loop over vertices in the face.
+				// loop over vertices, texcoords of the face.
 				std::vector<float3> vertices;
 				std::vector<float2> texcoords;
 				for ( size_t v = 0; v < fv; v++ ) {
@@ -260,7 +265,7 @@ namespace Tmpl8
 					tinyobj::real_t vz = attrib.vertices[3 * size_t( idx.vertex_index ) + 2];
 					// add vertex
 					vertices.push_back( float3( vx, vy, vz ) + pos );
-					// check texcoords
+					// add texcoords
 					tinyobj::real_t tx = 0, ty = 0;
 					if ( idx.texcoord_index >= 0 ) {
 						tx = attrib.texcoords[2 * size_t( idx.texcoord_index ) + 0];
@@ -276,8 +281,7 @@ namespace Tmpl8
 				index_offset += fv;
 			}
 		}
-		//bvh2->BuildBLAS( true, primIdx, primitives.size( ) - primIdx );
-		
+		bvh2->BuildBLAS( true, primIdx );
 		printf( "...Finished loading model\n" );
 	}
 	void Scene::LoadTexture( std::string filename, std::string name )
