@@ -134,9 +134,8 @@ namespace Tmpl8
 
 		LoadModel( "assets/cube.obj", "green-glass", float3( 5 * step + offset, 1.2f, .5f ) );
 		//LoadModel("assets/bunny_low_poly.obj", "white", float3(.5 + offset, 0, 0));
-#else
+#endif
 		/*AddSphere( float3( 0, 0, 0 ), .3f, "white" );
-		LoadModel( "assets/bunny.obj", "white", float3( 0, 0, 0 ) );
 		int x = 0;
 		AddTriangle( float3( 0 + x, 0, 1 ), float3( 0 + x, 0, 0 ), float3( 1 + x, 0, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "red" );
 		x++;
@@ -158,16 +157,7 @@ namespace Tmpl8
 				AddTriangle( float3( i, j, 1 ), float3( i, j + 1, 0 ), float3( i + 1, j, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "mosaic" );
 			}
 		}*/
-#endif
-		LoadModel( "assets/teapot.obj", "red", float3( 0, 4, 0 ) );
-		LoadModel( "assets/teapot.obj", "white", float3( 0 ) );
-		/*int x = 0;
-		AddTriangle( float3( 0 + x, 0, 1 ), float3( 0 + x, 0, 0 ), float3( 1 + x, 0, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "green" );
-		bvh2->BuildBLAS( true, 0, 1 );
-		x++;
-		AddTriangle( float3( 0 + x, 0, 1 ), float3( 0 + x, 0, 0 ), float3( 1 + x, 0, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "red" );
-		bvh2->BuildBLAS( true, 1, 2 );*/
-
+		LoadModel( "assets/cube.obj", "white" );
 		SetTime( 0 );
 	}
 	Scene::~Scene( )
@@ -216,7 +206,7 @@ namespace Tmpl8
 		prim.matIdx = matMap_[material];
 		primitives.push_back( prim );
 	}
-	void Scene::AddTriangle( float3 v0, float3 v1, float3 v2, float2 uv0, float2 uv1, float2 uv2, std::string material )
+	void Scene::AddTriangle( float3 v0, float3 v1, float3 v2, float2 uv0, float2 uv1, float2 uv2, const std::string material )
 	{
 		Primitive prim;
 		prim.objType = TRIANGLE;
@@ -231,22 +221,26 @@ namespace Tmpl8
 		prim.matIdx = matMap_[material];
 		primitives.push_back( prim );
 	}
-	void Scene::LoadModel( std::string filename, std::string material, float3 pos )
+	//https://pastebin.com/PZYVnJCd
+	void Scene::LoadModel( std::string _filename, const std::string _defaultMat, float3 _pos )
 	{
-		cout << "Loading model: " << filename << "..." << endl;
+		cout << "Loading model: " << _filename << "..." << endl;
 		tinyobj::ObjReaderConfig readerConfig;
 		tinyobj::ObjReader reader;
-		if ( !reader.ParseFromFile( filename, readerConfig ) ) {
-			if ( !reader.Error( ).empty( ) )
-				std::cerr << "E/TinyObjReader: " << reader.Error( ) << std::endl;
+		if ( !reader.ParseFromFile( _filename, readerConfig ) ) {
+			if ( !reader.Error( ).empty( ) ) std::cerr << "E/TinyObjReader: " << reader.Error( ) << std::endl;
 			return;
 		}
-		if ( !reader.Warning( ).empty( ) )
-			std::cout << "W/TinyObjReader: " << reader.Warning( ) << std::endl;
+		if ( !reader.Warning( ).empty( ) ) std::cout << "W/TinyObjReader: " << reader.Warning( ) << std::endl;
 		auto& attrib = reader.GetAttrib( );
 		auto& shapes = reader.GetShapes( );
+		// load textures
 		auto& materials = reader.GetMaterials( );
-		// start primitive index
+		for ( const auto& mat : materials ) {
+			if ( !mat.diffuse_texname.empty( ) )
+				LoadTexture( util::GetBaseDir( _filename ) + mat.diffuse_texname, mat.diffuse_texname );
+		}
+		// start primitive index for bvh
 		int primIdx = primitives.size( );
 		// loop over shapes
 		for ( size_t s = 0; s < shapes.size( ); s++ ) {
@@ -257,6 +251,7 @@ namespace Tmpl8
 				// loop over vertices, texcoords of the face.
 				std::vector<float3> vertices;
 				std::vector<float2> texcoords;
+				std::vector<float4> colors;
 				for ( size_t v = 0; v < fv; v++ ) {
 					// access to vertex
 					tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
@@ -264,20 +259,30 @@ namespace Tmpl8
 					tinyobj::real_t vy = attrib.vertices[3 * size_t( idx.vertex_index ) + 1];
 					tinyobj::real_t vz = attrib.vertices[3 * size_t( idx.vertex_index ) + 2];
 					// add vertex
-					vertices.push_back( float3( vx, vy, vz ) + pos );
+					vertices.push_back( float3( vx, vy, vz ) + _pos );
 					// add texcoords
 					tinyobj::real_t tx = 0, ty = 0;
 					if ( idx.texcoord_index >= 0 ) {
 						tx = attrib.texcoords[2 * size_t( idx.texcoord_index ) + 0];
-						ty = attrib.texcoords[2 * size_t( idx.texcoord_index ) + 1];
+						ty = 1.0 - attrib.texcoords[2 * size_t( idx.texcoord_index ) + 1];
 					}
 					texcoords.push_back( float2( tx, ty ) );
+					// colors
+					tinyobj::real_t r = attrib.colors[3 * idx.vertex_index + 0];
+					tinyobj::real_t g = attrib.colors[3 * idx.vertex_index + 1];
+					tinyobj::real_t b = attrib.colors[3 * idx.vertex_index + 2];
+					colors.push_back( float4( r, g, b, 1 ) );
 				}
 				// reverse the vector to get the correct vertex order
 				std::reverse( vertices.begin( ), vertices.end( ) );
-				for ( size_t v = 0, t = 0; v < vertices.size( ); )
+				// get material
+				int matIdx = shapes[s].mesh.material_ids[f];
+				auto tex = materials[matIdx].diffuse_texname;
+				if ( tex.empty( ) ) tex = _defaultMat ;
+				// add triangle
+				for ( size_t v = 0, t = 0, c = 0; v < vertices.size( ); )
 					AddTriangle( vertices[v++], vertices[v++], vertices[v++],
-						texcoords[t++], texcoords[t++], texcoords[t++], material );
+						texcoords[t++], texcoords[t++], texcoords[t++], tex );
 				index_offset += fv;
 			}
 		}

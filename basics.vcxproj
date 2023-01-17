@@ -177,6 +177,7 @@
     <ClInclude Include="src\stb_image.h" />
     <ClInclude Include="src\tiny_obj_loader.h" />
     <ClInclude Include="src\tlas.h" />
+    <ClInclude Include="src\util.h" />
     <ClInclude Include="template\common.h" />
     <ClInclude Include="template\precomp.h" />
     <ClInclude Include="src\scene.h" />

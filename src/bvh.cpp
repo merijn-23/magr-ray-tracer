@@ -52,7 +52,7 @@ void BVH2::BuildBLAS( bool _statistics, int _startIdx)
 	// populate triangle index array
 	auto data = CreateBVHPrimData( _startIdx );
 	// root node
-	bvhNodes.resize( bvhNodes.size( ) + (primitives_.size() - _startIdx ) * 4 );
+	bvhNodes.resize( bvhNodes.size( ) + (primitives_.size() - _startIdx ) * 8 );
 	bvhNodes[rootNodeIdx_].count = data.size( );
 	nodesUsed_++;
 	UpdateNodeBounds( rootNodeIdx_, data );
@@ -69,6 +69,7 @@ void BVH2::BuildBLAS( bool _statistics, int _startIdx)
 }
 void BVH2::UpdateNodeBounds( uint _nodeIdx, std::vector<BVHPrimData> _primData )
 {
+	if ( _nodeIdx >= bvhNodes.size( ) ) bvhNodes.resize( bvhNodes.size( ) * 1.5 );
 	BVHNode2& node = bvhNodes[_nodeIdx];
 	node.aabbMin = float3( REALLYFAR );
 	node.aabbMax = float3( -REALLYFAR );
