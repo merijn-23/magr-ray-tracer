@@ -197,6 +197,8 @@ void Renderer::InitKernels( )
 	matBuffer->CopyToDevice( );
 	bvhNodeBuffer->CopyToDevice( );
 	bvhIdxBuffer->CopyToDevice( );
+	blasNodeBuffer->CopyToDevice( );
+	tlasNodeBuffer->CopyToDevice( );
 }
 
 void Renderer::SaveFrame( const char* file )

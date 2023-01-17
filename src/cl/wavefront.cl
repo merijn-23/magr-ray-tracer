@@ -4,13 +4,13 @@
 #include "src/common.h"
 #include "src/cl/util.cl"
 #include "src/cl/primitives.cl"
-#include "src/cl/bvh.cl"
-#include "src/cl/tlas.cl"
 #include "src/cl/ray.cl"
 #include "src/cl/camera.cl"
 #include "src/cl/glass.cl"
 #include "src/cl/skydome.cl"
 #include "src/cl/shading.cl"
+#include "src/cl/bvh.cl"
+#include "src/cl/tlas.cl"
 
 __kernel void generate(
 	__global Ray* rays,
@@ -37,28 +37,27 @@ __kernel void generate(
 }
 
 __kernel void extend(
-	__global Ray* rays,
-	__global Primitive* _primitives,
-	__global TLASNode* tlasNodes,
-	__global BLASNode* blasNodes,
+	__global Ray* rays,					
+	__global Primitive* _primitives,	
+	__global TLASNode* tlasNodes,		
+	__global BLASNode* blasNodes,		
 #ifdef USE_BVH4
 	__global BVHNode4* bvhNodes,
 #else
-	__global BVHNode2* bvhNodes,
+	__global BVHNode2* bvhNodes,		
 #endif
-	__global uint* primIdx,
-	__global float4* accum,
-	__global Settings* settings
+	__global uint* primIdxs,			
+	__global float4* accum,				
+	__global Settings* settings			
 ){
 	int idx = get_global_id( 0 );
 	if ( idx == 0 ) primitives = _primitives;
 	work_group_barrier( CLK_GLOBAL_MEM_FENCE );
 	Ray* ray = rays + idx;
 #ifdef USE_BVH4
-	uint steps = intersectBVH4( ray, bvhNodes, primIdx );
+	uint steps = intersectBVH4( ray, bvhNodes, primIdxs );
 #else 
-	//uint steps = intersectTLAS( ray, tlasNodes, blasNodes, bvhNodes, primIdx );
-	uint steps = intersectBVH2( ray, bvhNodes, primIdx );
+	uint steps = intersectTLAS( ray, tlasNodes, blasNodes, bvhNodes, primIdxs );
 #endif
 	if ( settings->renderBVH ) accum[idx] = ( float4 )( steps / 32.f );
 	if ( ray->primIdx == -1 ) return;

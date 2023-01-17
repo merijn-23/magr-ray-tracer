@@ -1,15 +1,14 @@
 #pragma once
 #include "common.h"
-struct BVHPrimData { aabb box; uint idx; };
+struct BVHPrimData { aabb box; uint idx = 0; };
+//#define BVH_OLD
 class BVH2
 {
 public:
 	BVH2( std::vector<Primitive>& );
-	void BuildBLAS( bool statistics, int startIdx, int endIdx );
-	void RefitBVH( );
+	void BuildBLAS( bool statistics, int startIdx);
 	uint Depth( uint nodeIdx = -1 );
 	uint Count( uint nodeIdx = -1 );
-	//bool CheckBBs( uint nodeIdx = -1 );
 	float TotalCost( uint nodeIdx = -1 );
 	BVHNode2 Root() { return bvhNodes[rootNodeIdx_]; }
 	BVHNode2 Left( BVHNode2 n ) { return bvhNodes[n.first]; }
@@ -17,17 +16,14 @@ public:
 	std::vector<BVHNode2> bvhNodes;
 	std::vector<uint> primIdx;
 	std::vector<BLASNode> blasNodes;
-	float alpha = .001f;
+	float alpha = 1.f;
 	// statistics
-	uint stat_depth, stat_node_count, stat_spatial_splits, stat_prims_clipped, stat_prim_count;
-	float stat_sah_cost, stat_build_time;
+	uint stat_depth = 0, stat_node_count = 0, stat_spatial_splits = 0, stat_prims_clipped = 0, stat_prim_count = 0;
+	float stat_sah_cost = 0, stat_build_time = 0;
 private:
 	void BuildBVH( uint root, std::vector<BVHPrimData> data );
 	void UpdateNodeBounds( uint nodeIdx, std::vector<BVHPrimData> prims );
-	void UpdateTriangleBounds( BVHNode2& node, Triangle& triangle );
-	void UpdateSphereBounds( BVHNode2& node, Sphere& sphere );
-	std::vector<BVHPrimData> CreateBVHPrimData( int startIdx, int count );
-	void Subdivide( uint nodeIdx );
+	std::vector<BVHPrimData> CreateBVHPrimData( int startIdx );
 	float CalculateNodeCost( BVHNode2& node, uint count );
 	float FindBestObjectSplitPlane( BVHNode2& node, int& axis, float& splitPos, float& overlap, std::vector<BVHPrimData> prims );
 	std::pair<std::vector<BVHPrimData>, std::vector<BVHPrimData>> ObjectSplit( BVHNode2& node, int axis, float splitPos, std::vector<BVHPrimData> prims );
@@ -39,8 +35,7 @@ private:
 	std::vector<float3> SphereAAPlaneIntersection( float3 pos, float d, int axis, float plane );
 	std::vector<Primitive>& primitives_;
 	uint subdivisions_ = 0;
-	uint rootNodeIdx_, nodesUsed_;
-	uint tlasNodesUsed_;
+	uint rootNodeIdx_ = 0, nodesUsed_ = 0;
 };
 class BVH4
 {
@@ -59,3 +54,5 @@ private:
 	int GetChildCount( const BVHNode4& node ) const;
 	uint rootNodeIdx_;
 };
+
+

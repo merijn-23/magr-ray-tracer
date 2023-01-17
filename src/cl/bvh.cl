@@ -10,17 +10,17 @@ float intersectAABB( Ray* ray, const float4 bmin, const float4 bmax )
 	tmin = max( tmin, min( tz1, tz2 ) ), tmax = min( tmax, max( tz1, tz2 ) );
 	if ( tmax >= tmin && tmin < ray->t && tmax > 0 ) return tmin; else return REALLYFAR;
 }
-uint intersectBVH2( Ray* ray, BVHNode2* bvhNode, uint* primIdx )
+uint intersectBVH2( Ray* ray, BVHNode2* bvhNode, uint* primIdxs, uint bvhIdx )
 {
 	BVHNode2* stack[32];
-	BVHNode2* node = &bvhNode[0];
+	BVHNode2* node = bvhNode + bvhIdx;
 	uint stackPtr = 0;
 	uint steps = 0;
 	while ( 1 ) {
 		if ( node->count > 0 ) // isLeaf?
 		{
 			for ( uint i = 0; i < node->count; i++ ) {
-				int index = primIdx[node->first + i];
+				int index = primIdxs[node->first + i];
 				intersect( index, &primitives[index], ray );
 			}
 			if ( stackPtr == 0 ) break;

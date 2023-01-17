@@ -2,6 +2,7 @@
 
 TLAS::TLAS( BVH2& _bvh2 ) : bvh2_( _bvh2 )
 {
+	nodesUsed_ = 0;
 	tlasNodes.resize( bvh2_.blasNodes.size( ) * 2 );
 }
 void TLAS::Build( )
@@ -9,10 +10,11 @@ void TLAS::Build( )
 	// assign a TLASleaf node to each BLAS
 	int nodeIdx[256], nodeIndices = bvh2_.blasNodes.size();
 	nodesUsed_ = 1;
-	for ( uint i = 0; i < bvh2_.blasNodes.size( ); i++ ) {
+	for ( uint i = 0; i < nodeIndices; i++ ) {
 		nodeIdx[i] = nodesUsed_;
-		tlasNodes[nodesUsed_].aabbMin = bvh2_.bvhNodes[bvh2_.blasNodes[i].bvhIdx].aabbMin;
-		tlasNodes[nodesUsed_].aabbMax = bvh2_.bvhNodes[bvh2_.blasNodes[i].bvhIdx].aabbMax;
+		BVHNode2 bvhNode = bvh2_.bvhNodes[bvh2_.blasNodes[i].bvhIdx];
+		tlasNodes[nodesUsed_].aabbMin = bvhNode.aabbMin;
+		tlasNodes[nodesUsed_].aabbMax = bvhNode.aabbMax;
 		tlasNodes[nodesUsed_].BLASidx = i;
 		tlasNodes[nodesUsed_++].leftRight = 0; // makes it a leaf
 	}
@@ -40,8 +42,8 @@ int TLAS::FindBestMatch( int* list, int N, int A )
 	float smallest = REALLYFAR;
 	int bestB = -1;
 	for ( int B = 0; B < N; B++ ) if ( B != A ) {
-		float3 bmax = fmaxf( tlasNodes[list[A]].aabbMax, tlasNodes[list[B]].aabbMax );
 		float3 bmin = fminf( tlasNodes[list[A]].aabbMin, tlasNodes[list[B]].aabbMin );
+		float3 bmax = fmaxf( tlasNodes[list[A]].aabbMax, tlasNodes[list[B]].aabbMax );
 		float3 e = bmax - bmin;
 		float surfaceArea = e.x * e.y + e.y * e.z + e.z * e.x;
 		if ( surfaceArea < smallest ) smallest = surfaceArea, bestB = B;

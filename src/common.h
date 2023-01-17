@@ -97,8 +97,6 @@ typedef struct BVHNode4
 typedef struct BLASNode
 {
 	uint bvhIdx;	// point to root of BVHNode2 tree
-	uint primIdx;
-	uint primCount;
 } BLASNode;
 
 typedef struct TLASNode
