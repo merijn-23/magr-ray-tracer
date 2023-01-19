@@ -54,9 +54,8 @@ void ReshapeWindowCallback(GLFWwindow* window, int w, int h)
 	glViewport(0, 0, w, h);
 }
 
-static bool toggle_cursor = false;
+static bool toggle_cursor = true;
 std::map<int, int> key_map;
-
 void KeyEventCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	if (key == GLFW_KEY_ESCAPE) running = false;
@@ -66,19 +65,7 @@ void KeyEventCallback(GLFWwindow* window, int key, int scancode, int action, int
 		if (toggle_cursor) glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 		else glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	}
-
 	key_map[key] = action;
-
-	//if ( action == GLFW_PRESS )
-	//{
-	//	if ( app ) if ( key >= 0 )
-	//	{
-	//		app->KeyDown( key );
-	//		app->KeyRepeat( key );
-	//	}
-	//}
-	//else if ( action == GLFW_REPEAT ) { if ( app ) if ( key >= 0 )  app->KeyRepeat( key ); }
-	//else if ( action == GLFW_RELEASE ) { if ( app ) if ( key >= 0 ) app->KeyUp( key ); }
 }
 void CharEventCallback(GLFWwindow* window, uint code) { /* nothing here yet */ }
 void WindowFocusCallback(GLFWwindow* window, int focused) { hasFocus = (focused == GL_TRUE); }
@@ -130,7 +117,7 @@ void main()
 	glfwSetScrollCallback(window, MouseScrollCallback);
 	glfwSetCursorPosCallback(window, MousePosCallback);
 	glfwSetCharCallback(window, CharEventCallback);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL );
 
 	// initialize GLAD
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) FatalError("gladLoadGLLoader failed.");

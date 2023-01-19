@@ -50,37 +50,39 @@ uint intersectBVH2( Ray* ray, BVHNode2* bvhNode, uint* primIdxs, uint bvhIdx )
 	}
 	return steps;
 }
-uint intersectBVH4( Ray* ray, BVHNode4* bvhNode, uint* primIdx )
+uint intersectBVH4( Ray* ray, BVHNode4* bvhNode, uint* primIdxs, uint bvhIdx )
 {
 	BVHNode4* stack[64];
-	BVHNode4* node = &bvhNode[0];
+	BVHNode4* node = bvhNode + bvhIdx;
 	uint stackPtr = 0;
 	uint steps = 0;
 	while ( 1 ) {
 		steps++;
 		float dist[4];
 		int order[4] = { 0, 1, 2, 3 };
-		dist[0] = intersectAABB( ray, node->aabbMin[0], node->aabbMax[0] );
-		dist[1] = intersectAABB( ray, node->aabbMin[1], node->aabbMax[1] );
-		dist[2] = intersectAABB( ray, node->aabbMin[2], node->aabbMax[2] );
-		dist[3] = intersectAABB( ray, node->aabbMin[3], node->aabbMax[3] );
+		dist[0] = node->first[0] != INVALID ? intersectAABB( ray, node->aabbMin[0], node->aabbMax[0] ) : REALLYFAR;
+		dist[1] = node->first[1] != INVALID ? intersectAABB( ray, node->aabbMin[1], node->aabbMax[1] ) : REALLYFAR;
+		dist[2] = node->first[2] != INVALID ? intersectAABB( ray, node->aabbMin[2], node->aabbMax[2] ) : REALLYFAR;
+		dist[3] = node->first[3] != INVALID ? intersectAABB( ray, node->aabbMin[3], node->aabbMax[3] ) : REALLYFAR;
 		// sort
-		for ( int i = 0; i < 4; i++ ) for ( int j = 0; j < 3; j++ )
-			if ( dist[j] > dist[i] ) {
-				//swap them
-				float d = dist[i]; dist[i] = dist[j]; dist[j] = d;
-				int o = order[i]; order[i] = order[j]; order[j] = o;
-			}
+		//for ( int i = 0; i < 4; i++ ) for ( int j = 0; j < 3; j++ ) {
+		//	if ( dist[j] > dist[i] ) {
+		//		//swap them
+		//		float d = dist[i]; dist[i] = dist[j]; dist[j] = d;
+		//		int o = order[i]; order[i] = order[j]; order[j] = o;
+		//	}
+		//}
 		for ( int i = 0; i < 4; i++ ) {
 			int index = order[i];
-			if ( dist[i] == REALLYFAR || node->count[index] == INVALID ) continue;
+			if ( node->first[index] == INVALID ) continue;
+			if ( dist[index] == REALLYFAR ) continue;
 			if ( node->count[index] > 0 ) {
 				for ( uint j = 0; j < node->count[index]; j++ ) {
-					int index = primIdx[node->first[index] + j];
-					intersect( index, &primitives[index], ray );
+					int primIdx = primIdxs[node->first[index] + j];
+					intersect( primIdx, primitives + primIdx, ray );
 				}
 			} else {
-				stack[stackPtr++] = &bvhNode[node->first[index]];
+				stack[stackPtr++] = bvhNode + node->first[index];
 			}
 		}
 		if ( stackPtr == 0 ) break;
@@ -102,7 +104,7 @@ bool intersectBVH2Occlusion( Ray* ray, BVHNode2* bvhNode, uint* primIdx )
 			for ( uint i = 0; i < node->count; i++ ) {
 				int index = primIdx[node->first + i];
 				intersect( index, &primitives[index], ray );
-				if(ray->t < light_t) return true;
+				if ( ray->t < light_t ) return true;
 			}
 			if ( stackPtr == 0 ) break;
 			else node = stack[--stackPtr];
