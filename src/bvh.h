@@ -45,14 +45,13 @@ public:
 	std::vector<uint>& Idx( ) { return bvh2.primIdx; }
 	uint Depth( BVHNode4 );
 	uint Count( BVHNode4 );
-	BVHNode4 Root( ) { return bvhNodes[rootNodeIdx_]; }
+	//BVHNode4 Root( ) { return bvhNodes[rootNodeIdx_]; }
 private:
 	BVH2& bvh2;
 	std::vector<BVHNode4> bvhNodes;
-	void Convert( );
+	void Convert( uint root);
 	void Collapse( int index ); 
 	int GetChildCount( const BVHNode4& node ) const;
-	uint rootNodeIdx_;
 };
 
 

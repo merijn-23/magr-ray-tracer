@@ -4,7 +4,11 @@ int intersectTLAS(
 	Ray* ray,
 	TLASNode* tlasNodes,
 	BLASNode* blasNodes,
+#ifdef USE_BVH4
+	BVHNode4* bvhNodes,
+#else
 	BVHNode2* bvhNodes,
+#endif // USE_BVH4
 	uint* primIdxs
 )
 {
@@ -14,7 +18,11 @@ int intersectTLAS(
 	while ( 1 ) {
 		if ( node->leftRight == 0 ) {
 			BLASNode* blas = &blasNodes[node->BLASidx];
+#ifdef USE_BVH4
+			steps += intersectBVH4( ray, bvhNodes, primIdxs, blas->bvhIdx );
+#else
 			steps += intersectBVH2( ray, bvhNodes, primIdxs, blas->bvhIdx );
+#endif // USE_BVH4
 			if ( stackPtr == 0 ) break;
 			else node = stack[--stackPtr];
 			continue;
@@ -37,8 +45,8 @@ int intersectTLAS(
 			if ( dist2 != REALLYFAR )
 				stack[stackPtr++] = child2;
 		}
-		steps++;
+		//steps++;
 	}
 	return steps;
 }
-#endif
+#endif // __TLAS_CL

@@ -595,7 +595,6 @@ std::pair<std::vector<BVHPrimData>, std::vector<BVHPrimData>> BVH2::SpatialSplit
 #pragma region bvh4
 BVH4::BVH4( BVH2& _bvh2 ) : bvh2( _bvh2 )
 {
-	rootNodeIdx_ = 0;
 #if 0 // debugging
 	bvh2.nodes.clear( );
 	bvh2.nodes.resize( 13 );
@@ -657,10 +656,10 @@ BVH4::BVH4( BVH2& _bvh2 ) : bvh2( _bvh2 )
 	bvh2.nodes[12].count = 12;
 #endif
 	Timer t;
-	Convert( );
+	Convert( 0 );
 	bvh2.stat_build_time = t.elapsed( ) * 1000;
-	bvh2.stat_node_count = Count( bvhNodes[0] );
-	bvh2.stat_depth = Depth( bvhNodes[0] );
+	bvh2.stat_node_count = -1;
+	bvh2.stat_depth = -1;
 }
 uint BVH4::Depth( BVHNode4 node )
 {
@@ -680,7 +679,7 @@ uint BVH4::Count( BVHNode4 node )
 	return count;
 }
 // https://github.com/jan-van-bergen/GPU-Raytracer/blob/master/Src/BVH/Converters/BVH4Converter.cpp
-void BVH4::Convert( )
+void BVH4::Convert( uint _root )
 {
 	bvhNodes.resize( bvh2.bvhNodes.size( ) );
 	for ( size_t i = 0; i < bvhNodes.size( ); i++ ) {
@@ -712,17 +711,20 @@ void BVH4::Convert( )
 		}
 	}
 	// handle special case where the root is a leaf
-	if ( bvh2.bvhNodes[0].count > 0 ) {
-		bvhNodes[0].aabbMin[0] = bvh2.bvhNodes[0].aabbMin;
-		bvhNodes[0].aabbMax[0] = bvh2.bvhNodes[0].aabbMax;
-		bvhNodes[0].first[0] = bvh2.bvhNodes[0].first;
-		bvhNodes[0].count[0] = bvh2.bvhNodes[0].count;
-		for ( size_t i = 0; i < 4; i++ ) {
-			bvhNodes[0].first[0] = INVALID;
-			bvhNodes[0].count[0] = INVALID;
+	for ( size_t i = 0; i < bvh2.blasNodes.size(); i++ ) {
+		uint root = bvh2.blasNodes[i].bvhIdx;
+		if ( bvh2.bvhNodes[root].count > 0 ) {
+			bvhNodes[root].aabbMin[0] = bvh2.bvhNodes[root].aabbMin;
+			bvhNodes[root].aabbMax[0] = bvh2.bvhNodes[root].aabbMax;
+			bvhNodes[root].first[0] = bvh2.bvhNodes[root].first;
+			bvhNodes[root].count[0] = bvh2.bvhNodes[root].count;
+			for ( size_t i = 1; i < 4; i++ ) {
+				bvhNodes[root].first[i] = INVALID;
+				bvhNodes[root].count[i] = INVALID;
+			}
+		} else {
+			Collapse( root );
 		}
-	} else {
-		//Collapse( 0 );
 	}
 }
 // https://github.com/jan-van-bergen/GPU-Raytracer/blob/master/Src/BVH/Converters/BVH4Converter.cpp

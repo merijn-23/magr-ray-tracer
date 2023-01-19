@@ -161,9 +161,9 @@ void Renderer::InitKernels( )
 	bvhNodeBuffer->hostBuffer = (uint*)scene.bvh2->bvhNodes.data( );
 	bvhIdxBuffer = new Buffer( sizeof( uint ) * scene.bvh2->primIdx.size( ) );
 	bvhIdxBuffer->hostBuffer = (uint*)scene.bvh2->primIdx.data( );
+#endif
 	blasNodeBuffer = new Buffer( sizeof( BLASNode ) * scene.bvh2->blasNodes.size( ) );
 	blasNodeBuffer->hostBuffer = (uint*)scene.bvh2->blasNodes.data( );
-#endif
 	tlasNodeBuffer = new Buffer( sizeof( TLASNode ) * tlas->tlasNodes.size( ) );
 	tlasNodeBuffer->hostBuffer = (uint*)tlas->tlasNodes.data( );
 

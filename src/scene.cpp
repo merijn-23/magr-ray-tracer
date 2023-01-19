@@ -8,7 +8,6 @@ namespace Tmpl8
 	Scene::Scene( )
 	{
 		bvh2 = new BVH2( primitives );
-		//bvh4 = new BVH4( *bvh2 );
 		// load skydome first
 		LoadTexture( "assets/office.hdr", "skydome" );
 		// materials
@@ -157,7 +156,9 @@ namespace Tmpl8
 				AddTriangle( float3( i, j, 1 ), float3( i, j + 1, 0 ), float3( i + 1, j, 0 ), float2( 0, 1 ), float2( 0, 0 ), float2( 1, 0 ), "mosaic" );
 			}
 		}*/
-		LoadModel( "assets/cube.obj", "white" );
+		LoadModel( "assets/teapot.obj", "white" );
+		// bvh4 as last
+		bvh4 = new BVH4( *bvh2 );
 		SetTime( 0 );
 	}
 	Scene::~Scene( )
@@ -277,10 +278,11 @@ namespace Tmpl8
 				std::reverse( vertices.begin( ), vertices.end( ) );
 				// get material
 				int matIdx = shapes[s].mesh.material_ids[f];
-				auto tex = materials[matIdx].diffuse_texname;
+				auto tex = _defaultMat; ;
+				if ( matIdx >= 0 ) tex = materials[matIdx].diffuse_texname;
 				if ( tex.empty( ) ) tex = _defaultMat;
 				// add triangle
-				for ( size_t v = 0, t = 0, c = 0; v < vertices.size( ); )
+				for ( size_t v = 0, t = 0; v < vertices.size( ); )
 					AddTriangle( vertices[v++], vertices[v++], vertices[v++],
 						texcoords[t++], texcoords[t++], texcoords[t++], tex );
 				index_offset += fv;
