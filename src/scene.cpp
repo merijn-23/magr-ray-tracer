@@ -240,10 +240,10 @@ namespace Tmpl8
 			if ( !mat.diffuse_texname.empty( ) )
 				LoadTexture( util::GetBaseDir( _filename ) + mat.diffuse_texname, mat.diffuse_texname );
 		}
-		// start primitive index for bvh
-		int primIdx = primitives.size( );
 		// loop over shapes
 		for ( size_t s = 0; s < shapes.size( ); s++ ) {
+			// start primitive index for bvh
+			int primIdx = primitives.size( );
 			// loop over faces(polygon)
 			size_t index_offset = 0;
 			for ( size_t f = 0; f < shapes[s].mesh.num_face_vertices.size( ); f++ ) {
@@ -278,15 +278,16 @@ namespace Tmpl8
 				// get material
 				int matIdx = shapes[s].mesh.material_ids[f];
 				auto tex = materials[matIdx].diffuse_texname;
-				if ( tex.empty( ) ) tex = _defaultMat ;
+				if ( tex.empty( ) ) tex = _defaultMat;
 				// add triangle
 				for ( size_t v = 0, t = 0, c = 0; v < vertices.size( ); )
 					AddTriangle( vertices[v++], vertices[v++], vertices[v++],
 						texcoords[t++], texcoords[t++], texcoords[t++], tex );
 				index_offset += fv;
 			}
+			// build BLAS for this shape
+			bvh2->BuildBLAS( true, primIdx );
 		}
-		bvh2->BuildBLAS( true, primIdx );
 		printf( "...Finished loading model\n" );
 	}
 	void Scene::LoadTexture( std::string filename, std::string name )
