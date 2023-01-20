@@ -75,11 +75,8 @@ __kernel void extend(
 		if (idx < 0) break;
 
 		Ray* ray = rays + idx;
-#ifdef USE_BVH4
-		uint steps = intersectBVH4( ray, bvhNode, bvhIdx );
-#else 
-		uint steps = intersectBVH2( ray, bvhNode, bvhIdx );
-#endif
+		uint steps = intersectTLAS( ray, tlasNodes, blasNodes, bvhNodes, primIdxs );
+
 		if (settings->renderBVH) accum[idx] = (float4)(steps / 32.f);
 		if (ray->primIdx == -1) continue;
 		intersectionPoint( ray );
