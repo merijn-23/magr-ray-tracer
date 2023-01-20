@@ -60,31 +60,46 @@ void Renderer::RayTrace( )
 	for ( int i = 0; i < SCRHEIGHT * SCRWIDTH; i++ )
 		seedBuffer->hostBuffer[i] = RandomUInt( );
 	seedBuffer->CopyToDevice( );
-	settings->numInRays = PIXELS;
-	settings->numOutRays = 0;
+	settings->numInRays = 0;
+	settings->numOutRays = PIXELS;
 	settingsBuffer->CopyToDevice( );
 	// generate initial primary rays
 	generateKernel->SetArgument( 0, ray1Buffer );
 	clSetKernelArg( generateKernel->kernel, 3, sizeof( Camera ), &camera.cam );
-	generateKernel->Run( settings->numInRays );
-	while ( true ) {
-		// extend
+	generateKernel->Run( PIXELS );
+
+	for (int i = 0; i < MAX_BOUNCES; i++)
+	{
 		extendKernel->SetArgument( 0, ray1Buffer );
-		extendKernel->Run( settings->numInRays );
-		if ( settings->renderBVH ) break;
-		// shade
+		extendKernel->Run( NR_OF_PERSISTENT_THREADS );
+		if (settings->renderBVH) break;
+
 		shadeKernel->SetArgument( 0, ray1Buffer );
 		shadeKernel->SetArgument( 1, ray2Buffer );
-		shadeKernel->Run( settings->numInRays );
-		// settings
-		settingsBuffer->CopyFromDevice( );
-		//printf( "%i\n", settings->numOutRays );
-		if ( settings->numOutRays < MAX_RAYS ) break;
-		settings->numInRays = settings->numOutRays;
-		settings->numOutRays = 0;
-		settingsBuffer->CopyToDevice( );
+		shadeKernel->Run( NR_OF_PERSISTENT_THREADS );
+
 		std::swap( ray1Buffer, ray2Buffer );
 	}
+
+
+	//while ( true ) {
+	//	// extend
+	//	extendKernel->SetArgument( 0, ray1Buffer );
+	//	extendKernel->Run( settings->numInRays );
+	//	if ( settings->renderBVH ) break;
+	//	// shade
+	//	shadeKernel->SetArgument( 0, ray1Buffer );
+	//	shadeKernel->SetArgument( 1, ray2Buffer );
+	//	shadeKernel->Run( settings->numInRays );
+	//	// settings
+	//	settingsBuffer->CopyFromDevice( );
+	//	//printf( "%i\n", settings->numOutRays );
+	//	if ( settings->numOutRays < MAX_RAYS ) break;
+	//	settings->numInRays = settings->numOutRays;
+	//	settings->numOutRays = 0;
+	//	settingsBuffer->CopyToDevice( );
+	//	std::swap( ray1Buffer, ray2Buffer );
+	//}
 }
 
 void Renderer::PostProc( )
@@ -118,10 +133,10 @@ void Renderer::PostProc( )
 void Renderer::InitKernels( )
 {
 	// wavefront
+	resetKernel = new Kernel( "src/cl/wavefront.cl", "reset" );
 	generateKernel = new Kernel( "src/cl/wavefront.cl", "generate" );
 	extendKernel = new Kernel( "src/cl/wavefront.cl", "extend" );
 	shadeKernel = new Kernel( "src/cl/wavefront.cl", "shade" );
-	resetKernel = new Kernel( "src/cl/wavefront.cl", "reset" );
 	// post
 	post_prepKernel = new Kernel( "src/cl/postproc.cl", "prep" );
 	post_vignetKernel = new Kernel( "src/cl/postproc.cl", "vignetting" );
