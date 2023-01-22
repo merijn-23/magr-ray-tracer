@@ -3,6 +3,28 @@
 namespace Tmpl8
 {
 
+// Shading types
+#define SHADING_SIMPLE "SHADING_SIMPLE"
+#define SHADING_NEE "SHADING_NEE"
+#define SHADING_NEEIS "SHADING_NEEIS"
+#define SHADING_NEEMIS "SHADING_NEEMIS"
+
+#define USE_BVH2 "USE_BVH2"
+#define USE_BVH4 "USE_BVH4"
+
+typedef struct ImGuiData
+{
+	string shading_type = SHADING_SIMPLE;
+	string bvh_type = USE_BVH2;
+	float vignet_strength = 0;
+	float chromatic_strength = 0;
+	float gamma_strength = 1;
+	bool print_performance = false;
+
+	int dummy_bvh_type = 0;
+	int dummy_shading_type = 0;
+};
+
 class Renderer : public TheApp
 {
 public:
@@ -17,7 +39,8 @@ public:
 	void KeyInput(std::map<int, int>);
 	void Gui( );
 
-	void InitKernels();
+	void InitWavefrontKernels();
+	void InitPostProcKernels();
 	void PostProc( );
 	void RayTrace( );
 	void SaveFrame( const char* file );
@@ -30,6 +53,7 @@ public:
 	CameraManager camera;
 	Settings* settings;
 	TLAS* tlas;
+	ImGuiData imgui;
 
 	Kernel* resetKernel;
 	Kernel* post_prepKernel;

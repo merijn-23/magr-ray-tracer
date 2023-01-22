@@ -13,6 +13,7 @@ namespace Tmpl8
 		Material& AddMaterial( std::string name );
 		void AddSphere( float3 pos, float radius, std::string material );
 		void AddPlane( float3 N, float d, std::string material );
+		void AddQuad( float3 v0, float3 v1, float3 v2, float3 v3, float2 uv0, float2 uv1, float2 uv2, float2 uv3, const std::string material );
 		void AddTriangle( float3 v0, float3 v1, float3 v2, float2 uv0, float2 uv1, float2 uv2, const std::string material );
 		void LoadModel( std::string filename, const std::string defaultMaterial, float3 pos = {});
 		void LoadTexture( std::string filename, std::string name );

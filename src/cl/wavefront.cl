@@ -1,5 +1,6 @@
 #ifndef __WAVEFRONT_CL
 #define __WAVEFRONT_CL
+
 #include "src/constants.h"
 #include "src/common.h"
 #include "src/cl/util.cl"
@@ -11,11 +12,6 @@
 #include "src/cl/shading.cl"
 #include "src/cl/bvh.cl"
 #include "src/cl/tlas.cl"
-
-// atomics
-//volatile __global int numInExtensionRays;
-//volatile __global int numOutExtensionRays;
-//volatile __global int numShadowRays;
 
 __kernel void generate(
 	__global Ray* rays,
@@ -49,7 +45,8 @@ __kernel void extend(
 	__global BLASNode* blasNodes,
 #ifdef USE_BVH4
 	__global BVHNode4* bvhNodes,
-#else
+#endif
+#ifdef USE_BVH2
 	__global BVHNode2* bvhNodes,
 #endif
 	__global uint* primIdxs,
@@ -125,7 +122,14 @@ __kernel void shade(
 		}
 		Ray extensionRay = initRay( (float4)(0), (float4)(0) );
 		extensionRay.bounces = MAX_BOUNCES + 1;
-		float4 color = kajiyaShading( ray, &extensionRay, seed );
+
+		float4 color;
+#ifdef SHADING_SIMPLE
+		color = kajiyaShading( ray, &extensionRay, seed );
+#endif
+#ifdef SHADING_NEE
+		color = (float4)(1);
+#endif
 		accum[ray->pixelIdx] += color;
 		if (extensionRay.bounces <= MAX_BOUNCES)
 		{
