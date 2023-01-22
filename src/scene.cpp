@@ -49,8 +49,8 @@ namespace Tmpl8
 		// white light
 		auto& whiteLight = AddMaterial( "white-light" );
 		whiteLight.isLight = true;
-		whiteLight.color = float4( 1 );
-		whiteLight.emittance = float4( 2 );
+		whiteLight.color = float4( .6f );
+		whiteLight.emittance = float4( .5f );
 		auto& greenLight = AddMaterial( "green-light" );
 		greenLight.isLight = true;
 		greenLight.color = float4( .1f, 1, .1f, 0 );
@@ -66,9 +66,9 @@ namespace Tmpl8
 		yellowLight.color = float4( 1.f, .6f, 0, 0 );
 		yellowLight.emittance = float4( 1.f, .6f, 0, 0 ) * 5;
 		// textures
+		LoadTexture( "assets/mosaic.png", "mosaic" );
 		LoadTexture( "assets/cash_money.png", "cash" );
 		LoadTexture( "assets/suprised_pikachu.png", "pika" );
-		LoadTexture( "assets/mosaic.png", "mosaic" );
 		LoadTexture( "assets/stone.jpg", "stone" );
 #if 0
 		int width = 15;
@@ -135,7 +135,25 @@ namespace Tmpl8
 		//LoadModel("assets/bunny_low_poly.obj", "white", float3(.5 + offset, 0, 0));
 #endif
 
-		LoadModel( "assets/bunny.obj", "white" );
+		//LoadModel( "assets/bunny.obj", "red-glass" );
+		//LoadModel( "assets/bunny.obj", "red-glass", (1,0,0) );
+		LoadModel( "assets/dragon.obj", "red-glass" );
+
+		// start of separate prims
+		int startPrims = primitives.size();
+		//AddSphere( float3(0, 0, 0), 50, "white-light" );
+
+		//// floor
+		//AddTriangle( (-100, 0, -100), (100, 0, -100), (0, 0, 100), 0, 0, 0, "white" );
+		//AddTriangle( (-100, 0, -100), (100, 0, -100), (0, 0, 100), 0, 0, 0, "white" );
+		//AddTriangle( (-100, 0, -100), (100, 0, -100), (0, 0, 100), 0, 0, 0, "white" );
+		//AddTriangle( (-100, 0, -100), (100, 0, -100), (0, 0, 100), 0, 0, 0, "white" );
+		//AddTriangle( (-100, 0, -100), (100, 0, -100), (0, 0, 100), 0, 0, 0, "white" );
+		//// ceiling
+		//AddTriangle( (-100, 10, -100), (100, 10, -100), (50, 10, 100), 0, 0, 0, "white" );
+		//bvh2->BuildBLAS( true, startPrims );
+
+
 		// bvh4 as last
 		bvh4 = new BVH4( *bvh2 );
 		SetTime( 0 );
@@ -186,6 +204,13 @@ namespace Tmpl8
 		prim.matIdx = matMap_[material];
 		primitives.push_back( prim );
 	}
+
+	void Scene::AddQuad( float3 v0, float3 v1, float3 v2, float3 v3, float2 uv0, float2 uv1, float2 uv2, float2 uv3, const std::string material )
+	{
+		AddTriangle( v0, v1, v2, uv0, uv1, uv2, material );
+		AddTriangle( v2, v3, v1, uv2, uv3, uv1, material );
+	}
+
 	void Scene::AddTriangle( float3 v0, float3 v1, float3 v2, float2 uv0, float2 uv1, float2 uv2, const std::string material )
 	{
 		Primitive prim;

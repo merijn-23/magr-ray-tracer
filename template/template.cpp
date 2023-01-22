@@ -1179,12 +1179,12 @@ void Buffer::Clear()
 
 // Kernel constructor
 // ----------------------------------------------------------------------------
-Kernel::Kernel(char* file, char* entryPoint)
+Kernel::Kernel( char* file, char* entryPoint, const std::vector<std::string> defines )
 {
 	if (!clStarted) InitCL();
 	// load a cl file
-	string csText = TextFileRead(file);
-	if (csText.size() == 0) FatalError("File %s not found", file);
+	string csText = TextFileRead( file );
+	if (csText.size() == 0) FatalError( "File %s not found", file );
 	// add vendor defines
 	vendorLines = 0;
 	if (isNVidia) csText = "#define ISNVIDIA\n" + csText, vendorLines++;
@@ -1194,6 +1194,12 @@ Kernel::Kernel(char* file, char* entryPoint)
 	if (isAmpere) csText = "#define ISAMPERE\n" + csText, vendorLines++;
 	if (isTuring) csText = "#define ISTURING\n" + csText, vendorLines++;
 	if (isPascal) csText = "#define ISPASCAL\n" + csText, vendorLines++;
+
+	for (int i = 0; i < defines.size(); i++)
+	{
+		csText = "#define " + defines[i] + "\n" + csText, vendorLines++;
+	}
+
 	// expand #include directives: cl compiler doesn't support these natively
 	// warning: this simple system does not handle nested includes.
 	struct Include { int start, end; string file; } includes[64];
