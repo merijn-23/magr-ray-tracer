@@ -7,9 +7,16 @@ typedef struct Ray
 	float t;
 	// Index of primitive
 	int primIdx, bounces, pixelIdx;
-	bool inside;
+	bool inside, lastSpecular;
 	float u, v; // barycenter, is calculated upon intersection
 } Ray;
+
+typedef struct ShadowRay
+{
+	float4 I, L, intensity, BRDF;
+	int lightIdx, pixelIdx;
+	float dotNL;
+} ShadowRay;
 
 typedef struct Material
 {
@@ -77,7 +84,7 @@ typedef struct Camera
 typedef struct Settings
 {
 	int numPrimitives, numLights, tracerType, frames, antiAliasing;
-	int numInRays, numOutRays;
+	int numInRays, numOutRays, shadowRays;
 	int renderBVH;
 } Settings;
 

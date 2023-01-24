@@ -55,6 +55,7 @@ uint randomUInt( uint* seed )
 	return *seed;
 }
 float randomFloat( uint* seed ) { return randomUInt( seed ) * 2.3283064365387e-10f; }
+float random( uint* seed ) { return fabs(randomFloat( seed )); }
 float4 randomFloat3( uint* seed ) { return (float4)(randomFloat( seed ), randomFloat( seed ), randomFloat( seed ), 0); };
 
 #endif // __UTIL_CL

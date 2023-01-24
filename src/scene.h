@@ -24,7 +24,7 @@ namespace Tmpl8
 
 		std::vector<Primitive> primitives;
 		std::vector<Material> materials;
-		std::vector<Light> lights;
+		std::vector<uint> lights;
 		std::vector<float4> textures;
 		BVH2* bvh2;
 		BVH4* bvh4;

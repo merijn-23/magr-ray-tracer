@@ -9,7 +9,7 @@ namespace Tmpl8
 	{
 		bvh2 = new BVH2( primitives );
 		// load skydome first
-		LoadTexture( "assets/office.hdr", "skydome" );
+		LoadTexture( "assets/stone-canyon.hdr", "skydome" );
 		// materials
 		auto& red = AddMaterial( "red" );
 		red.color = float3( 1, 0, 0 );
@@ -49,8 +49,8 @@ namespace Tmpl8
 		// white light
 		auto& whiteLight = AddMaterial( "white-light" );
 		whiteLight.isLight = true;
-		whiteLight.color = float4( .6f );
-		whiteLight.emittance = float4( .5f );
+		whiteLight.color = float4( 1 );
+		whiteLight.emittance = float4( 2 );
 		auto& greenLight = AddMaterial( "green-light" );
 		greenLight.isLight = true;
 		greenLight.color = float4( .1f, 1, .1f, 0 );
@@ -137,11 +137,16 @@ namespace Tmpl8
 
 		//LoadModel( "assets/bunny.obj", "red-glass" );
 		//LoadModel( "assets/bunny.obj", "red-glass", (1,0,0) );
-		LoadModel( "assets/dragon.obj", "red-glass" );
+		LoadModel( "assets/bunny.obj", "red" );
 
 		// start of separate prims
 		int startPrims = primitives.size();
-		//AddSphere( float3(0, 0, 0), 50, "white-light" );
+		// AddSphere( float3(0,0,-2), 1, "red" );
+		// bvh2->BuildBLAS( true, startPrims );
+
+		//AddSphere( float3(1, 0, 0), 0.25f, "white-light" );
+		AddQuad( float3(2, 0, -2), float3(2, 2, -2), float3( 2, 2, 2 ), float3( 2, 0, 2 ), 0, 0, 0, 0, "white-light" );
+		bvh2->BuildBLAS( true, startPrims );
 
 		//// floor
 		//AddTriangle( (-100, 0, -100), (100, 0, -100), (0, 0, 100), 0, 0, 0, "white" );
@@ -193,6 +198,8 @@ namespace Tmpl8
 		prim.objData.sphere.invr = 1 / radius;
 		prim.matIdx = matMap_[material];
 		primitives.push_back( prim );
+		if(materials[matMap_[material]].isLight)
+			lights.push_back(primitives.size() - 1);
 	}
 
 	void Scene::AddPlane( float3 N, float d, std::string material )
@@ -203,12 +210,14 @@ namespace Tmpl8
 		prim.objData.plane.d = d;
 		prim.matIdx = matMap_[material];
 		primitives.push_back( prim );
+		if(materials[matMap_[material]].isLight)
+			lights.push_back(primitives.size() - 1);		
 	}
 
 	void Scene::AddQuad( float3 v0, float3 v1, float3 v2, float3 v3, float2 uv0, float2 uv1, float2 uv2, float2 uv3, const std::string material )
 	{
 		AddTriangle( v0, v1, v2, uv0, uv1, uv2, material );
-		AddTriangle( v2, v3, v1, uv2, uv3, uv1, material );
+		//AddTriangle( v2, v3, v0, uv2, uv3, uv1, material );
 	}
 
 	void Scene::AddTriangle( float3 v0, float3 v1, float3 v2, float2 uv0, float2 uv1, float2 uv2, const std::string material )
@@ -225,6 +234,8 @@ namespace Tmpl8
 		prim.objData.triangle.centroid = ( v0 + v1 + v2 ) * ( 1 / 3.f );
 		prim.matIdx = matMap_[material];
 		primitives.push_back( prim );
+		if(materials[matMap_[material]].isLight)
+			lights.push_back(primitives.size() - 1);
 	}
 	//https://pastebin.com/PZYVnJCd
 	void Scene::LoadModel( std::string _filename, const std::string _defaultMat, float3 _pos )

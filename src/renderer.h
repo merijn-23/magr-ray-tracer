@@ -14,15 +14,17 @@ namespace Tmpl8
 
 typedef struct ImGuiData
 {
-	string shading_type = SHADING_SIMPLE;
+	string shading_type = SHADING_NEE;
 	string bvh_type = USE_BVH2;
 	float vignet_strength = 0;
 	float chromatic_strength = 0;
 	float gamma_strength = 1;
-	bool print_performance = false;
+	float energy_total = 0;
+	bool print_performance = true;
+	bool show_energy_levels = true;
 
 	int dummy_bvh_type = 0;
-	int dummy_shading_type = 0;
+	int dummy_shading_type = 1;
 };
 
 class Renderer : public TheApp
@@ -41,8 +43,10 @@ public:
 
 	void InitWavefrontKernels();
 	void InitPostProcKernels();
+	void InitBuffers();
 	void PostProc( );
 	void RayTrace( );
+	void ComputeEnergy();
 	void SaveFrame( const char* file );
 
 	// data members
@@ -81,6 +85,7 @@ public:
 	Kernel* generateKernel;
 	Kernel* extendKernel;
 	Kernel* shadeKernel;
+	Kernel* connectKernel;
 	Kernel* displayKernel;
 
 	Buffer* ray1Buffer;

@@ -5,7 +5,7 @@
 
 __global Primitive* primitives;
 __global Material* materials;
-__global Light* lights;
+__global uint* lights;
 __global float4* textures;
 
 void intersectSphere( int primIdx, Sphere sphere, Ray* ray )
@@ -154,8 +154,8 @@ float4 getRandomPoint(Primitive* prim, uint* seed)
 		{
 			Sphere sphere = prim->objData.sphere;
 			// https://www.demonstrations.wolfram.com/RandomPointsOnASphere/
-			float theta = randomFloat(seed) * 2 * M_PI_F;
-			float u = randomFloat(seed) * 2 - 1;
+			float theta = random(seed) * 2 * M_PI_F;
+			float u = random(seed) * 2 - 1;
 
 			float precomp = sqrt(1 - u * u);
 			float x = cos(theta) * precomp;
@@ -166,8 +166,9 @@ float4 getRandomPoint(Primitive* prim, uint* seed)
 		{
 			Triangle triangle = prim->objData.triangle;
 			// https://blogs.sas.com/content/iml/2020/10/19/random-points-in-triangle.html
-			float u1 = randomFloat(seed);
-			float u2 = randomFloat(seed);
+			float u1 = random(seed);
+			//printf("u1 %f\n", u1);
+			float u2 = random(seed);
 			if(u1 + u2 > 1)
 			{
 				u1 = 1 - u1;
@@ -175,12 +176,12 @@ float4 getRandomPoint(Primitive* prim, uint* seed)
 			}
 			float4 a = triangle.v1 - triangle.v0;
 			float4 b = triangle.v2 - triangle.v0;
-			return u1 * a + u2 * b;
+			return triangle.v0 + u1 * a + u2 * b;
 		}
 	}
 }
 
-float4 getArea(Primitive* prim)
+float getArea(Primitive* prim)
 {
 	switch(prim->objType)
 	{

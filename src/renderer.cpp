@@ -11,6 +11,7 @@ void Renderer::Init()
 	settings->renderBVH = false;
 	tlas = new TLAS( *scene.bvh2 );
 	tlas->Build();
+	InitBuffers();
 	InitWavefrontKernels();
 	InitPostProcKernels();
 }
@@ -26,9 +27,8 @@ void Renderer::Tick( float _deltaTime )
 	scene.SetTime( animTime += deltaTime * 0.002f );
 	// pixel loop
 	Timer t;
-	//UpdateBuffers();
+
 	camera.UpdateCamVec();
-	//CamToDevice();
 	if ( camera.moved )
 	{
 		resetKernel->Run( PIXELS );
@@ -36,8 +36,12 @@ void Renderer::Tick( float _deltaTime )
 		settings->frames = 1;
 	}
 	if ( settings->renderBVH ) settings->frames = 1;
+
 	RayTrace();
 	PostProc();
+
+	if ( imgui.show_energy_levels ) ComputeEnergy();
+
 	settings->frames++;
 
 	if ( !imgui.print_performance ) return;
@@ -56,6 +60,7 @@ void Renderer::RayTrace()
 	seedBuffer->CopyToDevice();
 	settings->numInRays = 0;
 	settings->numOutRays = PIXELS;
+	settings->shadowRays = 0;
 	settingsBuffer->CopyToDevice();
 	// generate initial primary rays
 	generateKernel->SetArgument( 0, ray1Buffer );
@@ -71,6 +76,9 @@ void Renderer::RayTrace()
 		shadeKernel->SetArgument( 0, ray1Buffer );
 		shadeKernel->SetArgument( 1, ray2Buffer );
 		shadeKernel->Run( NR_OF_PERSISTENT_THREADS );
+
+		if ( imgui.shading_type == SHADING_NEE || imgui.shading_type == SHADING_NEEIS )
+			connectKernel->Run( NR_OF_PERSISTENT_THREADS );
 
 		std::swap( ray1Buffer, ray2Buffer );
 	}
@@ -106,23 +114,34 @@ void Renderer::PostProc()
 	displayKernel->Run( PIXELS );
 }
 
-void Renderer::InitWavefrontKernels()
+void Renderer::ComputeEnergy()
 {
-	// wavefront
-	resetKernel = new Kernel( "src/cl/wavefront.cl", "reset", { imgui.shading_type, imgui.bvh_type } );
-	generateKernel = new Kernel( "src/cl/wavefront.cl", "generate", { imgui.shading_type, imgui.bvh_type } );
-	extendKernel = new Kernel( "src/cl/wavefront.cl", "extend", { imgui.shading_type, imgui.bvh_type } );
-	shadeKernel = new Kernel( "src/cl/wavefront.cl", "shade", { imgui.shading_type, imgui.bvh_type } );
+	accumBuffer->CopyFromDevice();
+	float4* pixels = (float4*)(accumBuffer->hostBuffer);
 
+	imgui.energy_total = 0;
+	for ( int i = 0; i < PIXELS; i++ )
+	{
+		imgui.energy_total += pixels[i].x;
+		imgui.energy_total += pixels[i].y;
+		imgui.energy_total += pixels[i].z;
+	}
+
+	imgui.energy_total *= 1 / (float)(settings->frames);
+}
+
+void Renderer::InitBuffers()
+{
 	// data
 	primBuffer = new Buffer( sizeof( Primitive ) * scene.primitives.size() );
 	texBuffer = new Buffer( sizeof( float4 ) * scene.textures.size() );
 	matBuffer = new Buffer( sizeof( Material ) * scene.materials.size() );
+	lightBuffer = new Buffer( sizeof( uint ) * scene.lights.size() );
 
 	// rays
-	ray1Buffer = new Buffer( 2 * PIXELS * sizeof( Ray ) );
-	ray2Buffer = new Buffer( 2 * PIXELS * sizeof( Ray ) );
-	shadowRayBuffer = new Buffer( 2 * PIXELS * sizeof( Ray ) );
+	ray1Buffer = new Buffer( PIXELS * sizeof( Ray ) );
+	ray2Buffer = new Buffer( PIXELS * sizeof( Ray ) );
+	shadowRayBuffer = new Buffer( PIXELS * sizeof( ShadowRay ) );
 
 	seedBuffer = new Buffer( sizeof( uint ) * PIXELS );
 	settingsBuffer = new Buffer( sizeof( Settings ) );
@@ -132,11 +151,18 @@ void Renderer::InitWavefrontKernels()
 	primBuffer->hostBuffer = (uint*)scene.primitives.data();
 	matBuffer->hostBuffer = (uint*)scene.materials.data();
 	texBuffer->hostBuffer = (uint*)scene.textures.data();
+	lightBuffer->hostBuffer = (uint*)scene.lights.data();
 	settingsBuffer->hostBuffer = (uint*)settings;
 	seedBuffer->hostBuffer = new uint[PIXELS];
+
 	// settings
 	settings->numPrimitives = scene.primitives.size();
 	settings->numLights = scene.lights.size();
+
+	blasNodeBuffer = new Buffer( sizeof( BLASNode ) * scene.bvh2->blasNodes.size() );
+	blasNodeBuffer->hostBuffer = (uint*)scene.bvh2->blasNodes.data();
+	tlasNodeBuffer = new Buffer( sizeof( TLASNode ) * tlas->tlasNodes.size() );
+	tlasNodeBuffer->hostBuffer = (uint*)tlas->tlasNodes.data();
 
 	// BVH
 	if ( imgui.bvh_type == USE_BVH4 )
@@ -154,10 +180,24 @@ void Renderer::InitWavefrontKernels()
 		bvhIdxBuffer->hostBuffer = (uint*)scene.bvh2->primIdx.data();
 	}
 
-	blasNodeBuffer = new Buffer( sizeof( BLASNode ) * scene.bvh2->blasNodes.size() );
-	blasNodeBuffer->hostBuffer = (uint*)scene.bvh2->blasNodes.data();
-	tlasNodeBuffer = new Buffer( sizeof( TLASNode ) * tlas->tlasNodes.size() );
-	tlasNodeBuffer->hostBuffer = (uint*)tlas->tlasNodes.data();
+	bvhNodeBuffer->CopyToDevice();
+	bvhIdxBuffer->CopyToDevice();
+	primBuffer->CopyToDevice();
+	texBuffer->CopyToDevice();
+	matBuffer->CopyToDevice();
+	blasNodeBuffer->CopyToDevice();
+	tlasNodeBuffer->CopyToDevice();
+	lightBuffer->CopyToDevice();
+}
+
+void Renderer::InitWavefrontKernels()
+{
+	// wavefront
+	resetKernel = new Kernel( "src/cl/wavefront.cl", "reset", { imgui.shading_type, imgui.bvh_type } );
+	generateKernel = new Kernel( "src/cl/wavefront.cl", "generate", { imgui.shading_type, imgui.bvh_type } );
+	extendKernel = new Kernel( "src/cl/wavefront.cl", "extend", { imgui.shading_type, imgui.bvh_type } );
+	shadeKernel = new Kernel( "src/cl/wavefront.cl", "shade", { imgui.shading_type, imgui.bvh_type } );
+	connectKernel = new Kernel( "src/cl/wavefront.cl", "connect", { imgui.shading_type, imgui.bvh_type } );
 
 	generateKernel->SetArgument( 1, settingsBuffer );
 	generateKernel->SetArgument( 2, seedBuffer );
@@ -174,17 +214,22 @@ void Renderer::InitWavefrontKernels()
 	shadeKernel->SetArgument( 3, primBuffer );
 	shadeKernel->SetArgument( 4, texBuffer );
 	shadeKernel->SetArgument( 5, matBuffer );
-	shadeKernel->SetArgument( 6, settingsBuffer );
-	shadeKernel->SetArgument( 7, accumBuffer );
-	shadeKernel->SetArgument( 8, seedBuffer );
+	shadeKernel->SetArgument( 6, lightBuffer );
+	shadeKernel->SetArgument( 7, settingsBuffer );
+	shadeKernel->SetArgument( 8, accumBuffer );
+	shadeKernel->SetArgument( 9, seedBuffer );
 
-	primBuffer->CopyToDevice();
-	texBuffer->CopyToDevice();
-	matBuffer->CopyToDevice();
-	bvhNodeBuffer->CopyToDevice();
-	bvhIdxBuffer->CopyToDevice();
-	blasNodeBuffer->CopyToDevice();
-	tlasNodeBuffer->CopyToDevice();
+	connectKernel->SetArgument( 0, shadowRayBuffer );
+	connectKernel->SetArgument( 1, tlasNodeBuffer );
+	connectKernel->SetArgument( 2, blasNodeBuffer );
+	connectKernel->SetArgument( 3, bvhNodeBuffer );
+	connectKernel->SetArgument( 4, bvhIdxBuffer );
+	connectKernel->SetArgument( 5, primBuffer );
+	connectKernel->SetArgument( 6, matBuffer );
+	connectKernel->SetArgument( 7, settingsBuffer );
+	connectKernel->SetArgument( 8, accumBuffer );
+
+	resetKernel->SetArgument( 0, accumBuffer );
 }
 
 void Renderer::InitPostProcKernels()
@@ -254,24 +299,18 @@ void Renderer::Gui()
 		if ( ImGui::RadioButton( "Projection", &camera.cam.type, PROJECTION ) ) camera.moved = true;
 		if ( ImGui::RadioButton( "FishEye", &camera.cam.type, FISHEYE ) ) camera.moved = true;
 	}
-	if ( ImGui::CollapsingHeader( "Render" ) )
+	if ( ImGui::CollapsingHeader( "Render", ImGuiTreeNodeFlags_DefaultOpen ) )
 	{
 		if ( ImGui::Checkbox( "Anti-Aliasing", (bool*)(&(settings->antiAliasing)) ) ) camera.moved = true;
-		
+
 		if ( ImGui::TreeNodeEx( "Shading Type", ImGuiTreeNodeFlags_DefaultOpen ) )
 		{
-			if ( ImGui::RadioButton( "Kajiya", &(imgui.dummy_shading_type), 0 ) )
-			{
-				imgui.shading_type = SHADING_SIMPLE;
-			}
-			if ( ImGui::RadioButton( "NEE", &(imgui.dummy_shading_type), 1 ) )
-			{
-				imgui.shading_type = SHADING_NEE;
-			}
+			ImGui::RadioButton( "Kajiya", &(imgui.dummy_shading_type), 0 );
+			ImGui::RadioButton( "NEE", &(imgui.dummy_shading_type), 1 );
 			ImGui::TreePop();
 		}
 
-		if ( ImGui::TreeNodeEx( "BVH Type", ImGuiTreeNodeFlags_DefaultOpen ) )
+		if ( ImGui::TreeNodeEx( "BVH Type" ) )
 		{
 			if ( ImGui::RadioButton( "Normal BVH", &(imgui.dummy_bvh_type), 0 ) )
 			{
@@ -286,9 +325,21 @@ void Renderer::Gui()
 
 		if ( ImGui::Button( "Recompile OpenCL" ) )
 		{
+			switch ( imgui.dummy_shading_type )
+			{
+			case 0:
+				imgui.shading_type = SHADING_SIMPLE;
+				break;
+			case 1:
+				imgui.shading_type = SHADING_NEE;
+				break;
+			};
 			InitWavefrontKernels();
 			camera.moved = true;
 		}
+		ImGui::Checkbox( "Show Energy Levels", &(imgui.show_energy_levels) );
+		if ( imgui.show_energy_levels ) ImGui::Text( "%f", imgui.energy_total );
+
 
 		//if ( ImGui::RadioButton( "Kajiya", &( settings->tracerType ), KAJIYA ) ) camera.moved = true;
 	}

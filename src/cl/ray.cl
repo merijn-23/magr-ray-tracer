@@ -14,6 +14,7 @@ Ray initRay( float4 O, float4 D )
 	ray.primIdx = -1;
 	ray.bounces = 0;
 	ray.inside = false;
+	ray.lastSpecular = false;
 	return ray;
 }
 
@@ -54,5 +55,4 @@ float4 randomRayHemisphere( float4 N, uint* seed )
 	float3 v = cross( w, u );
 	return (float4)(normalize( u * cos( rand1 ) * rand2s + v * sin( rand1 ) * rand2s + w * sqrt( 1.0f - rand2 ) ), 0);
 }
-
 #endif // __RAY_CL

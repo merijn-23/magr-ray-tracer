@@ -29,6 +29,7 @@ int intersectTLAS(
 			else node = stack[--stackPtr];
 			continue;
 		}
+		
 		// current node is an interior node: visit child nodes, ordered
 		TLASNode* child1 = &tlasNodes[node->leftRight & 0xffff];
 		TLASNode* child2 = &tlasNodes[node->leftRight >> 16];
