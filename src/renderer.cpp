@@ -36,9 +36,9 @@ void Renderer::Tick( float _deltaTime )
 		settings->frames = 1;
 	}
 	if ( settings->renderBVH ) settings->frames = 1;
-
 	RayTrace();
 	PostProc();
+	settings->frames++;
 
 	if ( imgui.show_energy_levels ) ComputeEnergy();
 
@@ -154,6 +154,9 @@ void Renderer::InitBuffers()
 	lightBuffer->hostBuffer = (uint*)scene.lights.data();
 	settingsBuffer->hostBuffer = (uint*)settings;
 	seedBuffer->hostBuffer = new uint[PIXELS];
+	// settings
+	settings->numPrimitives = scene.primitives.size();
+	settings->numLights = scene.lights.size();
 
 	// settings
 	settings->numPrimitives = scene.primitives.size();

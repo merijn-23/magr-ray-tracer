@@ -9,7 +9,7 @@ namespace Tmpl8
 	{
 		bvh2 = new BVH2( primitives );
 		// load skydome first
-		LoadTexture( "assets/stone-canyon.hdr", "skydome" );
+		LoadTexture( "assets/office.hdr", "skydome" );
 		// materials
 		auto& red = AddMaterial( "red" );
 		red.color = float3( 1, 0, 0 );
