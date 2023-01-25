@@ -9,12 +9,12 @@ float4 kajiyaShading( Ray* ray, Ray* extensionRay, uint* seed )
 	// we hit an object
 	Primitive prim = primitives[ray->primIdx];
 	Material mat = materials[prim.matIdx];
-
+	
 	if (mat.isLight) return ray->intensity * mat.emittance;
 
 	Ray r;
 	float rand = randomFloat( seed );
-
+	
 	if (mat.isDieletric)
 	{
 		float4 T = (float4)(0);
@@ -44,6 +44,7 @@ float4 kajiyaShading( Ray* ray, Ray* extensionRay, uint* seed )
 			r = initRay( ray->I + EPSILON * diffuseReflection, diffuseReflection );
 			r.intensity = ray->intensity;
 			r.bounces = ray->bounces + 1;
+
 		}
 	}
 	r.pixelIdx = ray->pixelIdx;
@@ -92,29 +93,32 @@ float4 neeShading(Ray* ray, Ray* extensionRay, ShadowRay* shadowRay, Settings* s
 			
 			// sample a random light source
 			// output: a new shadow ray
-			uint lightIdx = lights[(uint)(floor(random(seed) * settings->numLights))];
-			float4 pointOnLight = getRandomPoint(primitives + lightIdx, seed);
-			//printf("Point on light: %f %f %f\n", pointOnLight.x, pointOnLight.y, pointOnLight.z);
-			float4 dirToLight = pointOnLight - ray->I;
-			float4 normalOnLight = getNormal(primitives + lightIdx, pointOnLight);
-			//printf("normal on light: %f %f %f\n", normalOnLight.x, normalOnLight.y, normalOnLight.z);
-			float dotNL = dot(ray->N, dirToLight);
-			//printf("dotnl %f\n", dotNL);
-			//printf("dotn-l %f\n", dot(normalOnLight, -dirToLight));
-			/* no check to see if normalonlight dot -dirtolight > 0 because of infinitely thin light sources
-			if  && dot(normalOnLight, -dirToLight) > 0*/
-			if(dotNL > 0)
+			if (settings->numLights > 0)
 			{
-				//printf("hi\n");
-				ShadowRay sr;
-				sr.I = ray->I;
-				sr.L = pointOnLight;
-				sr.intensity = ray->intensity;
-				sr.BRDF = BRDF;
-				sr.lightIdx = lightIdx;
-				sr.pixelIdx = ray->pixelIdx;
-				sr.dotNL = dotNL;
-				*shadowRay = sr;
+				uint lightIdx = lights[(uint)(floor( random( seed ) * settings->numLights ))];
+				float4 pointOnLight = getRandomPoint( primitives + lightIdx, seed );
+				//printf("Point on light: %f %f %f\n", pointOnLight.x, pointOnLight.y, pointOnLight.z);
+				float4 dirToLight = pointOnLight - ray->I;
+				float4 normalOnLight = getNormal( primitives + lightIdx, pointOnLight );
+				//printf("normal on light: %f %f %f\n", normalOnLight.x, normalOnLight.y, normalOnLight.z);
+				float dotNL = dot( ray->N, normalize(dirToLight) );
+				//printf("dotnl %f\n", dotNL);
+				//printf("dotn-l %f\n", dot(normalOnLight, -dirToLight));
+				/* no check to see if normalonlight dot -dirtolight > 0 because of infinitely thin light sources
+				if  && dot(normalOnLight, -dirToLight) > 0*/
+				if (dotNL > 0)
+				{
+					//printf("hi\n");
+					ShadowRay sr;
+					sr.I = ray->I;
+					sr.L = pointOnLight;
+					sr.intensity = ray->intensity;
+					sr.BRDF = BRDF;
+					sr.lightIdx = lightIdx;
+					sr.pixelIdx = ray->pixelIdx;
+					sr.dotNL = dotNL;
+					*shadowRay = sr;
+				}
 			}
 			
 			// diffuse 

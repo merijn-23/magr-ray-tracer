@@ -93,11 +93,10 @@ void BVH2::BuildBVH( uint root, std::vector<BVHPrimData> data )
 		std::pair<uint, std::vector<BVHPrimData>> pair = stack.top( );
 		stack.pop( );
 		BVHNode2& node = bvhNodes[pair.first];
-		if (pair.first == 19694)
-		{
-			int x = 0;
-			UpdateNodeBounds( pair.first, pair.second);
-		}
+		//if (pair.first == 19694)
+		//{
+		//	int x = 0;
+		//}
 		// determine split axis using SAH
 		int objectAxis;
 		float objectSplitPos, overlap;
@@ -242,7 +241,7 @@ std::pair<std::vector<BVHPrimData>, std::vector<BVHPrimData>> BVH2::ObjectSplit(
 	for ( int i = 0; i < prims.size( ); i++ ) {
 		aabb& box = prims[i].box;
 		float center = box.Center( axis );
-		if ( center < splitPos ) leftPrims.push_back( prims[i] );
+		if ( center <= splitPos ) leftPrims.push_back( prims[i] );
 		else rightPrims.push_back( prims[i] );
 	}
 	return { leftPrims, rightPrims };
@@ -586,7 +585,7 @@ std::pair<std::vector<BVHPrimData>, std::vector<BVHPrimData>> BVH2::SpatialSplit
 				leftPrims.push_back( { leftClipped, index } );
 			if ( rightsuccess )
 				rightPrims.push_back( { rightClipped, index } );
-		} else if ( max < splitPos ) {
+		} else if ( max <= splitPos ) {
 			// fully left of split
 			leftPrims.push_back( prims[i] );
 		} else {

@@ -196,7 +196,7 @@ __kernel void connect(
 		Primitive* prim = _primitives + shadowRay.lightIdx;
 		//printf( "Prim type: %i\n", prim->objType );
 		float4 NL = getNormal(prim, shadowRay.L);
-		float solidAngle = (fabs(dot(NL, - dir)) * prim->area * (1 / (dist * dist)));
+		float solidAngle = (fabs(dot(NL, - norm)) * prim->area * (1 / (dist * dist)));
 		//printf( "Area: %f, Dist: %f, DOT: %f\n", prim->area, dist, dot( NL, -dir ) );
 
 		float4 lightColor = _materials[prim->matIdx].emittance;

@@ -50,7 +50,7 @@ namespace Tmpl8
 		auto& whiteLight = AddMaterial( "white-light" );
 		whiteLight.isLight = true;
 		whiteLight.color = float4( 1 );
-		whiteLight.emittance = float4( 2 );
+		whiteLight.emittance = float4( 5 );
 		auto& greenLight = AddMaterial( "green-light" );
 		greenLight.isLight = true;
 		greenLight.color = float4( .1f, 1, .1f, 0 );
@@ -140,9 +140,9 @@ namespace Tmpl8
 		LoadModel( "assets/sponza/sponza.obj", "white");
 
 		// start of separate prims
-		//int startPrims = primitives.size();
-		//// AddSphere( float3(0,0,-2), 1, "red" );
-		//// bvh2->BuildBLAS( true, startPrims );
+		int startPrims = primitives.size();
+		AddSphere( float3(0,8,0), .5f, "white-light" );
+		bvh2->BuildBLAS( true, startPrims );
 
 		////AddSphere( float3(1, 0, 0), 0.25f, "white-light" );
 		//AddQuad( float3(2, 0, -2), float3(2, 2, -2), float3( 2, 2, 2 ), float3( 2, 0, 2 ), 0, 0, 0, 0, "white-light" );
@@ -172,6 +172,7 @@ namespace Tmpl8
 		default.texIdx = -1;
 		default.texH = 0;
 		default.texW = 0;
+		default.isLight = false;
 		materials.push_back( default );
 		matMap_[name] = matIdx_;
 		matIdx_++;

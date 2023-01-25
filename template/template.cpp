@@ -138,7 +138,8 @@ void main()
 	FILE* file = nullptr;
 	freopen_s(&file, "CON", "w", stdout);
 	freopen_s(&file, "CON", "w", stderr);
-	SetWindowPos(GetConsoleWindow(), HWND_TOP, 0, 0, 1280, 800, 0);
+	SetWindowPos( GetConsoleWindow(), HWND_TOP, 0, 0, 1280, 800, 0 );
+	glfwSetWindowPos( window, 400, 100 );
 	glfwShowWindow(window);
 #endif
 	// initialize application

@@ -117,10 +117,11 @@ float4 getAlbedo( Ray* ray )
 				Triangle t = prim.objData.triangle;
 				float2 uv = ray->u * t.uv1 + ray->v * t.uv0 + ( 1 - ray->u - ray->v) * t.uv2;
 				uv = fmod( uv, ( float2 )( 1.f, 1.f ) );
-				if ( uv.x < 0 ) uv.x = 1 - uv.x;
-				if ( uv.y < 0 ) uv.y = 1 - uv.y;
+				if ( uv.x < 0 ) uv.x = 1 + uv.x;
+				if ( uv.y < 0 ) uv.y = 1 + uv.y;
 				int x = (int)( uv.x * mat.texW );
 				int y = (int)( uv.y * mat.texH );
+				//printf( "x: %i, y: %i, max.texIdx: %i, mat.texW: %i, mat.texH: %i, u: %f, v: %f\n", x, y, mat.texIdx, mat.texW, mat.texH, uv.x, uv.y );
 				albedo = textures[mat.texIdx + x + y * mat.texW];
 			}break;
 			case SPHERE:

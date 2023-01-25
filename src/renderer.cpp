@@ -62,7 +62,7 @@ void Renderer::RayTrace()
 	generateKernel->SetArgument( 0, ray1Buffer );
 	clSetKernelArg( generateKernel->kernel, 3, sizeof( Camera ), &camera.cam );
 	generateKernel->Run( PIXELS );
-
+	
 	for ( int i = 0; i < MAX_BOUNCES; i++ )
 	{
 		extendKernel->SetArgument( 0, ray1Buffer );
