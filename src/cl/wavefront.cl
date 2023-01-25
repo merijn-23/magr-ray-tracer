@@ -72,7 +72,7 @@ __kernel void extend(
 		if (idx < 0) break;
 
 		Ray* ray = rays + idx;
-		uint steps = intersectTLAS( ray, tlasNodes, blasNodes, bvhNodes, primIdxs );
+		uint steps = intersectTLAS( ray, tlasNodes, blasNodes, bvhNodes, primIdxs, false );
 
 		if (settings->renderBVH) accum[idx] = (float4)(steps / 32.f);
 		if (ray->primIdx == -1) continue;
@@ -137,7 +137,7 @@ __kernel void shade(
 		if (extensionRay.bounces <= MAX_BOUNCES)
 		{
 			// get atomic inc in settings->numOutRays and set extensionRay in _extensionRays on that idx 
-			int extensionIdx = atomic_inc( &(settings->numOutRays) ); // atomic_inc( &(settings->numOutRays) );
+			int extensionIdx = atomic_inc( &(settings->numOutRays) ); 
 			extensionRays[extensionIdx] = extensionRay;
 		}
 #ifdef SHADING_NEE
@@ -187,17 +187,20 @@ __kernel void connect(
 		Ray ray = initRay(shadowRay.I + norm * EPSILON, norm);
 		ray.t = dist - 2 * EPSILON;
 
-		intersectTLAS( &ray, tlasNodes, blasNodes, bvhNodes, bvhIdxs );		
+		int value = intersectTLAS( &ray, tlasNodes, blasNodes, bvhNodes, bvhIdxs, true );		
 
-		if(ray.t < dist - 2 * EPSILON) continue;
+		if(value == -1) continue;
 		//printf("ray %i connected\n", idx);
-
+	
 		// calculate 
 		Primitive* prim = _primitives + shadowRay.lightIdx;
+		//printf( "Prim type: %i\n", prim->objType );
 		float4 NL = getNormal(prim, shadowRay.L);
-		float solidAngle = (fabs(dot(NL, - dir)) * getArea(prim)) * (1 / (dist * dist));
+		float solidAngle = (fabs(dot(NL, - dir)) * prim->area * (1 / (dist * dist)));
+		//printf( "Area: %f, Dist: %f, DOT: %f\n", prim->area, dist, dot( NL, -dir ) );
 
 		float4 lightColor = _materials[prim->matIdx].emittance;
+		//printf( "SA: %f, BRDF: %f %f %f, DOT: %f\n", solidAngle, shadowRay.BRDF.x, shadowRay.BRDF.y, shadowRay.BRDF.z, shadowRay.dotNL );
 		float4 Ld = lightColor * solidAngle * shadowRay.BRDF * shadowRay.dotNL;
 		accum[shadowRay.pixelIdx] += Ld * shadowRay.intensity;
 	}

@@ -15,15 +15,16 @@ namespace Tmpl8
 typedef struct ImGuiData
 {
 	string shading_type = SHADING_NEE;
-	string bvh_type = USE_BVH2;
+	string bvh_type = USE_BVH4;
 	float vignet_strength = 0;
 	float chromatic_strength = 0;
-	float gamma_strength = 1;
+	float gamma_strength = .9f;
 	float energy_total = 0;
 	bool print_performance = true;
 	bool show_energy_levels = true;
+	bool reset_every_frame = false;
 
-	int dummy_bvh_type = 0;
+	int dummy_bvh_type = 1;
 	int dummy_shading_type = 1;
 };
 

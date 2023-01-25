@@ -61,6 +61,7 @@ typedef struct Primitive
 
 	int objType;
 	int matIdx;
+	float area;
 } Primitive;
 
 typedef struct Light

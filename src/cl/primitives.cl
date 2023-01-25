@@ -181,18 +181,18 @@ float4 getRandomPoint(Primitive* prim, uint* seed)
 	}
 }
 
-float getArea(Primitive* prim)
-{
-	switch(prim->objType)
-	{
-		case SPHERE:
-			return 4 * M_PI_F * prim->objData.sphere.r2;
-		case TRIANGLE:
-		{
-			Triangle t = prim->objData.triangle;
-			return 0.5f * (t.v0.x * (t.v1.y - t.v2.y) + t.v1.x * (t.v2.y - t.v0.y) + t.v2.x * (t.v0.y - t.v1.y));
-		}
-	}
-}
+//float getArea(Primitive* prim)
+//{
+//	switch(prim->objType)
+//	{
+//		case SPHERE:
+//			return 4 * M_PI_F * prim->objData.sphere.r2;
+//		case TRIANGLE:
+//		{
+//			Triangle t = prim->objData.triangle;
+//			return 0.5f * (t.v0.x * (t.v1.y - t.v2.y) + t.v1.x * (t.v2.y - t.v0.y) + t.v2.x * (t.v0.y - t.v1.y));
+//		}
+//	}
+//}
 
 #endif // __PRIMITIVES_CL

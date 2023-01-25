@@ -10,20 +10,23 @@ int intersectTLAS(
 #ifdef USE_BVH2
 	BVHNode2* bvhNodes,
 #endif
-	uint* primIdxs
+	uint* primIdxs,
+	bool occlusion
 )
 {
 	TLASNode* node = &tlasNodes[0], * stack[32];
 	uint stackPtr = 0;
-	uint steps = 0;
+	int steps = 0;
 	while ( 1 ) {
 		if ( node->leftRight == 0 ) {
 			BLASNode* blas = &blasNodes[node->BLASidx];
 #ifdef USE_BVH4
-			steps += intersectBVH4( ray, bvhNodes, primIdxs, blas->bvhIdx );
+			steps += intersectBVH4( ray, bvhNodes, primIdxs, blas->bvhIdx, occlusion );
 #endif
 #ifdef USE_BVH2
-			steps += intersectBVH2( ray, bvhNodes, primIdxs, blas->bvhIdx );
+			int value = intersectBVH2( ray, bvhNodes, primIdxs, blas->bvhIdx, occlusion );
+			if(occlusion) if(value == -1) return -1;
+			steps += value;
 #endif
 			if ( stackPtr == 0 ) break;
 			else node = stack[--stackPtr];

@@ -46,7 +46,6 @@ float4 kajiyaShading( Ray* ray, Ray* extensionRay, uint* seed )
 			r.bounces = ray->bounces + 1;
 		}
 	}
-
 	r.pixelIdx = ray->pixelIdx;
 	*extensionRay = r;
 	return BLACK;

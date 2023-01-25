@@ -29,7 +29,7 @@ void Renderer::Tick( float _deltaTime )
 	Timer t;
 
 	camera.UpdateCamVec();
-	if ( camera.moved )
+	if ( camera.moved || imgui.reset_every_frame )
 	{
 		resetKernel->Run( PIXELS );
 		camera.moved = false;
@@ -38,7 +38,6 @@ void Renderer::Tick( float _deltaTime )
 	if ( settings->renderBVH ) settings->frames = 1;
 	RayTrace();
 	PostProc();
-	settings->frames++;
 
 	if ( imgui.show_energy_levels ) ComputeEnergy();
 
@@ -55,9 +54,6 @@ void Renderer::Tick( float _deltaTime )
 }
 void Renderer::RayTrace()
 {
-	for ( int i = 0; i < SCRHEIGHT * SCRWIDTH; i++ )
-		seedBuffer->hostBuffer[i] = RandomUInt();
-	seedBuffer->CopyToDevice();
 	settings->numInRays = 0;
 	settings->numOutRays = PIXELS;
 	settings->shadowRays = 0;
@@ -168,14 +164,14 @@ void Renderer::InitBuffers()
 	tlasNodeBuffer->hostBuffer = (uint*)tlas->tlasNodes.data();
 
 	// BVH
-	if ( imgui.bvh_type == USE_BVH4 )
+	if (imgui.bvh_type == USE_BVH4)
 	{
 		bvhNodeBuffer = new Buffer( sizeof( BVHNode4 ) * scene.bvh4->Nodes().size() );
 		bvhNodeBuffer->hostBuffer = (uint*)scene.bvh4->Nodes().data();
 		bvhIdxBuffer = new Buffer( sizeof( uint ) * scene.bvh4->Idx().size() );
 		bvhIdxBuffer->hostBuffer = (uint*)scene.bvh4->Idx().data();
 	}
-	else if ( imgui.bvh_type == USE_BVH2 )
+	else if (imgui.bvh_type == USE_BVH2)
 	{
 		bvhNodeBuffer = new Buffer( sizeof( BVHNode2 ) * scene.bvh2->bvhNodes.size() );
 		bvhNodeBuffer->hostBuffer = (uint*)scene.bvh2->bvhNodes.data();
@@ -183,8 +179,12 @@ void Renderer::InitBuffers()
 		bvhIdxBuffer->hostBuffer = (uint*)scene.bvh2->primIdx.data();
 	}
 
+	for (int i = 0; i < SCRHEIGHT * SCRWIDTH; i++)
+		seedBuffer->hostBuffer[i] = RandomUInt();
+
 	bvhNodeBuffer->CopyToDevice();
 	bvhIdxBuffer->CopyToDevice();
+	seedBuffer->CopyToDevice();
 	primBuffer->CopyToDevice();
 	texBuffer->CopyToDevice();
 	matBuffer->CopyToDevice();
@@ -304,46 +304,41 @@ void Renderer::Gui()
 	}
 	if ( ImGui::CollapsingHeader( "Render", ImGuiTreeNodeFlags_DefaultOpen ) )
 	{
-		if ( ImGui::Checkbox( "Anti-Aliasing", (bool*)(&(settings->antiAliasing)) ) ) camera.moved = true;
-
+		if (ImGui::Checkbox( "Anti-Aliasing", (bool*)(&(settings->antiAliasing)) )) camera.moved = true;
+		ImGui::Checkbox( "Reset every frame", &(imgui.reset_every_frame));
 		if ( ImGui::TreeNodeEx( "Shading Type", ImGuiTreeNodeFlags_DefaultOpen ) )
 		{
 			ImGui::RadioButton( "Kajiya", &(imgui.dummy_shading_type), 0 );
 			ImGui::RadioButton( "NEE", &(imgui.dummy_shading_type), 1 );
 			ImGui::TreePop();
 		}
-
-		if ( ImGui::TreeNodeEx( "BVH Type" ) )
-		{
-			if ( ImGui::RadioButton( "Normal BVH", &(imgui.dummy_bvh_type), 0 ) )
-			{
-				imgui.shading_type = USE_BVH2;
-			}
-			if ( ImGui::RadioButton( "Quad BVH", &(imgui.dummy_bvh_type), 1 ) )
-			{
-				imgui.shading_type = USE_BVH4;
-			}
-			ImGui::TreePop();
-		}
-
+		//if ( ImGui::TreeNodeEx( "BVH Type" ) )
+		//{
+		//	ImGui::RadioButton( "Normal BVH", &(imgui.dummy_bvh_type), 0 );
+		//	ImGui::RadioButton( "Quad BVH", &(imgui.dummy_bvh_type), 1 );
+		//	ImGui::TreePop();
+		//}
 		if ( ImGui::Button( "Recompile OpenCL" ) )
 		{
 			switch ( imgui.dummy_shading_type )
 			{
-			case 0:
-				imgui.shading_type = SHADING_SIMPLE;
+			case 0: imgui.shading_type = SHADING_SIMPLE;
 				break;
-			case 1:
-				imgui.shading_type = SHADING_NEE;
+			case 1: imgui.shading_type = SHADING_NEE;
 				break;
 			};
+			//switch (imgui.dummy_bvh_type)
+			//{
+			//case 0: imgui.bvh_type = USE_BVH2;
+			//	break;
+			//case 1: imgui.bvh_type = USE_BVH4;
+			//	break;
+			//};
 			InitWavefrontKernels();
 			camera.moved = true;
 		}
 		ImGui::Checkbox( "Show Energy Levels", &(imgui.show_energy_levels) );
 		if ( imgui.show_energy_levels ) ImGui::Text( "%f", imgui.energy_total );
-
-
 		//if ( ImGui::RadioButton( "Kajiya", &( settings->tracerType ), KAJIYA ) ) camera.moved = true;
 	}
 	if ( ImGui::CollapsingHeader( "BVH" ) )

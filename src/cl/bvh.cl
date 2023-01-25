@@ -10,18 +10,20 @@ float intersectAABB( Ray* ray, const float4 bmin, const float4 bmax )
 	tmin = max( tmin, min( tz1, tz2 ) ), tmax = min( tmax, max( tz1, tz2 ) );
 	if ( tmax >= tmin && tmin < ray->t && tmax > 0 ) return tmin; else return REALLYFAR;
 }
-uint intersectBVH2( Ray* ray, BVHNode2* bvhNode, uint* primIdxs, uint bvhIdx )
+int intersectBVH2( Ray* ray, BVHNode2* bvhNode, uint* primIdxs, uint bvhIdx, bool occlusion )
 {
 	BVHNode2* stack[32];
 	BVHNode2* node = bvhNode + bvhIdx;
 	uint stackPtr = 0;
-	uint steps = 0;
+	int steps = 0;
+	float light_t = ray->t;
 	while ( 1 ) {
 		if ( node->count > 0 ) // isLeaf?
 		{
 			for ( uint i = 0; i < node->count; i++ ) {
 				int index = primIdxs[node->first + i];
 				intersect( index, &primitives[index], ray );
+				if(occlusion) if ( ray->t < light_t ) return -1;
 			}
 			if ( stackPtr == 0 ) break;
 			else node = stack[--stackPtr];
@@ -50,12 +52,13 @@ uint intersectBVH2( Ray* ray, BVHNode2* bvhNode, uint* primIdxs, uint bvhIdx )
 	}
 	return steps;
 }
-uint intersectBVH4( Ray* ray, BVHNode4* bvhNode, uint* primIdxs, uint bvhIdx )
+uint intersectBVH4( Ray* ray, BVHNode4* bvhNode, uint* primIdxs, uint bvhIdx, bool occlusion )
 {
 	BVHNode4* stack[64];
 	BVHNode4* node = bvhNode + bvhIdx;
 	uint stackPtr = 0;
 	uint steps = 0;
+	float light_t = ray->t;
 	while ( 1 ) {
 		steps++;
 		float dist[4];
@@ -80,6 +83,7 @@ uint intersectBVH4( Ray* ray, BVHNode4* bvhNode, uint* primIdxs, uint bvhIdx )
 				for ( uint j = 0; j < node->count[index]; j++ ) {
 					int primIdx = primIdxs[node->first[index] + j];
 					intersect( primIdx, primitives + primIdx, ray );
+					if(occlusion) if ( ray->t < light_t ) return -1;
 				}
 			} else {
 				stack[stackPtr++] = bvhNode + node->first[index];
@@ -89,48 +93,5 @@ uint intersectBVH4( Ray* ray, BVHNode4* bvhNode, uint* primIdxs, uint bvhIdx )
 		node = stack[--stackPtr];
 	}
 	return steps;
-}
-
-bool intersectBVH2Occlusion( Ray* ray, BVHNode2* bvhNode, uint* primIdx )
-{
-	float light_t = ray->t;
-	BVHNode2* stack[32];
-	BVHNode2* node = &bvhNode[0];
-	uint stackPtr = 0;
-	uint steps = 0;
-	while ( 1 ) {
-		if ( node->count > 0 ) // isLeaf?
-		{
-			for ( uint i = 0; i < node->count; i++ ) {
-				int index = primIdx[node->first + i];
-				intersect( index, &primitives[index], ray );
-				if ( ray->t < light_t ) return true;
-			}
-			if ( stackPtr == 0 ) break;
-			else node = stack[--stackPtr];
-			continue;
-		}
-		BVHNode2* child1 = &bvhNode[node->first];
-		BVHNode2* child2 = &bvhNode[node->first + 1];
-		float dist1 = intersectAABB( ray, child1->aabbMin, child1->aabbMax );
-		float dist2 = intersectAABB( ray, child2->aabbMin, child2->aabbMax );
-		if ( dist1 > dist2 ) {
-			// swap
-			float d = dist1; dist1 = dist2; dist2 = d;
-			BVHNode2* c = child1; child1 = child2; child2 = c;
-		}
-		if ( dist1 > light_t ) {
-			if ( stackPtr == 0 ) break;
-			else node = stack[--stackPtr];
-		} else {
-			steps++;
-			node = child1;
-			if ( dist2 < light_t ) {
-				stack[stackPtr++] = child2;
-				steps++;
-			}
-		}
-	}
-	return false;
 }
 #endif // __BVH_CL
