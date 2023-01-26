@@ -36,7 +36,6 @@ __kernel void generate(
 	r.lastSpecular = true;
 	r.pixelIdx = idx;
 	rays[idx] = r;
-
 }
 
 __kernel void extend(
@@ -59,7 +58,9 @@ __kernel void extend(
 	if (get_global_id( 0 ) == 0)
 	{
 		settings->numInRays = settings->numOutRays;
+#ifndef RUSSIAN_ROULETTE
 		settings->shadowRays = 0;
+#endif
 		primitives = _primitives;
 	}
 	work_group_barrier( CLK_GLOBAL_MEM_FENCE );
@@ -200,6 +201,7 @@ __kernel void connect(
 		//printf( "Area: %f, Dist: %f, DOT: %f\n", prim->area, dist, dot( NL, -dir ) );
 
 		float4 lightColor = _materials[prim->matIdx].emittance;
+		//printf( "matIdx: %i, lightColor: %f %f %f\n", prim->matIdx, lightColor.x, lightColor.y, lightColor.z );
 		//printf( "SA: %f, BRDF: %f %f %f, DOT: %f\n", solidAngle, shadowRay.BRDF.x, shadowRay.BRDF.y, shadowRay.BRDF.z, shadowRay.dotNL );
 		float4 Ld = lightColor * solidAngle * shadowRay.BRDF * shadowRay.dotNL;
 		accum[shadowRay.pixelIdx] += Ld * shadowRay.intensity;

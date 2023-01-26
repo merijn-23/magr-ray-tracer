@@ -16,14 +16,14 @@ int intersectBVH2( Ray* ray, BVHNode2* bvhNode, uint* primIdxs, uint bvhIdx, boo
 	BVHNode2* node = bvhNode + bvhIdx;
 	uint stackPtr = 0;
 	int steps = 0;
-	float light_t = ray->t;
+	float t_light = ray->t;
 	while ( 1 ) {
 		if ( node->count > 0 ) // isLeaf?
 		{
 			for ( uint i = 0; i < node->count; i++ ) {
 				int index = primIdxs[node->first + i];
 				intersect( index, &primitives[index], ray );
-				if(occlusion) if ( ray->t < light_t ) return -1;
+				if(occlusion) if ( ray->t < t_light ) return -1;
 			}
 			if ( stackPtr == 0 ) break;
 			else node = stack[--stackPtr];
@@ -38,13 +38,13 @@ int intersectBVH2( Ray* ray, BVHNode2* bvhNode, uint* primIdxs, uint bvhIdx, boo
 			float d = dist1; dist1 = dist2; dist2 = d;
 			BVHNode2* c = child1; child1 = child2; child2 = c;
 		}
-		if ( dist1 == REALLYFAR ) {
+		if ( dist1 >= t_light ) {
 			if ( stackPtr == 0 ) break;
 			else node = stack[--stackPtr];
 		} else {
 			steps++;
 			node = child1;
-			if ( dist2 != REALLYFAR ) {
+			if ( dist2 < t_light ) {
 				stack[stackPtr++] = child2;
 				steps++;
 			}
@@ -78,7 +78,7 @@ uint intersectBVH4( Ray* ray, BVHNode4* bvhNode, uint* primIdxs, uint bvhIdx, bo
 		for ( int i = 0; i < 4; i++ ) {
 			int index = order[i];
 			if ( node->first[index] == INVALID ) continue;
-			if ( dist[index] == REALLYFAR ) continue;
+			if ( dist[index] >= light_t ) continue;
 			if ( node->count[index] > 0 ) {
 				for ( uint j = 0; j < node->count[index]; j++ ) {
 					int primIdx = primIdxs[node->first[index] + j];

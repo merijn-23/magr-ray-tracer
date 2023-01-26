@@ -73,11 +73,15 @@ void Renderer::RayTrace()
 		shadeKernel->SetArgument( 1, ray2Buffer );
 		shadeKernel->Run( NR_OF_PERSISTENT_THREADS );
 
-		if ( imgui.shading_type == SHADING_NEE || imgui.shading_type == SHADING_NEEIS )
-			connectKernel->Run( NR_OF_PERSISTENT_THREADS );
+		if ( !imgui.use_russian_roulette)
+			if (imgui.shading_type == SHADING_NEE || imgui.shading_type == SHADING_NEEIS)
+				connectKernel->Run( NR_OF_PERSISTENT_THREADS );
 
 		std::swap( ray1Buffer, ray2Buffer );
 	}
+	if( imgui.use_russian_roulette )				
+		connectKernel->Run( NR_OF_PERSISTENT_THREADS );
+
 }
 void Renderer::PostProc()
 {
@@ -137,7 +141,7 @@ void Renderer::InitBuffers()
 	// rays
 	ray1Buffer = new Buffer( PIXELS * sizeof( Ray ) );
 	ray2Buffer = new Buffer( PIXELS * sizeof( Ray ) );
-	shadowRayBuffer = new Buffer( PIXELS * sizeof( ShadowRay ) );
+	shadowRayBuffer = new Buffer( 4 * PIXELS * sizeof( ShadowRay ) );
 
 	seedBuffer = new Buffer( sizeof( uint ) * PIXELS );
 	settingsBuffer = new Buffer( sizeof( Settings ) );
@@ -195,12 +199,14 @@ void Renderer::InitBuffers()
 
 void Renderer::InitWavefrontKernels()
 {
+	std::vector<string> defines{ imgui.shading_type, imgui.bvh_type };
+	if ( imgui.use_russian_roulette ) defines.push_back( USE_RUSSIAN_ROULETTE );
 	// wavefront
-	resetKernel = new Kernel( "src/cl/wavefront.cl", "reset", { imgui.shading_type, imgui.bvh_type } );
-	generateKernel = new Kernel( "src/cl/wavefront.cl", "generate", { imgui.shading_type, imgui.bvh_type } );
-	extendKernel = new Kernel( "src/cl/wavefront.cl", "extend", { imgui.shading_type, imgui.bvh_type } );
-	shadeKernel = new Kernel( "src/cl/wavefront.cl", "shade", { imgui.shading_type, imgui.bvh_type } );
-	connectKernel = new Kernel( "src/cl/wavefront.cl", "connect", { imgui.shading_type, imgui.bvh_type } );
+	resetKernel = new Kernel( "src/cl/wavefront.cl", "reset", defines );
+	generateKernel = new Kernel( "src/cl/wavefront.cl", "generate", defines );
+	extendKernel = new Kernel( "src/cl/wavefront.cl", "extend", defines );
+	shadeKernel = new Kernel( "src/cl/wavefront.cl", "shade", defines );
+	connectKernel = new Kernel( "src/cl/wavefront.cl", "connect", defines );
 
 	generateKernel->SetArgument( 1, settingsBuffer );
 	generateKernel->SetArgument( 2, seedBuffer );
@@ -305,37 +311,43 @@ void Renderer::Gui()
 	if ( ImGui::CollapsingHeader( "Render", ImGuiTreeNodeFlags_DefaultOpen ) )
 	{
 		if (ImGui::Checkbox( "Anti-Aliasing", (bool*)(&(settings->antiAliasing)) )) camera.moved = true;
-		ImGui::Checkbox( "Reset every frame", &(imgui.reset_every_frame));
-		if ( ImGui::TreeNodeEx( "Shading Type", ImGuiTreeNodeFlags_DefaultOpen ) )
+		ImGui::Checkbox( "Reset every frame", &(imgui.reset_every_frame) );
+		if ( ImGui::TreeNodeEx( "Recompile options", ImGuiTreeNodeFlags_DefaultOpen ) )
 		{
-			ImGui::RadioButton( "Kajiya", &(imgui.dummy_shading_type), 0 );
-			ImGui::RadioButton( "NEE", &(imgui.dummy_shading_type), 1 );
-			ImGui::TreePop();
-		}
-		//if ( ImGui::TreeNodeEx( "BVH Type" ) )
-		//{
-		//	ImGui::RadioButton( "Normal BVH", &(imgui.dummy_bvh_type), 0 );
-		//	ImGui::RadioButton( "Quad BVH", &(imgui.dummy_bvh_type), 1 );
-		//	ImGui::TreePop();
-		//}
-		if ( ImGui::Button( "Recompile OpenCL" ) )
-		{
-			switch ( imgui.dummy_shading_type )
+			ImGui::Checkbox( "Russian Roulette", &(imgui.dummy_russian_roulette) );
+			if ( ImGui::TreeNodeEx( "Shading Type", ImGuiTreeNodeFlags_DefaultOpen ) )
 			{
-			case 0: imgui.shading_type = SHADING_SIMPLE;
-				break;
-			case 1: imgui.shading_type = SHADING_NEE;
-				break;
-			};
-			//switch (imgui.dummy_bvh_type)
+				ImGui::RadioButton( "Kajiya", &(imgui.dummy_shading_type), 0 );
+				ImGui::RadioButton( "NEE", &(imgui.dummy_shading_type), 1 );
+				ImGui::TreePop();
+			}
+			//if ( ImGui::TreeNodeEx( "BVH Type" ) )
 			//{
-			//case 0: imgui.bvh_type = USE_BVH2;
-			//	break;
-			//case 1: imgui.bvh_type = USE_BVH4;
-			//	break;
-			//};
-			InitWavefrontKernels();
-			camera.moved = true;
+			//	ImGui::RadioButton( "Normal BVH", &(imgui.dummy_bvh_type), 0 );
+			//	ImGui::RadioButton( "Quad BVH", &(imgui.dummy_bvh_type), 1 );
+			//	ImGui::TreePop();
+			//}
+			if ( ImGui::Button( "Recompile OpenCL" ) )
+			{
+				switch ( imgui.dummy_shading_type )
+				{
+				case 0: imgui.shading_type = SHADING_SIMPLE;
+					break;
+				case 1: imgui.shading_type = SHADING_NEE;
+					break;
+				};
+				imgui.use_russian_roulette = imgui.dummy_russian_roulette;
+				//switch (imgui.dummy_bvh_type)
+				//{
+				//case 0: imgui.bvh_type = USE_BVH2;
+				//	break;
+				//case 1: imgui.bvh_type = USE_BVH4;
+				//	break;
+				//};
+				InitWavefrontKernels();
+				camera.moved = true;
+			}
+			ImGui::TreePop();
 		}
 		ImGui::Checkbox( "Show Energy Levels", &(imgui.show_energy_levels) );
 		if ( imgui.show_energy_levels ) ImGui::Text( "%f", imgui.energy_total );

@@ -36,9 +36,17 @@ float4 kajiyaShading( Ray* ray, Ray* extensionRay, uint* seed )
 		}
 		else
 		{
+			float4 albedo = getAlbedo( ray );
+#ifdef RUSSIAN_ROULETTE
+			float rr_p = getSurvivalProb( albedo );
+			if ( rr_p < randomFloat( seed ) )
+				return BLACK;
+			else
+				ray->intensity *= 1 / rr_p;
+#endif
 			// diffuse 
 			float4 diffuseReflection = randomRayHemisphere( ray->N, seed );
-			float4 BRDF = getAlbedo( ray ) * M_1_PI_F;
+			float4 BRDF = albedo * M_1_PI_F;
 			float I_PDF = 2 * M_PI_F;
 			ray->intensity *= BRDF * I_PDF * dot( diffuseReflection, ray->N );
 			r = initRay( ray->I + EPSILON * diffuseReflection, diffuseReflection );
@@ -87,9 +95,8 @@ float4 neeShading(Ray* ray, Ray* extensionRay, ShadowRay* shadowRay, Settings* s
 		else
 		{
 			// calculate BRDF
-			float4 diffuseReflection = randomRayHemisphere( ray->N, seed );
-			float4 BRDF = getAlbedo( ray ) * M_1_PI_F;
-			float I_PDF = 2 * M_PI_F;
+			float4 albedo = getAlbedo( ray );
+			float4 BRDF = albedo * M_1_PI_F;
 			
 			// sample a random light source
 			// output: a new shadow ray
@@ -112,7 +119,7 @@ float4 neeShading(Ray* ray, Ray* extensionRay, ShadowRay* shadowRay, Settings* s
 					ShadowRay sr;
 					sr.I = ray->I;
 					sr.L = pointOnLight;
-					sr.intensity = ray->intensity;
+					sr.intensity = ray->intensity * settings->numLights;
 					sr.BRDF = BRDF;
 					sr.lightIdx = lightIdx;
 					sr.pixelIdx = ray->pixelIdx;
@@ -120,11 +127,19 @@ float4 neeShading(Ray* ray, Ray* extensionRay, ShadowRay* shadowRay, Settings* s
 					*shadowRay = sr;
 				}
 			}
-			
+			// russian roullete
+#ifdef RUSSIAN_ROULETTE
+			float rr_p = getSurvivalProb( albedo );
+			if ( rr_p < randomFloat( seed ) )
+				return BLACK;
+			else
+				ray->intensity *= 1 / rr_p;
+#endif
 			// diffuse 
-			ray->intensity *= BRDF * I_PDF * dot( diffuseReflection, ray->N );
+			float I_PDF = 2 * M_PI_F;
+			float4 diffuseReflection = randomRayHemisphere( ray->N, seed );
 			r = initRay( ray->I + EPSILON * diffuseReflection, diffuseReflection );
-			r.intensity = ray->intensity;
+			r.intensity = ray->intensity * BRDF * I_PDF * dot( diffuseReflection, ray->N );;
 			r.bounces = ray->bounces + 1;
 		}
 	}

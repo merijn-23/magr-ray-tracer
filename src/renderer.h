@@ -12,10 +12,14 @@ namespace Tmpl8
 #define USE_BVH2 "USE_BVH2"
 #define USE_BVH4 "USE_BVH4"
 
+#define USE_RUSSIAN_ROULETTE "RUSSIAN_ROULETTE"
+
 typedef struct ImGuiData
 {
 	string shading_type = SHADING_NEE;
 	string bvh_type = USE_BVH4;
+	bool use_russian_roulette = true;
+
 	float vignet_strength = 0;
 	float chromatic_strength = 0;
 	float gamma_strength = .9f;
@@ -26,6 +30,7 @@ typedef struct ImGuiData
 
 	int dummy_bvh_type = 1;
 	int dummy_shading_type = 1;
+	bool dummy_russian_roulette = true;
 };
 
 class Renderer : public TheApp

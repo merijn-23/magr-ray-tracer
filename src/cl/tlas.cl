@@ -17,6 +17,7 @@ int intersectTLAS(
 	TLASNode* node = &tlasNodes[0], * stack[32];
 	uint stackPtr = 0;
 	int steps = 0;
+	float t_light = ray->t;
 	while ( 1 ) {
 		if ( node->leftRight == 0 ) {
 			BLASNode* blas = &blasNodes[node->BLASidx];
@@ -42,13 +43,13 @@ int intersectTLAS(
 			float d = dist1; dist1 = dist2; dist2 = d;
 			TLASNode* c = child1; child1 = child2; child2 = c;
 		}
-		if ( dist1 == REALLYFAR ) {
+		if ( dist1 >= t_light ) {
 			// missed both child nodes; pop a node from the stack
 			if ( stackPtr == 0 ) break;
 			else node = stack[--stackPtr];
 		} else {
 			node = child1;
-			if ( dist2 != REALLYFAR )
+			if ( dist2 < t_light )
 				stack[stackPtr++] = child2;
 		}
 		//steps++;

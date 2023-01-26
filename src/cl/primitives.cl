@@ -147,6 +147,11 @@ float4 getAlbedo( Ray* ray )
 	return albedo;
 }
 
+float getSurvivalProb( float4 albedo )
+{
+	return clamp( max(albedo.x, max(albedo.y, albedo.z)), 0.f, 1.f);
+}
+
 float4 getRandomPoint(Primitive* prim, uint* seed)
 {
 	switch(prim->objType)
@@ -161,7 +166,8 @@ float4 getRandomPoint(Primitive* prim, uint* seed)
 			float precomp = sqrt(1 - u * u);
 			float x = cos(theta) * precomp;
 			float y = sin(theta) * precomp;
-			return (float4)(x, y, u, 0) * sphere.r + sphere.pos;
+			float4 point = (float4)(x, y, u, 0) * sphere.r + sphere.pos;
+			return point;
 		}
 		case TRIANGLE:
 		{

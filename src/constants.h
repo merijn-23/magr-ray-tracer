@@ -4,7 +4,7 @@
 #define SCRHEIGHT		720
 #define PIXELS			SCRWIDTH * SCRHEIGHT
 
-#define MAX_BOUNCES 3
+#define MAX_BOUNCES 7
 #define MAX_RAYS 64
 #define EPSILON 0.0001f
 

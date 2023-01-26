@@ -9,7 +9,7 @@ namespace Tmpl8
 	{
 		bvh2 = new BVH2( primitives );
 		// load skydome first
-		LoadTexture( "assets/snow-forest.hdr", "skydome" );
+		LoadTexture( "assets/office.hdr", "skydome" );
 		// materials
 		auto& red = AddMaterial( "red" );
 		red.color = float3( 1, 0, 0 );
@@ -50,7 +50,7 @@ namespace Tmpl8
 		auto& whiteLight = AddMaterial( "white-light" );
 		whiteLight.isLight = true;
 		whiteLight.color = float4( 1 );
-		whiteLight.emittance = float4( 5 );
+		whiteLight.emittance = float4( 500 );
 		auto& greenLight = AddMaterial( "green-light" );
 		greenLight.isLight = true;
 		greenLight.color = float4( .1f, 1, .1f, 0 );
@@ -70,70 +70,6 @@ namespace Tmpl8
 		LoadTexture( "assets/cash_money.png", "cash" );
 		LoadTexture( "assets/suprised_pikachu.png", "pika" );
 		LoadTexture( "assets/stone.jpg", "stone" );
-#if 0
-		int width = 15;
-		int height = 2;
-		int u = 3;
-		int depth = 1;
-		// Back wall
-		AddTriangle(
-			float3( -width, height, -depth ), float3( -width, 0, -depth ), float3( width, height, -depth ),
-			float2( u, 1 ), float2( 0, 0 ), float2( u, 0 ), "mosaic" );
-		AddTriangle(
-			float3( -width, 0, -depth ), float3( width, 0, -depth ), float3( width, height, -depth ),
-			float2( u, 0 ), float2( u, 1 ), float2( 0, 0 ), "mosaic" );
-
-		// Ceiling lamp
-		int lamp_y = 4;
-		int size = 2;
-		float step = 5;
-		float offset = -10;
-		for ( int i = 0; i < 5; i++ ) {
-			AddTriangle(
-				float3( -size + i * step + offset, lamp_y, 0 ), float3( size + i * step + offset, lamp_y, 0 ), float3( -size + i * step + offset, lamp_y, depth ),
-				float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "white-light" );
-			AddTriangle(
-				float3( -size + i * step + offset, lamp_y, depth ), float3( size + i * step + offset, lamp_y, depth ), float3( size + i * step + offset, lamp_y, 0 ),
-				float2( 1, 0 ), float2( 0, 0 ), float2( 0.5, 1 ), "white-light" );
-		}
-
-		// Floor
-		AddTriangle(
-			float3( -width, 0, -depth ), float3( -width, 0, depth ), float3( width, 0, -depth ),
-			float2( 2, .25 ), float2( 0, 0 ), float2( 2, 0 ), "stone" );
-		AddTriangle(
-			float3( -width, 0, depth ), float3( width, 0, depth ), float3( width, 0, -depth ),
-			float2( 2, 0 ), float2( 2, .25 ), float2( 0, 0 ), "stone" );
-
-		// Front cover
-		AddTriangle(
-			float3( -width, 0, depth ), float3( -width, -height, depth ), float3( width, 0, depth ),
-			float2( u, 1 ), float2( 0, 0 ), float2( u, 0 ), "mosaic" );
-		AddTriangle(
-			float3( -width, -height, depth ), float3( width, -height, depth ), float3( width, 0, depth ),
-			float2( u, 0 ), float2( u, 1 ), float2( 0, 0 ), "mosaic" );
-
-		step = -1.5f;
-		offset = 2;
-
-		AddSphere( float3( 1 * step + offset, -0.75f, 0 ), 1, "white" );
-		AddSphere( float3( 1 * step + offset, .75f, 0 ), .5f, "green" );
-
-		AddSphere( float3( 2 * step + offset, -0.75f, 0 ), 1, "white" );
-		AddSphere( float3( 2 * step + offset, .75f, 0 ), .5f, "mirror" );
-
-		AddSphere( float3( 2.5 * step + offset, 2.f, 0 ), .5f, "yellow-light" );
-
-		AddSphere( float3( 3 * step + offset, -0.75f, 0 ), 1, "white" );
-		AddSphere( float3( 3 * step + offset, .75f, 0 ), .5f, "red-glass" );
-
-		AddSphere( float3( 4 * step + offset, -0.75f, 0 ), 1, "white" );
-		AddSphere( float3( 4 * step + offset, .75f, 0 ), .5f, "pika" );
-
-
-		LoadModel( "assets/cube.obj", "green-glass", float3( 5 * step + offset, 1.2f, .5f ) );
-		//LoadModel("assets/bunny_low_poly.obj", "white", float3(.5 + offset, 0, 0));
-#endif
 
 		//LoadModel( "assets/bunny.obj", "red-glass" );
 		//LoadModel( "assets/bunny.obj", "red-glass", (1,0,0) );
@@ -141,7 +77,9 @@ namespace Tmpl8
 
 		// start of separate prims
 		int startPrims = primitives.size();
-		AddSphere( float3(0,8,0), .5f, "white-light" );
+		AddSphere( float3( 2, 6, 0 ), .1f, "white-light" );
+		AddSphere( float3( -2, 6, 0 ), .1f, "white-light" );
+		AddSphere( float3(0,6,0), .1f, "white-light" );
 		bvh2->BuildBLAS( true, startPrims );
 
 		////AddSphere( float3(1, 0, 0), 0.25f, "white-light" );
