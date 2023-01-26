@@ -17,7 +17,7 @@ namespace Tmpl8
 typedef struct ImGuiData
 {
 	string shading_type = SHADING_NEE;
-	string bvh_type = USE_BVH4;
+	string bvh_type = USE_BVH2;
 	bool use_russian_roulette = true;
 
 	float vignet_strength = 0;
@@ -27,6 +27,7 @@ typedef struct ImGuiData
 	bool print_performance = true;
 	bool show_energy_levels = true;
 	bool reset_every_frame = false;
+	bool focus_mode = false;
 
 	int dummy_bvh_type = 1;
 	int dummy_shading_type = 1;
@@ -41,7 +42,7 @@ public:
 	void Shutdown( );
 	// input handling
 	void MouseUp( int button ) { /* implement if you want to detect mouse button presses */ }
-	void MouseDown( int button ) { /* implement if you want to detect mouse button presses */ }
+	void MouseDown( int button );
 	void MouseMove( int x, int y );
 	void MouseWheel( float y );
 	void KeyInput(std::map<int, int>);
@@ -93,6 +94,7 @@ public:
 	Kernel* shadeKernel;
 	Kernel* connectKernel;
 	Kernel* displayKernel;
+	Kernel* focusKernel;
 
 	Buffer* ray1Buffer;
 	Buffer* ray2Buffer;

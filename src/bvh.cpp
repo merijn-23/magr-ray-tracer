@@ -58,11 +58,15 @@ void BVH2::BuildBLAS( bool _statistics, int _startIdx)
 	UpdateNodeBounds( rootNodeIdx_, data );
 	BuildBVH( rootNodeIdx_, data );
 	if ( _statistics ) {
-		stat_build_time = t.elapsed( ) * 1000;
+		stat_build_time += t.elapsed( ) * 1000;
 		stat_node_count = nodesUsed_;
-		stat_depth = Depth( );
-		stat_sah_cost = TotalCost( );
+		stat_depth = max(stat_depth, Depth(rootNodeIdx_ ));
+		stat_sah_cost += TotalCost(rootNodeIdx_ );
 		stat_prim_count = primitives_.size( );
+		for ( int i = 0; i < bvhNodes.size(); i++ )
+		{
+			if ( bvhNodes[i].count > 10 ) printf( "More tahn 10 children\n" );
+		}
 	}
 	bvhNodes.resize( nodesUsed_ );
 	rootNodeIdx_ = nodesUsed_;
@@ -659,11 +663,7 @@ BVH4::BVH4( BVH2& _bvh2 ) : bvh2( _bvh2 )
 	bvh2.nodes[12].count = 12;
 	bvh2.nodes[12].count = 12;
 #endif
-	Timer t;
 	Convert( 0 );
-	bvh2.stat_build_time = t.elapsed( ) * 1000;
-	bvh2.stat_node_count = -1;
-	bvh2.stat_depth = -1;
 }
 uint BVH4::Depth( BVHNode4 node )
 {

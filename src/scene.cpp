@@ -73,8 +73,8 @@ namespace Tmpl8
 
 		//LoadModel( "assets/bunny.obj", "red-glass" );
 		//LoadModel( "assets/bunny.obj", "red-glass", (1,0,0) );
-		LoadModel( "assets/sponza/sponza.obj", "white");
-
+		//LoadModel( "assets/sponza/sponza.obj", "white");
+		LoadModel( "assets/dragon.obj", "white", float3(0,4,0));
 		// start of separate prims
 		int startPrims = primitives.size();
 		AddSphere( float3( 2, 6, 0 ), .1f, "white-light" );
@@ -206,9 +206,9 @@ namespace Tmpl8
 				LoadTexture( util::GetBaseDir( _filename ) + mat.diffuse_texname, mat.diffuse_texname );
 		}
 		// loop over shapes
+			int primIdx = primitives.size( );
 		for ( size_t s = 0; s < shapes.size( ); s++ ) {
 			// start primitive index for bvh
-			int primIdx = primitives.size( );
 			// loop over faces(polygon)
 			size_t index_offset = 0;
 			for ( size_t f = 0; f < shapes[s].mesh.num_face_vertices.size( ); f++ ) {
@@ -252,8 +252,8 @@ namespace Tmpl8
 				index_offset += fv;
 			}
 			// build BLAS for this shape
-			bvh2->BuildBLAS( true, primIdx );
 		}
+		bvh2->BuildBLAS( true, primIdx );
 		printf( "...Finished loading model\n" );
 	}
 	void Scene::LoadTexture( std::string filename, std::string name )

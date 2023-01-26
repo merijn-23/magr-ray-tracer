@@ -43,13 +43,13 @@ void Renderer::Tick( float _deltaTime )
 
 	settings->frames++;
 
-	if ( !imgui.print_performance ) return;
 	// performance report - running average - ms, MRays/s
 	static float avg = 10, alpha = 1;
 	avg = (1 - alpha) * avg + alpha * t.elapsed() * 1000;
 	if ( alpha > 0.05f )
 		alpha *= 0.5f;
 	float fps = 1000 / avg, rps = (SCRWIDTH * SCRHEIGHT) * fps;
+	if ( !imgui.print_performance ) return;
 	printf( "%5.2fms (%.1f fps) - %.1fMrays/s\n", avg, fps, rps / 1000000 );
 }
 void Renderer::RayTrace()
@@ -207,6 +207,7 @@ void Renderer::InitWavefrontKernels()
 	extendKernel = new Kernel( "src/cl/wavefront.cl", "extend", defines );
 	shadeKernel = new Kernel( "src/cl/wavefront.cl", "shade", defines );
 	connectKernel = new Kernel( "src/cl/wavefront.cl", "connect", defines );
+	focusKernel = new Kernel( "src/cl/wavefront.cl", "focus", defines );
 
 	generateKernel->SetArgument( 1, settingsBuffer );
 	generateKernel->SetArgument( 2, seedBuffer );
@@ -239,6 +240,13 @@ void Renderer::InitWavefrontKernels()
 	connectKernel->SetArgument( 8, accumBuffer );
 
 	resetKernel->SetArgument( 0, accumBuffer );
+
+	focusKernel->SetArgument( 2, tlasNodeBuffer );
+	focusKernel->SetArgument( 3, blasNodeBuffer );
+	focusKernel->SetArgument( 4, bvhNodeBuffer );
+	focusKernel->SetArgument( 5, bvhIdxBuffer );
+	focusKernel->SetArgument( 6, primBuffer );
+	focusKernel->SetArgument( 7, settingsBuffer );
 }
 
 void Renderer::InitPostProcKernels()
@@ -283,6 +291,21 @@ void Renderer::MouseWheel( float y )
 	camera.Zoom( -y );
 }
 
+void Renderer::MouseDown( int button )
+{
+	if ( button == GLFW_MOUSE_BUTTON_1 && imgui.focus_mode )
+	{
+		focusKernel->SetArgument( 0, mousePos.x );
+		focusKernel->SetArgument( 1, mousePos.y );
+		clSetKernelArg( generateKernel->kernel, 8, sizeof( Camera ), &camera.cam );
+
+		focusKernel->Run( 1 );
+		settingsBuffer->CopyFromDevice();
+		if(settings->focalLength != REALLYFAR )
+			camera.cam.focalLength = settings->focalLength;
+	}
+}
+
 void Renderer::KeyInput( std::map<int, int> keyMap )
 {
 	if ( keyMap[GLFW_KEY_W] == GLFW_PRESS || keyMap[GLFW_KEY_W] == GLFW_REPEAT ) camera.Move( CamDir::Forward, deltaTime );
@@ -307,6 +330,7 @@ void Renderer::Gui()
 		if ( ImGui::SliderFloat( "Focal Length", &camera.cam.focalLength, .1f, 50, "%.2f" ) ) camera.moved = true;
 		if ( ImGui::RadioButton( "Projection", &camera.cam.type, PROJECTION ) ) camera.moved = true;
 		if ( ImGui::RadioButton( "FishEye", &camera.cam.type, FISHEYE ) ) camera.moved = true;
+		ImGui::Checkbox( "Focus Mode", &(imgui.focus_mode) );
 	}
 	if ( ImGui::CollapsingHeader( "Render", ImGuiTreeNodeFlags_DefaultOpen ) )
 	{

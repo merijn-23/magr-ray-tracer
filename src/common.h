@@ -15,7 +15,7 @@ typedef struct ShadowRay
 {
 	float4 I, L, intensity, BRDF;
 	int lightIdx, pixelIdx;
-	float dotNL;
+	float dotNL, dist;
 } ShadowRay;
 
 typedef struct Material
@@ -87,6 +87,7 @@ typedef struct Settings
 	int numPrimitives, numLights, tracerType, frames, antiAliasing;
 	int numInRays, numOutRays, shadowRays;
 	int renderBVH;
+	float focalLength;
 } Settings;
 
 typedef struct BVHNode2

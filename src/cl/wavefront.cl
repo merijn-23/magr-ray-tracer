@@ -20,11 +20,11 @@ __kernel void generate(
 	Camera _camera
 )
 {
-	__local Camera camera;
-	// first thread of a warp can retrieve settings and camera into local memory, all other threads must wait
-	if (get_local_id( 0 ) == 0)
-		camera = _camera;
-	work_group_barrier( CLK_LOCAL_MEM_FENCE );
+	//__local Camera camera;
+	//// first thread of a warp can retrieve settings and camera into local memory, all other threads must wait
+	//if (get_local_id( 0 ) == 0)
+	//	camera = _camera;
+	//work_group_barrier( CLK_LOCAL_MEM_FENCE );
 
 	int idx = get_global_id( 0 );
 	uint* seed = seeds + idx;
@@ -32,7 +32,7 @@ __kernel void generate(
 	int x = idx % SCRWIDTH;
 	int y = idx / SCRWIDTH;
 
-	Ray r = initPrimaryRay( x, y, camera, settings, seed );
+	Ray r = initPrimaryRay( x, y, _camera, settings, seed );
 	r.lastSpecular = true;
 	r.pixelIdx = idx;
 	rays[idx] = r;
@@ -61,10 +61,10 @@ __kernel void extend(
 #ifndef RUSSIAN_ROULETTE
 		settings->shadowRays = 0;
 #endif
-		primitives = _primitives;
 	}
 	work_group_barrier( CLK_GLOBAL_MEM_FENCE );
 	
+	primitives = _primitives;
 	// persistent thread
 	while (true)
 	{
@@ -75,7 +75,7 @@ __kernel void extend(
 		Ray* ray = rays + idx;
 		uint steps = intersectTLAS( ray, tlasNodes, blasNodes, bvhNodes, primIdxs, false );
 
-		if (settings->renderBVH) accum[idx] = (float4)(steps / 32.f);
+		if (settings->renderBVH) accum[idx] = (float4)(steps / 255.f);
 		if (ray->primIdx == -1) continue;
 		intersectionPoint( ray );
 		ray->N = getNormal( primitives + ray->primIdx, ray->I );
@@ -99,16 +99,17 @@ __kernel void shade(
 	int global_idx = get_global_id( 0 );
 	if (global_idx == 0)
 	{
-		primitives = _primitives;
-		textures = _textures;
-		materials = _materials;
-		lights = _lights;
 
 		settings->numInRays = settings->numOutRays;
 		settings->numOutRays = 0;
 	}
 	work_group_barrier( CLK_GLOBAL_MEM_FENCE );
+
 	uint* seed = seeds + global_idx;
+	primitives = _primitives;
+	textures = _textures;
+	materials = _materials;
+	lights = _lights;
 
 	while (true)
 	{
@@ -182,11 +183,10 @@ __kernel void connect(
 		if (idx < 0) break;
 		ShadowRay shadowRay = shadowRays[idx];
 		float4 dir = shadowRay.L - shadowRay.I;
-		float dist = length(dir);
-		float4 norm = dir / dist;
+		float4 norm = dir / shadowRay.dist;
 
 		Ray ray = initRay(shadowRay.I + norm * EPSILON, norm);
-		ray.t = dist - 2 * EPSILON;
+		ray.t = shadowRay.dist - 2 * EPSILON;
 
 		int value = intersectTLAS( &ray, tlasNodes, blasNodes, bvhNodes, bvhIdxs, true );		
 
@@ -197,7 +197,7 @@ __kernel void connect(
 		Primitive* prim = _primitives + shadowRay.lightIdx;
 		//printf( "Prim type: %i\n", prim->objType );
 		float4 NL = getNormal(prim, shadowRay.L);
-		float solidAngle = (fabs(dot(NL, - norm)) * prim->area * (1 / (dist * dist)));
+		float solidAngle = (fabs(dot(NL, - norm)) * prim->area * (1 / (shadowRay.dist * shadowRay.dist)));
 		//printf( "Area: %f, Dist: %f, DOT: %f\n", prim->area, dist, dot( NL, -dir ) );
 
 		float4 lightColor = _materials[prim->matIdx].emittance;
@@ -206,6 +206,29 @@ __kernel void connect(
 		float4 Ld = lightColor * solidAngle * shadowRay.BRDF * shadowRay.dotNL;
 		accum[shadowRay.pixelIdx] += Ld * shadowRay.intensity;
 	}
+}
+
+__kernel void focus(
+	int x,
+	int y,
+	__global TLASNode* tlasNodes,
+	__global BLASNode* blasNodes,
+#ifdef USE_BVH4
+	__global BVHNode4* bvhNodes,
+#endif
+#ifdef USE_BVH2
+	__global BVHNode2* bvhNodes,
+#endif
+	__global uint* primIdxs,
+	__global Primitive* _primitives,
+	__global Settings* settings,
+	Camera camera
+)
+{
+	settings->antiAliasing = false;
+	Ray r = initPrimaryRay( x, y, camera, settings, 0 );
+	intersectTLAS( &r, tlasNodes, blasNodes, bvhNodes, primIdxs, false );
+	settings->focalLength = r.t;
 }
 
 __kernel void reset( __global float4* pixels )

@@ -108,12 +108,13 @@ float4 neeShading(Ray* ray, Ray* extensionRay, ShadowRay* shadowRay, Settings* s
 				float4 dirToLight = pointOnLight - ray->I;
 				float4 normalOnLight = getNormal( primitives + lightIdx, pointOnLight );
 				//printf("normal on light: %f %f %f\n", normalOnLight.x, normalOnLight.y, normalOnLight.z);
-				float dotNL = dot( ray->N, normalize(dirToLight) );
+				float dist = length( dirToLight );
+				float dotNL = dot( ray->N, dirToLight * (1 / dist) );
 				//printf("dotnl %f\n", dotNL);
 				//printf("dotn-l %f\n", dot(normalOnLight, -dirToLight));
 				/* no check to see if normalonlight dot -dirtolight > 0 because of infinitely thin light sources
 				if  && dot(normalOnLight, -dirToLight) > 0*/
-				if (dotNL > 0)
+				if (dotNL > 0 && dot( normalOnLight, -dirToLight ) > 0)
 				{
 					//printf("hi\n");
 					ShadowRay sr;
@@ -124,6 +125,7 @@ float4 neeShading(Ray* ray, Ray* extensionRay, ShadowRay* shadowRay, Settings* s
 					sr.lightIdx = lightIdx;
 					sr.pixelIdx = ray->pixelIdx;
 					sr.dotNL = dotNL;
+					sr.dist = dist;
 					*shadowRay = sr;
 				}
 			}

@@ -51,7 +51,7 @@ void intersectTriangle( int primIdx, Triangle tri, Ray* ray )
 	float4 pvec = cross( ray->D, v0v2 );
 	float det = dot( v0v1, pvec );
 	// ray and triangle are parallel if det is close to 0
-#ifdef ONE_SIDED
+#ifdef ONE_SIDED_TRIANGLE
 	if ( det < kEpsilon ) return;
 #else
 	if ( fabs( det ) < kEpsilon ) return;

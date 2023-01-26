@@ -25,7 +25,7 @@
 #define MIN_LEAF_PRIMS 2
 
 // gpu architecture
-#define STREAMING_MULTIPROCESSORS 500 // GTX 1060
+#define STREAMING_MULTIPROCESSORS 10 // GTX 1060
 
 // create 8 full warps per SM of persistent threads
 #define NR_OF_PERSISTENT_THREADS 256 * STREAMING_MULTIPROCESSORS
