@@ -1652,7 +1652,7 @@ public:
 	virtual void Shutdown() = 0;
 	virtual void MouseUp( int button ) = 0;
 	virtual void MouseDown( int button ) = 0;
-	virtual void MouseMove( int x, int y ) = 0;
+	virtual void MouseMove( int x, int y, bool mouse_active ) = 0;
 	virtual void MouseWheel( float y ) = 0;
 	virtual void KeyInput(std::map<int, int>) = 0;
 	//virtual void KeyUp( int key ) = 0;

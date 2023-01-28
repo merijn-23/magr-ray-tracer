@@ -17,7 +17,6 @@ Ray initPrimaryRay(int x, int y, Camera cam, Settings* settings, uint* seed)
 
 		float4 P = cam.topLeft + u * cam.horizontal + v * cam.vertical;
 		float4 dir = normalize(P - cam.origin);
-
 		float4 focalPoint = cam.origin + dir * cam.focalLength;
 		float4 O = cam.origin + (randomFloat3(seed) - 0.5f) * cam.aperture;
 		dir = normalize(focalPoint - O);
@@ -44,6 +43,15 @@ Ray initPrimaryRay(int x, int y, Camera cam, Settings* settings, uint* seed)
 		return initRay(cam.origin, D);
 	}break;
 	}
+}
+
+Ray initPrimaryRaySimple( int x, int y, Camera cam )
+{
+	float u = (float)x * (1.0f / SCRWIDTH);
+	float v = (float)y * (1.0f / SCRHEIGHT);
+	float4 P = cam.topLeft + u * cam.horizontal + v * cam.vertical;
+	float4 dir = normalize( P - cam.origin );
+	return initRay( cam.origin, dir );
 }
 
 #endif // __CAMERA_CL

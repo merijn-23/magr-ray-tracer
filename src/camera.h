@@ -24,11 +24,11 @@ namespace Tmpl8
 		CameraManager(float vfov = 110, int type = PROJECTION)
 		{
 			cam.type = type;
-			cam.origin = float3(0, 4, 5);
+			cam.origin = float3(0, 2, 5);
 			cam.forward = float3(0, 0, 1);
 			cam.right = float3(1, 0, 0);
 			cam.up = float3(0, 1, 0);
-			cam.aperture = 0;
+			cam.aperture = 0.5f;
 			cam.focalLength = 1;
 			Fov(vfov);
 		}
@@ -40,7 +40,7 @@ namespace Tmpl8
 
 		float aspect = (float)SCRWIDTH / (float)SCRHEIGHT;
 		float mouseSensivity = 0.5f;
-		float speed = .05f;
+		float speed = .2f;
 
 		bool moved = true;
 

@@ -27,7 +27,7 @@ typedef struct ImGuiData
 	bool print_performance = false;
 	bool show_energy_levels = true;
 	bool reset_every_frame = false;
-	bool focus_mode = false;
+	bool focus_mode = true;
 
 	int dummy_bvh_type = 1;
 	int dummy_shading_type = 1;
@@ -43,7 +43,7 @@ public:
 	// input handling
 	void MouseUp( int button ) { /* implement if you want to detect mouse button presses */ }
 	void MouseDown( int button );
-	void MouseMove( int x, int y );
+	void MouseMove( int x, int y, bool mouse_active );
 	void MouseWheel( float y );
 	void KeyInput(std::map<int, int>);
 	void Gui( );
@@ -54,6 +54,7 @@ public:
 	void PostProc( );
 	void RayTrace( );
 	void ComputeEnergy();
+	void FocusCamera( int x, int y );
 	void SaveFrame( const char* file );
 
 	// data members

@@ -80,7 +80,7 @@ void MouseScrollCallback(GLFWwindow* window, double x, double y)
 }
 void MousePosCallback(GLFWwindow* window, double x, double y)
 {
-	if (app && !toggle_cursor) app->MouseMove((int)x, (int)y);
+	if (app) app->MouseMove((int)x, (int)y, !toggle_cursor);
 }
 void ErrorCallback(int error, const char* description)
 {
@@ -306,14 +306,15 @@ void main()
 			shader->SetInputTexture(0, "c", renderTarget);
 			DrawQuad();
 			shader->Unbind();
+
+			glfwPollEvents();
 #ifdef NDEBUG
 			app->Gui();
 			ImGui::Render();
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 #endif // NDEBUG
-
 			glfwSwapBuffers(window);
-			glfwPollEvents();
+
 		}
 		if (!running) break;
 	}

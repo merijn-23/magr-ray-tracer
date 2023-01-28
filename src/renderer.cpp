@@ -14,6 +14,10 @@ void Renderer::Init()
 	InitBuffers();
 	InitWavefrontKernels();
 	InitPostProcKernels();
+
+	// Set initial camera focus
+	camera.UpdateCamVec();
+	FocusCamera( SCRWIDTH / 2, SCRHEIGHT / 2 );
 }
 void Renderer::Shutdown() {}
 // -----------------------------------------------------------
@@ -66,7 +70,7 @@ void Renderer::RayTrace()
 	generateKernel->SetArgument( 0, ray1Buffer );
 	clSetKernelArg( generateKernel->kernel, 3, sizeof( Camera ), &camera.cam );
 	generateKernel->Run( PIXELS );
-	
+
 	for ( int i = 0; i < MAX_BOUNCES; i++ )
 	{
 		extendKernel->SetArgument( 0, ray1Buffer );
@@ -77,13 +81,13 @@ void Renderer::RayTrace()
 		shadeKernel->SetArgument( 1, ray2Buffer );
 		shadeKernel->Run( NR_OF_PERSISTENT_THREADS );
 
-		if ( !imgui.use_russian_roulette)
-			if (imgui.shading_type == SHADING_NEE || imgui.shading_type == SHADING_NEEIS)
+		if ( !imgui.use_russian_roulette )
+			if ( imgui.shading_type == SHADING_NEE || imgui.shading_type == SHADING_NEEIS )
 				connectKernel->Run( NR_OF_PERSISTENT_THREADS );
 
 		std::swap( ray1Buffer, ray2Buffer );
 	}
-	if( imgui.use_russian_roulette )				
+	if ( imgui.use_russian_roulette )
 		connectKernel->Run( NR_OF_PERSISTENT_THREADS );
 
 }
@@ -172,14 +176,14 @@ void Renderer::InitBuffers()
 	tlasNodeBuffer->hostBuffer = (uint*)tlas->tlasNodes.data();
 
 	// BVH
-	if (imgui.bvh_type == USE_BVH4)
+	if ( imgui.bvh_type == USE_BVH4 )
 	{
 		bvhNodeBuffer = new Buffer( sizeof( BVHNode4 ) * scene.bvh4->Nodes().size() );
 		bvhNodeBuffer->hostBuffer = (uint*)scene.bvh4->Nodes().data();
 		bvhIdxBuffer = new Buffer( sizeof( uint ) * scene.bvh4->Idx().size() );
 		bvhIdxBuffer->hostBuffer = (uint*)scene.bvh4->Idx().data();
 	}
-	else if (imgui.bvh_type == USE_BVH2)
+	else if ( imgui.bvh_type == USE_BVH2 )
 	{
 		bvhNodeBuffer = new Buffer( sizeof( BVHNode2 ) * scene.bvh2->bvhNodes.size() );
 		bvhNodeBuffer->hostBuffer = (uint*)scene.bvh2->bvhNodes.data();
@@ -187,7 +191,7 @@ void Renderer::InitBuffers()
 		bvhIdxBuffer->hostBuffer = (uint*)scene.bvh2->primIdx.data();
 	}
 
-	for (int i = 0; i < SCRHEIGHT * SCRWIDTH; i++)
+	for ( int i = 0; i < SCRHEIGHT * SCRWIDTH; i++ )
 		seedBuffer->hostBuffer[i] = RandomUInt();
 
 	bvhNodeBuffer->CopyToDevice();
@@ -199,6 +203,7 @@ void Renderer::InitBuffers()
 	blasNodeBuffer->CopyToDevice();
 	tlasNodeBuffer->CopyToDevice();
 	lightBuffer->CopyToDevice();
+	settingsBuffer->CopyToDevice();
 }
 
 void Renderer::InitWavefrontKernels()
@@ -277,6 +282,20 @@ void Renderer::InitPostProcKernels()
 	saveImageKernel->SetArguments( screenBuffer, swap1Buffer );
 }
 
+void Renderer::FocusCamera( int x, int y )
+{
+	focusKernel->SetArgument( 0, x );
+	focusKernel->SetArgument( 1, y );
+	clSetKernelArg( focusKernel->kernel, 8, sizeof( Camera ), &camera.cam );
+	focusKernel->Run( 1 );
+	settingsBuffer->CopyFromDevice();
+	if ( settings->focalLength != REALLYFAR )
+	{
+		printf( "focalLength: %f\n", settings->focalLength );
+		camera.cam.focalLength = settings->focalLength;
+	}
+}
+
 void Renderer::SaveFrame( const char* file )
 {
 	saveImageKernel->Run( PIXELS );
@@ -284,29 +303,32 @@ void Renderer::SaveFrame( const char* file )
 	SaveImageF( file, SCRWIDTH, SCRHEIGHT, (float4*)swap1Buffer->hostBuffer );
 }
 
-void Renderer::MouseMove( int x, int y )
+void Renderer::MouseMove( int x, int y, bool mouse_active )
 {
-	camera.MouseMove( x - mousePos.x, y - mousePos.y );
+	if ( mouse_active )
+	{
+		camera.MouseMove( x - mousePos.x, y - mousePos.y );
+	}
 	mousePos.x = x, mousePos.y = y;
 }
 
 void Renderer::MouseWheel( float y )
 {
-	camera.Zoom( -y );
+	if ( !ImGui::IsWindowHovered() )
+	{
+		camera.Zoom( -y );
+	}
 }
 
 void Renderer::MouseDown( int button )
 {
 	if ( button == GLFW_MOUSE_BUTTON_1 && imgui.focus_mode )
 	{
-		focusKernel->SetArgument( 0, mousePos.x );
-		focusKernel->SetArgument( 1, mousePos.y );
-		clSetKernelArg( generateKernel->kernel, 8, sizeof( Camera ), &camera.cam );
-
-		focusKernel->Run( 1 );
-		settingsBuffer->CopyFromDevice();
-		if(settings->focalLength != REALLYFAR )
-			camera.cam.focalLength = settings->focalLength;
+		if ( !ImGui::IsWindowHovered() )
+		{
+			FocusCamera( mousePos.x, mousePos.y );
+			camera.moved = true;
+		}
 	}
 }
 
@@ -338,7 +360,7 @@ void Renderer::Gui()
 	}
 	if ( ImGui::CollapsingHeader( "Render", ImGuiTreeNodeFlags_DefaultOpen ) )
 	{
-		if (ImGui::Checkbox( "Anti-Aliasing", (bool*)(&(settings->antiAliasing)) )) camera.moved = true;
+		if ( ImGui::Checkbox( "Anti-Aliasing", (bool*)(&(settings->antiAliasing)) ) ) camera.moved = true;
 		ImGui::Checkbox( "Reset every frame", &(imgui.reset_every_frame) );
 		if ( ImGui::TreeNodeEx( "Recompile options", ImGuiTreeNodeFlags_DefaultOpen ) )
 		{

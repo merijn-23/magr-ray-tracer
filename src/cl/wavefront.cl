@@ -207,8 +207,8 @@ __kernel void focus(
 	Camera camera
 )
 {
-	settings->antiAliasing = false;
-	Ray r = initPrimaryRay( x, y, camera, settings, 0 );
+	primitives = _primitives;
+	Ray r = initPrimaryRaySimple( x, y, camera );
 	intersectTLAS( &r, tlasNodes, blasNodes, bvhNodes, primIdxs, false );
 	settings->focalLength = r.t;
 }
