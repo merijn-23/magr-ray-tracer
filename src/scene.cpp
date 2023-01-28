@@ -7,7 +7,7 @@ namespace Tmpl8
 {
 	Scene::Scene( )
 	{
-		bvh2 = new BVH2( primitives );
+		bvh2 = new BVH2( primitives, blasNodes );
 		// load skydome first
 		LoadTexture( "assets/office.hdr", "skydome" );
 		// materials
@@ -71,33 +71,28 @@ namespace Tmpl8
 		LoadTexture( "assets/suprised_pikachu.png", "pika" );
 		LoadTexture( "assets/stone.jpg", "stone" );
 
-		//LoadModel( "assets/bunny.obj", "red-glass" );
-		//LoadModel( "assets/bunny.obj", "red-glass", (1,0,0) );
-		//LoadModel( "assets/sponza/sponza.obj", "white");
-		LoadModel( "assets/dragon.obj", "white", float3(0,4,0));
+		LoadModel( "assets/teapot.obj", "white", float3( 0, 0, 0 ) );
+		LoadModel( "assets/teapot.obj", "white", float3( 0, 4, 0 ) );
 		// start of separate prims
-		int startPrims = primitives.size();
-		AddSphere( float3( 2, 6, 0 ), .1f, "white-light" );
-		AddSphere( float3( -2, 6, 0 ), .1f, "white-light" );
-		AddSphere( float3(0,6,0), .1f, "white-light" );
+		int startPrims = primitives.size( );
+		AddSphere( float3( -2, 6, 0 ), 1.0f, "white-light" );
 		bvh2->BuildBLAS( true, startPrims );
-
-		////AddSphere( float3(1, 0, 0), 0.25f, "white-light" );
-		//AddQuad( float3(2, 0, -2), float3(2, 2, -2), float3( 2, 2, 2 ), float3( 2, 0, 2 ), 0, 0, 0, 0, "white-light" );
-		//bvh2->BuildBLAS( true, startPrims );
+		AddSphere( float3( -2, 2, 0 ), 1.0f, "white" );
+		bvh2->BuildBLAS( true, 1 );
 
 		// bvh4 as last
 		bvh4 = new BVH4( *bvh2 );
-		SetTime( 0 );
+		Animate( 0 );
 	}
 	Scene::~Scene( )
 	{
 	}
-	void Scene::SetTime( float t )
+	void Scene::Animate( float t )
 	{
-		// default time for the scene is simply 0. Updating/ the time per frame
-		// enables animation. Updating it per ray can be used for motion blur.
 		animTime = t * .1f;
+		mat4 T;
+		T = T.RotateY( animTime );
+		memcpy( blasNodes[0].invT, T.Inverted( ).cell, sizeof( float ) * 16 );
 	}
 	Material& Scene::AddMaterial( std::string name )
 	{
@@ -129,7 +124,7 @@ namespace Tmpl8
 
 		float ABL = length( AB );
 		float ACL = length( AC );
-		float theta = dot( AB, AC ) * (1 / (ABL * ACL));
+		float theta = dot( AB, AC ) * ( 1 / ( ABL * ACL ) );
 		return 0.5f * ABL * ACL * sin( theta );
 	}
 
@@ -144,8 +139,8 @@ namespace Tmpl8
 		prim.matIdx = matMap_[material];
 		prim.area = SphereArea( prim.objData.sphere.r2 );
 		primitives.push_back( prim );
-		if(materials[matMap_[material]].isLight)
-			lights.push_back(primitives.size() - 1);
+		if ( materials[matMap_[material]].isLight )
+			lights.push_back( primitives.size( ) - 1 );
 	}
 
 	void Scene::AddPlane( float3 N, float d, std::string material )
@@ -156,8 +151,8 @@ namespace Tmpl8
 		prim.objData.plane.d = d;
 		prim.matIdx = matMap_[material];
 		primitives.push_back( prim );
-		if(materials[matMap_[material]].isLight)
-			lights.push_back(primitives.size() - 1);		
+		if ( materials[matMap_[material]].isLight )
+			lights.push_back( primitives.size( ) - 1 );
 	}
 
 	void Scene::AddQuad( float3 v0, float3 v1, float3 v2, float3 v3, float2 uv0, float2 uv1, float2 uv2, float2 uv3, const std::string material )
@@ -181,8 +176,8 @@ namespace Tmpl8
 		prim.matIdx = matMap_[material];
 		prim.area = TriangleArea( v0, v1, v2 );
 		primitives.push_back( prim );
-		if(materials[matMap_[material]].isLight)
-			lights.push_back(primitives.size() - 1);
+		if ( materials[matMap_[material]].isLight )
+			lights.push_back( primitives.size( ) - 1 );
 	}
 
 
@@ -206,7 +201,7 @@ namespace Tmpl8
 				LoadTexture( util::GetBaseDir( _filename ) + mat.diffuse_texname, mat.diffuse_texname );
 		}
 		// loop over shapes
-			int primIdx = primitives.size( );
+		int primIdx = primitives.size( );
 		for ( size_t s = 0; s < shapes.size( ); s++ ) {
 			// start primitive index for bvh
 			// loop over faces(polygon)

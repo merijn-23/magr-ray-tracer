@@ -1,6 +1,7 @@
 #include "precomp.h"
 #include <stack>
-BVH2::BVH2( std::vector<Primitive>& primitives ) : primitives_( primitives )
+BVH2::BVH2( std::vector<Primitive>& _primitives, std::vector<BVHInstance>& _blasNodes )
+	: primitives_( _primitives ), blasNodes( _blasNodes )
 {
 }
 #pragma region bvh_statistics
@@ -42,17 +43,24 @@ uint BVH2::Count( uint nodeIdx )
 }
 #pragma endregion bvh_statistics
 #pragma region bvh2
-void BVH2::BuildBLAS( bool _statistics, int _startIdx)
+void BVH2::BuildBLAS( bool _statistics, int _startIdx )
 {
 	Timer t;
 	// add blas node
-	BLASNode blas;
+	BVHInstance blas;
 	blas.bvhIdx = rootNodeIdx_;
+	float I[16] = {
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 1 };
+	memcpy( blas.invT, I, sizeof( float ) * 16 );
+
 	blasNodes.push_back( blas );
 	// populate triangle index array
 	auto data = CreateBVHPrimData( _startIdx );
 	// root node
-	bvhNodes.resize( bvhNodes.size( ) + (primitives_.size() - _startIdx ) * 8 );
+	bvhNodes.resize( bvhNodes.size( ) + ( primitives_.size( ) - _startIdx ) * 8 );
 	bvhNodes[rootNodeIdx_].count = data.size( );
 	nodesUsed_++;
 	UpdateNodeBounds( rootNodeIdx_, data );
@@ -60,11 +68,10 @@ void BVH2::BuildBLAS( bool _statistics, int _startIdx)
 	if ( _statistics ) {
 		stat_build_time += t.elapsed( ) * 1000;
 		stat_node_count = nodesUsed_;
-		stat_depth = max(stat_depth, Depth(rootNodeIdx_ ));
-		stat_sah_cost += TotalCost(rootNodeIdx_ );
+		stat_depth = max( stat_depth, Depth( rootNodeIdx_ ) );
+		stat_sah_cost += TotalCost( rootNodeIdx_ );
 		stat_prim_count = primitives_.size( );
-		for ( int i = 0; i < bvhNodes.size(); i++ )
-		{
+		for ( int i = 0; i < bvhNodes.size( ); i++ ) {
 			if ( bvhNodes[i].count > 10 ) printf( "More tahn 10 children\n" );
 		}
 	}
@@ -166,13 +173,13 @@ float BVH2::FindBestObjectSplitPlane( BVHNode2& node, int& axis, float& splitPos
 					boundsMax = max( boundsMax, prim.objData.sphere.pos[a] );
 				} break;
 				default: continue;
-	}
+			}
 #else
 			aabb box = prims[i].box;
 			boundsMin = min( boundsMin, box.Center( a ) );
 			boundsMax = max( boundsMax, box.Center( a ) );
 #endif
-}
+		}
 		if ( boundsMin == boundsMax ) continue;
 		// populate the bins
 		struct Bin { aabb bounds; int count = 0; } bin[BVH_BINS];
@@ -255,7 +262,7 @@ std::pair<std::vector<BVHPrimData>, std::vector<BVHPrimData>> BVH2::ObjectSplit(
 std::vector<BVHPrimData> BVH2::CreateBVHPrimData( int _startIdx )
 {
 	std::vector<BVHPrimData> data;
-	for ( uint i = _startIdx; i < primitives_.size(); i++ ) {
+	for ( uint i = _startIdx; i < primitives_.size( ); i++ ) {
 		aabb box;
 		Primitive p = primitives_[i];
 		switch ( p.objType ) {
@@ -715,7 +722,7 @@ void BVH4::Convert( uint _root )
 		}
 	}
 	// handle special case where the root is a leaf
-	for ( size_t i = 0; i < bvh2.blasNodes.size(); i++ ) {
+	for ( size_t i = 0; i < bvh2.blasNodes.size( ); i++ ) {
 		uint root = bvh2.blasNodes[i].bvhIdx;
 		if ( bvh2.bvhNodes[root].count > 0 ) {
 			bvhNodes[root].aabbMin[0] = bvh2.bvhNodes[root].aabbMin;

@@ -1,6 +1,5 @@
 #ifndef __WAVEFRONT_CL
 #define __WAVEFRONT_CL
-
 #include "src/constants.h"
 #include "src/common.h"
 #include "src/cl/util.cl"
@@ -12,7 +11,6 @@
 #include "src/cl/shading.cl"
 #include "src/cl/bvh.cl"
 #include "src/cl/tlas.cl"
-
 __kernel void generate(
 	__global Ray* rays,
 	__global Settings* settings,
@@ -25,24 +23,20 @@ __kernel void generate(
 	//if (get_local_id( 0 ) == 0)
 	//	camera = _camera;
 	//work_group_barrier( CLK_LOCAL_MEM_FENCE );
-
 	int idx = get_global_id( 0 );
 	uint* seed = seeds + idx;
-
 	int x = idx % SCRWIDTH;
 	int y = idx / SCRWIDTH;
-
 	Ray r = initPrimaryRay( x, y, _camera, settings, seed );
 	r.lastSpecular = true;
 	r.pixelIdx = idx;
 	rays[idx] = r;
 }
-
 __kernel void extend(
 	__global Ray* rays,
 	__global Primitive* _primitives,
 	__global TLASNode* tlasNodes,
-	__global BLASNode* blasNodes,
+	__global BVHInstance* blasNodes,
 #ifdef USE_BVH4
 	__global BVHNode4* bvhNodes,
 #endif
@@ -55,34 +49,28 @@ __kernel void extend(
 )
 {
 	// swap the atomics after an extend-shade cycle
-	if (get_global_id( 0 ) == 0)
-	{
+	if ( get_global_id( 0 ) == 0 ) {
 		settings->numInRays = settings->numOutRays;
 #ifndef RUSSIAN_ROULETTE
 		settings->shadowRays = 0;
 #endif
 	}
 	work_group_barrier( CLK_GLOBAL_MEM_FENCE );
-	
 	primitives = _primitives;
 	// persistent thread
-	while (true)
-	{
+	while ( true ) {
 		// stop when there are no more incoming extensionRays
-		int idx = atomic_dec( &(settings->numInRays) ) - 1;
-		if (idx < 0) break;
-
+		int idx = atomic_dec( &( settings->numInRays ) ) - 1;
+		if ( idx < 0 ) break;
 		Ray* ray = rays + idx;
 		uint steps = intersectTLAS( ray, tlasNodes, blasNodes, bvhNodes, primIdxs, false );
-
-		if (settings->renderBVH) accum[idx] = (float4)(steps / 255.f);
-		if (ray->primIdx == -1) continue;
+		if ( settings->renderBVH ) accum[idx] = ( float4 )( steps / 255.f );
+		if ( ray->primIdx == -1 ) continue;
 		intersectionPoint( ray );
 		ray->N = getNormal( primitives + ray->primIdx, ray->I );
-		if (ray->inside) ray->N = -ray->N;
+		if ( ray->inside ) ray->N = -ray->N;
 	}
 }
-
 __kernel void shade(
 	__global Ray* inputRays,
 	__global Ray* extensionRays,
@@ -97,8 +85,7 @@ __kernel void shade(
 )
 {
 	int global_idx = get_global_id( 0 );
-	if (global_idx == 0)
-	{
+	if ( global_idx == 0 ) {
 
 		settings->numInRays = settings->numOutRays;
 		settings->numOutRays = 0;
@@ -111,19 +98,17 @@ __kernel void shade(
 	materials = _materials;
 	lights = _lights;
 
-	while (true)
-	{
-		int idx = atomic_dec( &(settings->numInRays) ) - 1;
-		if (idx < 0) break;
+	while ( true ) {
+		int idx = atomic_dec( &( settings->numInRays ) ) - 1;
+		if ( idx < 0 ) break;
 
 		Ray* ray = inputRays + idx;
 		// we did not hit anything, fall back to the skydome
-		if (ray->primIdx == -1)
-		{
+		if ( ray->primIdx == -1 ) {
 			accum[ray->pixelIdx] += ray->intensity * readSkydome( ray->D );
 			continue;
 		}
-		Ray extensionRay = initRay( (float4)(0), (float4)(0) );
+		Ray extensionRay = initRay( ( float4 )( 0 ), ( float4 )( 0 ) );
 		extensionRay.bounces = MAX_BOUNCES + 1;
 
 		float4 color;
@@ -133,19 +118,17 @@ __kernel void shade(
 #ifdef SHADING_NEE
 		ShadowRay shadowRay;
 		shadowRay.pixelIdx = -1;
-		color = neeShading( ray, &extensionRay, &shadowRay, settings, seed);
+		color = neeShading( ray, &extensionRay, &shadowRay, settings, seed );
 #endif
 		accum[ray->pixelIdx] += color;
-		if (extensionRay.bounces <= MAX_BOUNCES)
-		{
+		if ( extensionRay.bounces <= MAX_BOUNCES ) {
 			// get atomic inc in settings->numOutRays and set extensionRay in _extensionRays on that idx 
-			int extensionIdx = atomic_inc( &(settings->numOutRays) ); 
+			int extensionIdx = atomic_inc( &( settings->numOutRays ) );
 			extensionRays[extensionIdx] = extensionRay;
 		}
 #ifdef SHADING_NEE
-		if(shadowRay.pixelIdx != -1)
-		{
-			int shadowIdx = atomic_inc(&(settings->shadowRays));
+		if ( shadowRay.pixelIdx != -1 ) {
+			int shadowIdx = atomic_inc( &( settings->shadowRays ) );
 			//printf("raid shadow rays%i\n", shadowIdx);
 			shadowRays[shadowIdx] = shadowRay;
 		}
@@ -156,7 +139,7 @@ __kernel void shade(
 __kernel void connect(
 	__global ShadowRay* shadowRays,
 	__global TLASNode* tlasNodes,
-	__global BLASNode* blasNodes,
+	__global BVHInstance* blasNodes,
 #ifdef USE_BVH4
 	__global BVHNode4* bvhNodes,
 #endif
@@ -168,36 +151,35 @@ __kernel void connect(
 	__global Material* _materials,
 	__global Settings* settings,
 	__global float4* accum
-){
-	if(get_global_id(0) == 0)
-	{
+)
+{
+	if ( get_global_id( 0 ) == 0 ) {
 		//printf("nr of shadow rays input %i\n", settings->shadowRays);
 		primitives = _primitives;
 		materials = _materials;
 	}
 	work_group_barrier( CLK_GLOBAL_MEM_FENCE );
-	
-	while (true)
-	{
-		int idx = atomic_dec( &(settings->shadowRays) ) - 1;
-		if (idx < 0) break;
+
+	while ( true ) {
+		int idx = atomic_dec( &( settings->shadowRays ) ) - 1;
+		if ( idx < 0 ) break;
 		ShadowRay shadowRay = shadowRays[idx];
 		float4 dir = shadowRay.L - shadowRay.I;
 		float4 norm = dir / shadowRay.dist;
 
-		Ray ray = initRay(shadowRay.I + norm * EPSILON, norm);
+		Ray ray = initRay( shadowRay.I + norm * EPSILON, norm );
 		ray.t = shadowRay.dist - 2 * EPSILON;
 
-		int value = intersectTLAS( &ray, tlasNodes, blasNodes, bvhNodes, bvhIdxs, true );		
+		int value = intersectTLAS( &ray, tlasNodes, blasNodes, bvhNodes, bvhIdxs, true );
 
-		if(value == -1) continue;
+		if ( value == -1 ) continue;
 		//printf("ray %i connected\n", idx);
-	
+
 		// calculate 
 		Primitive* prim = _primitives + shadowRay.lightIdx;
 		//printf( "Prim type: %i\n", prim->objType );
-		float4 NL = getNormal(prim, shadowRay.L);
-		float solidAngle = (fabs(dot(NL, - norm)) * prim->area * (1 / (shadowRay.dist * shadowRay.dist)));
+		float4 NL = getNormal( prim, shadowRay.L );
+		float solidAngle = ( fabs( dot( NL, -norm ) ) * prim->area * ( 1 / ( shadowRay.dist * shadowRay.dist ) ) );
 		//printf( "Area: %f, Dist: %f, DOT: %f\n", prim->area, dist, dot( NL, -dir ) );
 
 		float4 lightColor = _materials[prim->matIdx].emittance;
@@ -212,7 +194,7 @@ __kernel void focus(
 	int x,
 	int y,
 	__global TLASNode* tlasNodes,
-	__global BLASNode* blasNodes,
+	__global BVHInstance* blasNodes,
 #ifdef USE_BVH4
 	__global BVHNode4* bvhNodes,
 #endif
@@ -233,7 +215,7 @@ __kernel void focus(
 
 __kernel void reset( __global float4* pixels )
 {
-	pixels[get_global_id( 0 )] = (float4)(0);
+	pixels[get_global_id( 0 )] = ( float4 )( 0 );
 }
 
 #endif // __WAVEFRONT_CL

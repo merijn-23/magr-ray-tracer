@@ -24,7 +24,7 @@ typedef struct ImGuiData
 	float chromatic_strength = 0;
 	float gamma_strength = .9f;
 	float energy_total = 0;
-	bool print_performance = true;
+	bool print_performance = false;
 	bool show_energy_levels = true;
 	bool reset_every_frame = false;
 	bool focus_mode = false;
