@@ -73,8 +73,8 @@ namespace Tmpl8
 
 		//LoadModel( "assets/bunny.obj", "red-glass" );
 		//LoadModel( "assets/bunny.obj", "red-glass", (1,0,0) );
-		//LoadModel( "assets/sponza/sponza.obj", "white");
-		LoadModel( "assets/dragon.obj", "white", float3(0,4,0));
+		LoadModel( "assets/sponza/sponza.obj", "white");
+		//LoadModel( "assets/dragon.obj", "white", float3(0,4,0));
 		// start of separate prims
 		int startPrims = primitives.size();
 		AddSphere( float3( 2, 6, 0 ), .1f, "white-light" );
