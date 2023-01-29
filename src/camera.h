@@ -28,8 +28,8 @@ namespace Tmpl8
 			cam.forward = float3(0, 0, 1);
 			cam.right = float3(1, 0, 0);
 			cam.up = float3(0, 1, 0);
-			cam.aperture = 0.5f;
-			cam.focalLength = 1;
+			cam.aperture = 0.25f;
+			cam.focalLength = 3;
 			Fov(vfov);
 		}
 		Camera cam;

@@ -55,4 +55,9 @@ float4 randomRayHemisphere( float4 N, uint* seed )
 	float3 v = cross( w, u );
 	return (float4)(normalize( u * cos( rand1 ) * rand2s + v * sin( rand1 ) * rand2s + w * sqrt( 1.0f - rand2 ) ), 0);
 }
+
+float4 cosineWeightedRayHemisphere( float4 N, uint* seed )
+{
+
+}
 #endif // __RAY_CL

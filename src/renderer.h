@@ -13,6 +13,7 @@ namespace Tmpl8
 #define USE_BVH4 "USE_BVH4"
 
 #define USE_RUSSIAN_ROULETTE "RUSSIAN_ROULETTE"
+#define FILTER_FIREFLIES "FILTER_FIREFLIES"
 
 typedef struct ImGuiData
 {
@@ -28,6 +29,7 @@ typedef struct ImGuiData
 	bool show_energy_levels = true;
 	bool reset_every_frame = false;
 	bool focus_mode = true;
+	bool filter_fireflies = false;
 
 	int dummy_bvh_type = 1;
 	int dummy_shading_type = 1;

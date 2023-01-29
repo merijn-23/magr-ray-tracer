@@ -16,7 +16,7 @@ void Renderer::Init()
 	InitPostProcKernels();
 
 	// Set initial camera focus
-	camera.UpdateCamVec();
+		camera.UpdateCamVec();
 	FocusCamera( SCRWIDTH / 2, SCRHEIGHT / 2 );
 }
 void Renderer::Shutdown() {}
@@ -198,7 +198,8 @@ void Renderer::InitBuffers()
 	matBuffer->CopyToDevice();
 	blasNodeBuffer->CopyToDevice();
 	tlasNodeBuffer->CopyToDevice();
-	lightBuffer->CopyToDevice();
+	if(settings->numLights > 0 )
+		lightBuffer->CopyToDevice();
 	settingsBuffer->CopyToDevice();
 }
 
@@ -206,6 +207,8 @@ void Renderer::InitWavefrontKernels()
 {
 	std::vector<string> defines{ imgui.shading_type, imgui.bvh_type };
 	if ( imgui.use_russian_roulette ) defines.push_back( USE_RUSSIAN_ROULETTE );
+	if ( imgui.filter_fireflies ) defines.push_back( FILTER_FIREFLIES );
+
 	// wavefront
 	resetKernel = new Kernel( "src/cl/wavefront.cl", "reset", defines );
 	generateKernel = new Kernel( "src/cl/wavefront.cl", "generate", defines );
@@ -361,6 +364,7 @@ void Renderer::Gui()
 		if ( ImGui::TreeNodeEx( "Recompile options", ImGuiTreeNodeFlags_DefaultOpen ) )
 		{
 			ImGui::Checkbox( "Russian Roulette", &(imgui.dummy_russian_roulette) );
+			ImGui::Checkbox( "Filter fireflies (don't use with kajiya)", &(imgui.filter_fireflies) );
 			if ( ImGui::TreeNodeEx( "Shading Type", ImGuiTreeNodeFlags_DefaultOpen ) )
 			{
 				ImGui::RadioButton( "Kajiya", &(imgui.dummy_shading_type), 0 );

@@ -10,7 +10,7 @@ float4 kajiyaShading( Ray* ray, Ray* extensionRay, uint* seed )
 	Primitive prim = primitives[ray->primIdx];
 	Material mat = materials[prim.matIdx];
 	
-	if (mat.isLight) return ray->intensity * mat.emittance;
+	if ( mat.isLight ) return ray->intensity * mat.emittance;
 
 	Ray r;
 	float rand = randomFloat( seed );
@@ -106,20 +106,18 @@ float4 neeShading(Ray* ray, Ray* extensionRay, ShadowRay* shadowRay, Settings* s
 				float4 pointOnLight = getRandomPoint( primitives + lightIdx, seed );
 				//printf("Point on light: %f %f %f\n", pointOnLight.x, pointOnLight.y, pointOnLight.z);
 				float4 dirToLight = pointOnLight - ray->I;
-				float4 normalOnLight = getNormal( primitives + lightIdx, pointOnLight );
-				//printf("normal on light: %f %f %f\n", normalOnLight.x, normalOnLight.y, normalOnLight.z);
+				float4 Nl = getNormal( primitives + lightIdx, pointOnLight );
+				//printf("normal on light: %f %f %f\n", Nl.x, Nl.y, Nl.z);
 				float dist = length( dirToLight );
-				float dotNL = dot( ray->N, dirToLight * (1 / dist) );
-				//printf("dotnl %f\n", dotNL);
-				//printf("dotn-l %f\n", dot(normalOnLight, -dirToLight));
-				/* no check to see if normalonlight dot -dirtolight > 0 because of infinitely thin light sources
-				if  && dot(normalOnLight, -dirToLight) > 0*/
-				if (dotNL > 0 && dot( normalOnLight, -dirToLight ) > 0)
+				float4 L = dirToLight * (1 / dist);
+				float dotNL = dot( ray->N, L );
+
+				if (dotNL > 0 && dot( Nl, -L ) > 0)
 				{
-					//printf("hi\n");
 					ShadowRay sr;
 					sr.I = ray->I;
-					sr.L = pointOnLight;
+					sr.L = L;
+					sr.Nl = Nl;
 					sr.intensity = ray->intensity * settings->numLights;
 					sr.BRDF = BRDF;
 					sr.lightIdx = lightIdx;
@@ -129,7 +127,7 @@ float4 neeShading(Ray* ray, Ray* extensionRay, ShadowRay* shadowRay, Settings* s
 					*shadowRay = sr;
 				}
 			}
-			// russian roullete
+
 #ifdef RUSSIAN_ROULETTE
 			float rr_p = getSurvivalProb( albedo );
 			if ( rr_p < randomFloat( seed ) )

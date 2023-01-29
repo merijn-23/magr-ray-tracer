@@ -12,7 +12,7 @@ namespace Tmpl8
 		LoadTexture( "assets/office.hdr", "skydome" );
 		// materials
 		auto& red = AddMaterial( "red" );
-		red.color = float3( 1, 0, 0 );
+		red.color = float3( .9f, .1f, .1f );
 		auto& green = AddMaterial( "green" );
 		green.color = float3( 0, 1, 0 );
 		auto& blue = AddMaterial( "blue" );
@@ -50,7 +50,7 @@ namespace Tmpl8
 		auto& whiteLight = AddMaterial( "white-light" );
 		whiteLight.isLight = true;
 		whiteLight.color = float4( 1 );
-		whiteLight.emittance = float4( 500 );
+		whiteLight.emittance = float4( 10 );
 		auto& greenLight = AddMaterial( "green-light" );
 		greenLight.isLight = true;
 		greenLight.color = float4( .1f, 1, .1f, 0 );
@@ -63,8 +63,8 @@ namespace Tmpl8
 		// yellow light
 		auto& yellowLight = AddMaterial( "yellow-light" );
 		yellowLight.isLight = true;
-		yellowLight.color = float4( 1.f, .6f, 0, 0 );
-		yellowLight.emittance = float4( 1.f, .6f, 0, 0 ) * 5;
+		yellowLight.color = float4( 244, 233, 140, 0 ) / 255.f / 2.f;
+		yellowLight.emittance = yellowLight.color * 75;
 		// textures
 		LoadTexture( "assets/mosaic.png", "mosaic" );
 		LoadTexture( "assets/cash_money.png", "cash" );
@@ -73,13 +73,19 @@ namespace Tmpl8
 
 		//LoadModel( "assets/bunny.obj", "red-glass" );
 		//LoadModel( "assets/bunny.obj", "red-glass", (1,0,0) );
-		LoadModel( "assets/sponza/sponza.obj", "white");
-		//LoadModel( "assets/dragon.obj", "white", float3(0,4,0));
+		//LoadModel( "assets/sponza/sponza.obj", "white");
+		LoadModel( "assets/low-poly-mine.obj", "white" );
+
 		// start of separate prims
 		int startPrims = primitives.size();
-		AddSphere( float3( 2, 6, 0 ), .1f, "white-light" );
-		AddSphere( float3( -2, 6, 0 ), .1f, "white-light" );
-		AddSphere( float3(0,6,0), .1f, "white-light" );
+		//AddSphere( float3( 2, 6, 0 ), .1f, "white-light" );
+		//AddSphere( float3( -2, 6, 0 ), .1f, "white-light" );
+		//AddSphere( float3( 0, 6, 0 ), .1f, "white-light" );
+		//AddSphere( float3(3,2,-4.f), 1.5f, "red" );
+		//AddQuad( float3( -1, 0, -7.5f ), float3( 1, 0, -7.5f ), float3( 2, 3, -7.5f ), float3( -2, 3, -7.5f ), 0, 0, 0, 0, "white-light" );
+		//AddQuad( float3( -2, 0, -7.5f ), float3( 2, 0, -7.5f ), float3( 2, 5, -7.5f ), float3( -2, 5, -7.5f ), 0, 0, 0, 0, "yellow-light" );
+		//AddQuad( float3( -50, 20, -50 ), float3( 50, 20, -50 ), float3( 50, 20, 50 ), float3( -50, 20, 50 ), 0, 0, 0, 0, "white" );
+
 		bvh2->BuildBLAS( true, startPrims );
 
 		////AddSphere( float3(1, 0, 0), 0.25f, "white-light" );
@@ -124,13 +130,20 @@ namespace Tmpl8
 
 	static float TriangleArea( float3 A, float3 B, float3 C )
 	{
-		float3 AB = B - A;
-		float3 AC = C - A;
+		//float3 AB = B - A;
+		//float3 AC = C - A;
 
-		float ABL = length( AB );
-		float ACL = length( AC );
-		float theta = dot( AB, AC ) * (1 / (ABL * ACL));
-		return 0.5f * ABL * ACL * sin( theta );
+		//float ABL = length( AB );
+		//float ACL = length( AC );
+		//float theta = dot( AB, AC ) * (1 / (ABL * ACL));
+		//return 0.5f * ABL * ACL * sin( theta );
+		
+		// Heron's Formula https://www.wikiwand.com/en/Heron%27s_formula
+		float a = length( B - A );
+		float b = length( B - C );
+		float c = length( C - A );
+		float s = 0.5f * (a + b + c);
+		return sqrtf( s * (s - a) * (s - b) * (s - c) );
 	}
 
 	void Scene::AddSphere( float3 pos, float radius, std::string material )
