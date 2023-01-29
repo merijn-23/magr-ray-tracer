@@ -66,19 +66,22 @@ namespace Tmpl8
 		yellowLight.color = float4( 244, 233, 140, 0 ) / 255.f / 2.f;
 		yellowLight.emittance = yellowLight.color * 75;
 		// textures
-		LoadTexture( "assets/mosaic.png", "mosaic" );
-		LoadTexture( "assets/cash_money.png", "cash" );
-		LoadTexture( "assets/suprised_pikachu.png", "pika" );
-		LoadTexture( "assets/stone.jpg", "stone" );
+		//LoadTexture( "assets/mosaic.png", "mosaic" );
+		//LoadTexture( "assets/cash_money.png", "cash" );
+		//LoadTexture( "assets/suprised_pikachu.png", "pika" );
+		//LoadTexture( "assets/stone.jpg", "stone" );
 
-		LoadModel( "assets/teapot.obj", "white", float3( 0, 0, 0 ) );
-		LoadModel( "assets/teapot.obj", "white", float3( 0, 4, 0 ) );
+		//LoadModel( "assets/teapot.obj", "white", float3( 0, 0, 0 ) );
+		//LoadModel( "assets/teapot.obj", "white", float3( 0, 4, 0 ) );
+		
+		LoadModel( "assets/sponza/sponza.obj", "white" );
+		
 		// start of separate prims
 		int startPrims = primitives.size( );
-		AddSphere( float3( -2, 6, 0 ), 1.0f, "white-light" );
+		//AddSphere( float3( -2, 200, 0 ), 20.0f, "yellow-light" );
+		//AddSphere( float3( -2, 2, 0 ), 1.0f, "white" );
+		AddQuad( float3( -2, 0, -7.5f ), float3( 2, 0, -7.5f ), float3( 2, 4, -7.5f ), float3( -2, 4, -7.5f ), 0, 0, 0, 0, "yellow-light" );
 		bvh2->BuildBLAS( true, startPrims );
-		AddSphere( float3( -2, 2, 0 ), 1.0f, "white" );
-		bvh2->BuildBLAS( true, 1 );
 
 		// bvh4 as last
 		bvh4 = new BVH4( *bvh2 );

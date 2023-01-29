@@ -56,8 +56,19 @@ float4 randomRayHemisphere( float4 N, uint* seed )
 	return (float4)(normalize( u * cos( rand1 ) * rand2s + v * sin( rand1 ) * rand2s + w * sqrt( 1.0f - rand2 ) ), 0);
 }
 
+// use rejection sampling
 float4 cosineWeightedRayHemisphere( float4 N, uint* seed )
 {
+	// random point from (-1,-1,-1) to (1,1,1)
+	float4 p = randomFloat3( seed ) * 2 - 1;
+
+	// reject if outside unit sphere
+	while( p.x*p.x + p.y*p.y+p.z*p.z > 1 )
+		p = randomFloat3( seed ) * 2 - 1;
+
+	// normalize so it becomes a point on the boundary of the unit sphere
+	p = normalize( p );
+	return normalize( N + p );
 
 }
 #endif // __RAY_CL

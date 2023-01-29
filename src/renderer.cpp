@@ -29,7 +29,7 @@ void Renderer::Tick( float _deltaTime )
 	// animation
 	static float animTime = 0;
 	animTime += deltaTime * 0.002f;
-	scene.Animate( animTime );
+	//scene.Animate( animTime );
 	tlas->Build( );
 	blasNodeBuffer->CopyToDevice( );
 	tlasNodeBuffer->CopyToDevice( );
@@ -209,7 +209,7 @@ void Renderer::InitBuffers()
 
 void Renderer::InitWavefrontKernels()
 {
-	std::vector<string> defines{ imgui.shading_type, imgui.bvh_type };
+	std::vector<string> defines{ imgui.shading_type, imgui.sampling_type, imgui.bvh_type };
 	if ( imgui.use_russian_roulette ) defines.push_back( USE_RUSSIAN_ROULETTE );
 	if ( imgui.filter_fireflies ) defines.push_back( FILTER_FIREFLIES );
 
@@ -373,6 +373,17 @@ void Renderer::Gui()
 			{
 				ImGui::RadioButton( "Kajiya", &(imgui.dummy_shading_type), 0 );
 				ImGui::RadioButton( "NEE", &(imgui.dummy_shading_type), 1 );
+				if ( imgui.dummy_shading_type == 1 )
+				{
+					if ( ImGui::TreeNodeEx( "Sampling Type", ImGuiTreeNodeFlags_DefaultOpen ))
+					{
+						if(ImGui::RadioButton( "Hemisphere", &(imgui.dummy_sampling_type), 0))
+							imgui.sampling_type = SAMPLING_HEMISPHERE;
+						if ( ImGui::RadioButton( "Cosine-weighted", &(imgui.dummy_sampling_type), 1 ) )
+							imgui.sampling_type = SAMPLING_COSINE;
+						ImGui::TreePop();
+					} 
+				}
 				ImGui::TreePop();
 			}
 			//if ( ImGui::TreeNodeEx( "BVH Type" ) )

@@ -45,11 +45,20 @@ float4 kajiyaShading( Ray* ray, Ray* extensionRay, uint* seed )
 				ray->intensity *= 1 / rr_p;
 #endif
 			// diffuse 
-			float4 diffuseReflection = randomRayHemisphere( ray->N, seed );
-			float4 BRDF = albedo * M_1_PI_F;
+#if defined(SAMPLING_HEMISPHERE)
+			float4 reflection = randomRayHemisphere( ray->N, seed );
+#elif defined(SAMPLING_COSINE)
+			float4 reflection = cosineWeightedRayHemisphere( ray->N, seed );
+#endif
+			float dotNR = dot( ray->N, reflection );
+#if defined(SAMPLING_HEMISPHERE)
 			float I_PDF = 2 * M_PI_F;
-			ray->intensity *= BRDF * I_PDF * dot( diffuseReflection, ray->N );
-			r = initRay( ray->I + EPSILON * diffuseReflection, diffuseReflection );
+#elif defined(SAMPLING_COSINE)
+			float I_PDF = dotNR * M_PI_F;
+#endif
+			float4 BRDF = albedo * M_1_PI_F;
+			ray->intensity *= BRDF * I_PDF * dotNR;
+			r = initRay( ray->I + EPSILON * reflection, reflection );
 			r.intensity = ray->intensity;
 			r.bounces = ray->bounces + 1;
 
