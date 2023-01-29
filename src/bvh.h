@@ -1,11 +1,12 @@
 #pragma once
 #include "common.h"
 struct BVHPrimData { aabb box; uint idx = 0; };
-//#define BVH_OLD
 class BVH2
 {
+	friend class BVH4;
+	friend class TLAS;
 public:
-	BVH2( std::vector<Primitive>& );
+	BVH2( std::vector<Primitive>&, std::vector<BVHInstance>& );
 	void BuildBLAS( bool statistics, int startIdx);
 	uint Depth( uint nodeIdx = -1 );
 	uint Count( uint nodeIdx = -1 );
@@ -15,12 +16,12 @@ public:
 	BVHNode2 Right( BVHNode2 n ) { return bvhNodes[n.first + 1]; }
 	std::vector<BVHNode2> bvhNodes;
 	std::vector<uint> primIdx;
-	std::vector<BLASNode> blasNodes;
 	float alpha = 1.f;
 	// statistics
 	uint stat_depth = 0, stat_node_count = 0, stat_spatial_splits = 0, stat_prims_clipped = 0, stat_prim_count = 0;
 	float stat_sah_cost = 0, stat_build_time = 0;
 private:
+	std::vector<BVHInstance>& blasNodes;
 	void BuildBVH( uint root, std::vector<BVHPrimData> data );
 	void UpdateNodeBounds( uint nodeIdx, std::vector<BVHPrimData> prims );
 	std::vector<BVHPrimData> CreateBVHPrimData( int startIdx );

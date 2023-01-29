@@ -9,7 +9,7 @@ namespace Tmpl8
 	public:
 		Scene( );
 		~Scene( );
-		void SetTime( float t );
+		void Animate( float t );
 		Material& AddMaterial( std::string name );
 		void AddSphere( float3 pos, float radius, std::string material );
 		void AddPlane( float3 N, float d, std::string material );
@@ -26,6 +26,7 @@ namespace Tmpl8
 		std::vector<Material> materials;
 		std::vector<uint> lights;
 		std::vector<float4> textures;
+		std::vector<BVHInstance> blasNodes;
 		BVH2* bvh2;
 		BVH4* bvh4;
 

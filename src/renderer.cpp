@@ -28,10 +28,14 @@ void Renderer::Tick( float _deltaTime )
 	deltaTime = _deltaTime;
 	// animation
 	static float animTime = 0;
-	scene.SetTime( animTime += deltaTime * 0.002f );
+	animTime += deltaTime * 0.002f;
+	scene.Animate( animTime );
+	tlas->Build( );
+	blasNodeBuffer->CopyToDevice( );
+	tlasNodeBuffer->CopyToDevice( );
+
 	// pixel loop
 	Timer t;
-
 	camera.UpdateCamVec();
 	if ( camera.moved || imgui.reset_every_frame )
 	{
@@ -166,8 +170,8 @@ void Renderer::InitBuffers()
 	settings->numPrimitives = scene.primitives.size();
 	settings->numLights = scene.lights.size();
 
-	blasNodeBuffer = new Buffer( sizeof( BLASNode ) * scene.bvh2->blasNodes.size() );
-	blasNodeBuffer->hostBuffer = (uint*)scene.bvh2->blasNodes.data();
+	blasNodeBuffer = new Buffer( sizeof( BVHInstance ) * scene.blasNodes.size() );
+	blasNodeBuffer->hostBuffer = (uint*)scene.blasNodes.data();
 	tlasNodeBuffer = new Buffer( sizeof( TLASNode ) * tlas->tlasNodes.size() );
 	tlasNodeBuffer->hostBuffer = (uint*)tlas->tlasNodes.data();
 

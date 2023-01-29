@@ -99,14 +99,14 @@ typedef struct BVHNode2
 typedef struct BVHNode4
 {
 	float4 aabbMin[4], aabbMax[4];
-	int first[4];
-	int count[4];
+	int first[4], count[4];
 } BVHNode4;
 
-typedef struct BLASNode
+typedef struct BVHInstance
 {
 	uint bvhIdx;	// point to root of BVHNode2 tree
-} BLASNode;
+	float invT[16];
+} BVHInstance;
 
 typedef struct TLASNode
 {
