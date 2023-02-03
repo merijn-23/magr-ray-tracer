@@ -11,6 +11,8 @@ namespace Tmpl8
 		// load skydome first
 		LoadTexture( "assets/office.hdr", "skydome" );
 		// materials
+		auto& grey = AddMaterial( "grey" );
+		grey.color = float4( 0.231f, 0.266f, 0.294f, 0 );
 		auto& mirror = AddMaterial( "mirror" );
 		mirror.color = float3( .1f, .1f, .9f );
 		mirror.specular = .5f;
@@ -21,41 +23,42 @@ namespace Tmpl8
 		whiteglass.n1 = 1.f;
 		whiteglass.n2 = 1.1f;
 		whiteglass.specular = 0.03f;
-		whiteglass.absorption = float3( .1f );
+		whiteglass.absorption = float3( .01f );
 		// white light
 		auto& whiteLight = AddMaterial( "white-light" );
 		whiteLight.isLight = true;
 		whiteLight.color = float4( 1.f, .7f, 0.1f, 0 );
-		whiteLight.emittance = float4( .7f, .7f, 0.7f, 0 ) * 5;
-		//auto& greenLight = AddMaterial( "green-light" );
-		//greenLight.isLight = true;
-		//greenLight.color = float4( .1f, 1, .1f, 0 );
-		//greenLight.emittance = float4( .1f, 1, .1f, 0 ) * 10;
-		//// blue light
-		//auto& blueLight = AddMaterial( "blue-light" );
-		//blueLight.isLight = true;
-		//blueLight.color = float4( .1f, .1f, 1, 0 );
-		//blueLight.emittance = float4( .1f, .1f, 1, 0 ) * 5;
-		//// yellow light
+		whiteLight.emittance = float4( .9f, .9f, .9f, 0 ) * 100;
+		auto& greenLight = AddMaterial( "green-light" );
+		greenLight.isLight = true;
+		greenLight.color = float4( .1f, 1.f, 0.1f, 0 );
+		greenLight.emittance = float4( .1f, 1.f, 0.1f, 0 ) * 10;
 		auto& redLight = AddMaterial( "red-light" );
 		redLight.isLight = true;
 		redLight.color = float4( 1.f, .1f, .1f, 0 );
-		redLight.emittance = float4( 1.f, .1f, .1f, 0 ) * 10;
+		redLight.emittance = float4( 1.f, .1f, .1f, 0 ) * 100;
+		auto& blueLight = AddMaterial( "blue-light" );
+		blueLight.isLight = true;
+		blueLight.color = float4( 1.f, .1f, .1f, 0 );
+		blueLight.emittance = float4( 1.f, .1f, .1f, 0 ) * 100;
 
 #if 1
 		int startPrims = primitives.size( );
-		LoadModel( "assets/robo-orb/robo.obj", "white" );
+		//LoadModel( "assets/robo-orb/robo.obj", "white" );
 		//LoadModel( "assets/robo-orb/robo-lights.obj", "yellow-light" );
-		bvh2->BuildBLAS( true, startPrims );
+		//bvh2->BuildBLAS( true, startPrims );
 		
 		startPrims = primitives.size( );
 		LoadModel( "assets/terrarium_bot/bot.obj", "white" );
 		LoadModel( "assets/terrarium_bot/bot-glass.obj", "white-glass" );
 		bvh2->BuildBLAS( true, startPrims );
 		startPrims = primitives.size( );
-		LoadModel( "assets/hallway/hallway.obj", "white", {}, true );
-		LoadModel( "assets/hallway/hallway_lights_front.obj", "white-light" );
+		LoadModel( "assets/hallway/hallway.obj", "grey", {}, true );
+		LoadModel( "assets/hallway/hallway_lights_top.obj", "green-light" );
+		LoadModel( "assets/hallway/hallway_lights_top_left.obj", "red-light" );
+		LoadModel( "assets/hallway/hallway_lights_top_right.obj", "red-light" );
 		LoadModel( "assets/hallway/hallway_lights_back.obj", "red-light" );
+		LoadModel( "assets/hallway/hallway_lights_front.obj", "white-light" );
 		bvh2->BuildBLAS( true, startPrims );
 #else
 		LoadModel( "assets/sponza/sponza.obj", "white" );
