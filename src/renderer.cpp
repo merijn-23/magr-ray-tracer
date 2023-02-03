@@ -27,13 +27,14 @@ void Renderer::Tick( float _deltaTime )
 {
 	deltaTime = _deltaTime;
 	// animation
+#if 0
 	static float animTime = 0;
 	animTime += deltaTime * 0.002f;
 	scene.Animate( animTime );
 	tlas->Build( );
 	blasNodeBuffer->CopyToDevice( );
 	tlasNodeBuffer->CopyToDevice( );
-
+#endif
 	// pixel loop
 	Timer t;
 	camera.UpdateCamVec();

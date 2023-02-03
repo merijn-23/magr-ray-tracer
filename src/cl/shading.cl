@@ -52,7 +52,7 @@ float4 kajiyaShading( Ray* ray, Ray* extensionRay, uint* seed )
 			r = initRay( ray->I + EPSILON * diffuseReflection, diffuseReflection );
 			r.intensity = ray->intensity;
 			r.bounces = ray->bounces + 1;
-
+			r.inside = ray->inside;
 		}
 	}
 	r.pixelIdx = ray->pixelIdx;
@@ -66,7 +66,9 @@ float4 neeShading(Ray* ray, Ray* extensionRay, ShadowRay* shadowRay, Settings* s
 	Primitive prim = primitives[ray->primIdx];
 	Material mat = materials[prim.matIdx];
 	if (mat.isLight){
-		if(ray->lastSpecular) return ray->intensity * mat.emittance;
+		if ( ray->lastSpecular ) {
+			return ray->intensity * mat.emittance;
+		}
 		else return BLACK;	
 	}
 	Ray r;
@@ -112,8 +114,6 @@ float4 neeShading(Ray* ray, Ray* extensionRay, ShadowRay* shadowRay, Settings* s
 				float dotNL = dot( ray->N, dirToLight * (1 / dist) );
 				//printf("dotnl %f\n", dotNL);
 				//printf("dotn-l %f\n", dot(normalOnLight, -dirToLight));
-				/* no check to see if normalonlight dot -dirtolight > 0 because of infinitely thin light sources
-				if  && dot(normalOnLight, -dirToLight) > 0*/
 				if (dotNL > 0 && dot( normalOnLight, -dirToLight ) > 0)
 				{
 					//printf("hi\n");

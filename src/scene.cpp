@@ -11,74 +11,45 @@ namespace Tmpl8
 		// load skydome first
 		LoadTexture( "assets/office.hdr", "skydome" );
 		// materials
-		auto& red = AddMaterial( "red" );
-		red.color = float3( 1, 0, 0 );
-		auto& green = AddMaterial( "green" );
-		green.color = float3( 0, 1, 0 );
-		auto& blue = AddMaterial( "blue" );
-		blue.color = float3( 0, 0, 1 );
-		auto& white = AddMaterial( "white" );
-		white.color = float3( .9f );
-		auto& yellow = AddMaterial( "yellow" );
-		yellow.color = float3( 1, 1, 0 );
-		auto& magenta = AddMaterial( "magenta" );
-		magenta.color = float3( 1, 0, 1 );
-		magenta.isLight = true;
-		magenta.emittance = float3( 1, .1f, 1 );
 		auto& mirror = AddMaterial( "mirror" );
 		mirror.color = float3( .1f, .1f, .9f );
 		mirror.specular = .5f;
-		auto& cyan = AddMaterial( "cyan" );
-		cyan.color = float3( 0, 1, 1 );
-		// red glass
-		auto& redglass = AddMaterial( "red-glass" );
-		redglass.color = float3( 1 );
-		redglass.isDieletric = true;
-		redglass.n1 = 1.f;
-		redglass.n2 = 1.5f;
-		redglass.specular = 0.03f;
-		redglass.absorption = float3( 0, 1, 1 );
-		// green glass
-		auto& greenglass = AddMaterial( "green-glass" );
-		greenglass = redglass;
-		greenglass.absorption = float3( 0, 1, 0 );
 		// white glass
 		auto& whiteglass = AddMaterial( "white-glass" );
-		whiteglass = redglass;
-		whiteglass.absorption = float3( .1f, .1f, .1f );
+		whiteglass.color = float3( 1 );
+		whiteglass.isDieletric = true;
+		whiteglass.n1 = 1.f;
+		whiteglass.n2 = 1.1f;
+		whiteglass.specular = 0.03f;
+		whiteglass.absorption = float3( 0 );
 		// white light
 		auto& whiteLight = AddMaterial( "white-light" );
 		whiteLight.isLight = true;
 		whiteLight.color = float4( 1 );
-		whiteLight.emittance = float4( 500 );
-		auto& greenLight = AddMaterial( "green-light" );
-		greenLight.isLight = true;
-		greenLight.color = float4( .1f, 1, .1f, 0 );
-		greenLight.emittance = float4( .1f, 1, .1f, 0 ) * 10;
-		// blue light
-		auto& blueLight = AddMaterial( "blue-light" );
-		blueLight.isLight = true;
-		blueLight.color = float4( .1f, .1f, 1, 0 );
-		blueLight.emittance = float4( .1f, .1f, 1, 0 ) * 5;
-		// yellow light
-		auto& yellowLight = AddMaterial( "yellow-light" );
-		yellowLight.isLight = true;
-		yellowLight.color = float4( 1.f, .6f, 0, 0 );
-		yellowLight.emittance = float4( 1.f, .6f, 0, 0 ) * 5;
-		// textures
-		LoadTexture( "assets/mosaic.png", "mosaic" );
-		LoadTexture( "assets/cash_money.png", "cash" );
-		LoadTexture( "assets/suprised_pikachu.png", "pika" );
-		LoadTexture( "assets/stone.jpg", "stone" );
+		whiteLight.emittance = float4( 50 );
+		//auto& greenLight = AddMaterial( "green-light" );
+		//greenLight.isLight = true;
+		//greenLight.color = float4( .1f, 1, .1f, 0 );
+		//greenLight.emittance = float4( .1f, 1, .1f, 0 ) * 10;
+		//// blue light
+		//auto& blueLight = AddMaterial( "blue-light" );
+		//blueLight.isLight = true;
+		//blueLight.color = float4( .1f, .1f, 1, 0 );
+		//blueLight.emittance = float4( .1f, .1f, 1, 0 ) * 5;
+		//// yellow light
+		//auto& yellowLight = AddMaterial( "yellow-light" );
+		//yellowLight.isLight = true;
+		//yellowLight.color = float4( 1.f, .6f, 0, 0 );
+		//yellowLight.emittance = float4( 1.f, .6f, 0, 0 ) * 5;
 
-		LoadModel( "assets/teapot.obj", "white", float3( 0, 0, 0 ) );
-		LoadModel( "assets/teapot.obj", "white", float3( 0, 4, 0 ) );
+		LoadModel( "assets/terrarium_bot/bot.obj", "white" );
+		LoadModel( "assets/terrarium_bot/bot-glass.obj", "white-glass" );
 		// start of separate prims
 		int startPrims = primitives.size( );
-		AddSphere( float3( -2, 6, 0 ), 1.0f, "white-light" );
+		int hW = 10;
+		int H = 25;
+		AddQuad( float3( -hW, H, -hW ), float3(-hW, H, hW), float3(hW, H, hW), float3( hW, H, -hW ), "white-light", true );
 		bvh2->BuildBLAS( true, startPrims );
-		AddSphere( float3( -2, 2, 0 ), 1.0f, "white" );
-		bvh2->BuildBLAS( true, 1 );
 
 		// bvh4 as last
 		bvh4 = new BVH4( *bvh2 );
@@ -92,7 +63,7 @@ namespace Tmpl8
 		animTime = t * .1f;
 		mat4 T;
 		T = T.RotateY( animTime );
-		memcpy( blasNodes[0].invT, T.Inverted( ).cell, sizeof( float ) * 16 );
+		//memcpy( blasNodes[0].invT, T.Inverted( ).cell, sizeof( float ) * 16 );
 	}
 	Material& Scene::AddMaterial( std::string name )
 	{
@@ -155,13 +126,13 @@ namespace Tmpl8
 			lights.push_back( primitives.size( ) - 1 );
 	}
 
-	void Scene::AddQuad( float3 v0, float3 v1, float3 v2, float3 v3, float2 uv0, float2 uv1, float2 uv2, float2 uv3, const std::string material )
+	void Scene::AddQuad( float3 v0, float3 v1, float3 v2, float3 v3, const std::string material,  bool _flipNormal, float2 uv0, float2 uv1, float2 uv2, float2 uv3 )
 	{
-		AddTriangle( v0, v1, v2, uv0, uv1, uv2, material );
-		AddTriangle( v2, v3, v0, uv2, uv3, uv1, material );
+		AddTriangle( v0, v1, v2, uv0, uv1, uv2, material, _flipNormal );
+		AddTriangle( v2, v3, v0, uv2, uv3, uv1, material, _flipNormal );
 	}
 
-	void Scene::AddTriangle( float3 v0, float3 v1, float3 v2, float2 uv0, float2 uv1, float2 uv2, const std::string material )
+	void Scene::AddTriangle( float3 v0, float3 v1, float3 v2, float2 uv0, float2 uv1, float2 uv2, const std::string material, bool _flipNormal )
 	{
 		Primitive prim;
 		prim.objType = TRIANGLE;
@@ -172,6 +143,26 @@ namespace Tmpl8
 		prim.objData.triangle.uv1 = uv1;
 		prim.objData.triangle.uv2 = uv2;
 		prim.objData.triangle.N = normalize( cross( v1 - v0, v2 - v0 ) );
+		if ( _flipNormal ) prim.objData.triangle.N *= -1;
+		prim.objData.triangle.centroid = ( v0 + v1 + v2 ) * ( 1 / 3.f );
+		prim.matIdx = matMap_[material];
+		prim.area = TriangleArea( v0, v1, v2 );
+		primitives.push_back( prim );
+		if ( materials[matMap_[material]].isLight )
+			lights.push_back( primitives.size( ) - 1 );
+	}
+	void Scene::AddTriangle( float3 v0, float3 v1, float3 v2, float3 N, float2 uv0, float2 uv1, float2 uv2, const std::string material, bool _flipNormal )
+	{
+		Primitive prim;
+		prim.objType = TRIANGLE;
+		prim.objData.triangle.v0 = v0;
+		prim.objData.triangle.v1 = v1;
+		prim.objData.triangle.v2 = v2;
+		prim.objData.triangle.uv0 = uv0;
+		prim.objData.triangle.uv1 = uv1;
+		prim.objData.triangle.uv2 = uv2;
+		prim.objData.triangle.N = N;
+		if ( _flipNormal ) prim.objData.triangle.N *= -1;
 		prim.objData.triangle.centroid = ( v0 + v1 + v2 ) * ( 1 / 3.f );
 		prim.matIdx = matMap_[material];
 		prim.area = TriangleArea( v0, v1, v2 );
@@ -180,9 +171,8 @@ namespace Tmpl8
 			lights.push_back( primitives.size( ) - 1 );
 	}
 
-
 	//https://pastebin.com/PZYVnJCd
-	void Scene::LoadModel( std::string _filename, const std::string _defaultMat, float3 _pos )
+	void Scene::LoadModel( std::string _filename, const std::string _defaultMat, float3 _pos, bool _forceDefaultMat )
 	{
 		cout << "Loading model: " << _filename << "..." << endl;
 		tinyobj::ObjReaderConfig readerConfig;
@@ -239,7 +229,7 @@ namespace Tmpl8
 				int matIdx = shapes[s].mesh.material_ids[f];
 				auto tex = _defaultMat; ;
 				if ( matIdx >= 0 ) tex = materials[matIdx].diffuse_texname;
-				if ( tex.empty( ) ) tex = _defaultMat;
+				if ( tex.empty( ) || _forceDefaultMat ) tex = _defaultMat;
 				// add triangle
 				for ( size_t v = 0, t = 0; v < vertices.size( ); )
 					AddTriangle( vertices[v++], vertices[v++], vertices[v++],

@@ -68,7 +68,9 @@ __kernel void extend(
 		if ( ray->primIdx == -1 ) continue;
 		intersectionPoint( ray );
 		ray->N = getNormal( primitives + ray->primIdx, ray->I );
-		if ( ray->inside ) ray->N = -ray->N;
+		// flip normal if we hit backside of obj
+		if ( dot( ray->N, -ray->D ) < 0 ) ray->N *= -1;
+		//if ( ray->inside ) ray->N = -ray->N;
 	}
 }
 __kernel void shade(

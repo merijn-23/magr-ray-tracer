@@ -45,14 +45,13 @@ void intersectionPoint( Ray* ray )
 
 float4 randomRayHemisphere( float4 N, uint* seed )
 {
-	float rand1 = 2.f * M_PI_F * randomFloat( seed );
-	float rand2 = randomFloat( seed );
-	float rand2s = sqrt( rand2 );
-
-	float3 w = N.xyz;
-	float3 axis = fabs( w.x ) > 0.1f ? (float3)(0.0f, 1.0f, 0.0f) : (float3)(1.0f, 0.0f, 0.0f);
-	float3 u = normalize( cross( axis, w ) );
-	float3 v = cross( w, u );
-	return (float4)(normalize( u * cos( rand1 ) * rand2s + v * sin( rand1 ) * rand2s + w * sqrt( 1.0f - rand2 ) ), 0);
+    // random point from (-1,-1,-1) to (1,1,1)
+    float4 p = randomFloat3( seed ) * 2 - 1;
+    // reject if outside unit sphere
+    while (p.x * p.x + p.y * p.y + p.z * p.z > 1)
+        p = randomFloat3( seed ) * 2 - 1;
+    p = normalize( p );
+    // flip if in wrong half
+    return (dot( N, p ) < 0) ? -p : p;
 }
 #endif // __RAY_CL

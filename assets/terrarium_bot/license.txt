@@ -1,0 +1,11 @@
+Model Information:
+* title:	Terrarium Bot
+* source:	https://sketchfab.com/3d-models/terrarium-bot-2040185592db48b29b50d2d6e465bd7c
+* author:	ChrisLee (https://sketchfab.com/chrisleeX)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Terrarium Bot" (https://sketchfab.com/3d-models/terrarium-bot-2040185592db48b29b50d2d6e465bd7c) by ChrisLee (https://sketchfab.com/chrisleeX) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
