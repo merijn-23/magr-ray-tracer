@@ -90,13 +90,20 @@ namespace Tmpl8
 
 	static float TriangleArea( float3 A, float3 B, float3 C )
 	{
-		float3 AB = B - A;
-		float3 AC = C - A;
+		//float3 AB = B - A;
+		//float3 AC = C - A;
 
-		float ABL = length( AB );
-		float ACL = length( AC );
-		float theta = dot( AB, AC ) * ( 1 / ( ABL * ACL ) );
-		return 0.5f * ABL * ACL * sin( theta );
+		//float ABL = length( AB );
+		//float ACL = length( AC );
+		//float theta = dot( AB, AC ) * (1 / (ABL * ACL));
+		//return 0.5f * ABL * ACL * sin( theta );
+		
+		// Heron's Formula https://www.wikiwand.com/en/Heron%27s_formula
+		float a = length( B - A );
+		float b = length( B - C );
+		float c = length( C - A );
+		float s = 0.5f * (a + b + c);
+		return sqrtf( s * (s - a) * (s - b) * (s - c) );
 	}
 
 	void Scene::AddSphere( float3 pos, float radius, std::string material )

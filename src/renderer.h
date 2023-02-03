@@ -9,15 +9,20 @@ namespace Tmpl8
 #define SHADING_NEEIS "SHADING_NEEIS"
 #define SHADING_NEEMIS "SHADING_NEEMIS"
 
+#define SAMPLING_HEMISPHERE "SAMPLING_HEMISPHERE"
+#define SAMPLING_COSINE "SAMPLING_COSINE"
+
 #define USE_BVH2 "USE_BVH2"
 #define USE_BVH4 "USE_BVH4"
 
 #define USE_RUSSIAN_ROULETTE "RUSSIAN_ROULETTE"
+#define FILTER_FIREFLIES "FILTER_FIREFLIES"
 
 typedef struct ImGuiData
 {
 	string shading_type = SHADING_NEE;
 	string bvh_type = USE_BVH2;
+	string sampling_type = SAMPLING_HEMISPHERE;
 	bool use_russian_roulette = true;
 
 	float vignet_strength = 0;
@@ -28,9 +33,11 @@ typedef struct ImGuiData
 	bool show_energy_levels = true;
 	bool reset_every_frame = false;
 	bool focus_mode = true;
+	bool filter_fireflies = false;
 
 	int dummy_bvh_type = 1;
 	int dummy_shading_type = 1;
+	int dummy_sampling_type = 0;
 	bool dummy_russian_roulette = true;
 };
 

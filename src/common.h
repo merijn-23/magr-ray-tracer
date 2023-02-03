@@ -13,7 +13,7 @@ typedef struct Ray
 
 typedef struct ShadowRay
 {
-	float4 I, L, intensity, BRDF;
+	float4 I, L, Nl, intensity, BRDF;
 	int lightIdx, pixelIdx;
 	float dotNL, dist;
 } ShadowRay;

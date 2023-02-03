@@ -122,6 +122,9 @@ __kernel void shade(
 		shadowRay.pixelIdx = -1;
 		color = neeShading( ray, &extensionRay, &shadowRay, settings, seed );
 #endif
+#ifdef FILTER_FIREFLIES
+		if ( dot( color, color ) > 25 ) color = 5 * normalize( color );
+#endif
 		accum[ray->pixelIdx] += color;
 		if ( extensionRay.bounces <= MAX_BOUNCES ) {
 			// get atomic inc in settings->numOutRays and set extensionRay in _extensionRays on that idx 
@@ -166,10 +169,10 @@ __kernel void connect(
 		int idx = atomic_dec( &( settings->shadowRays ) ) - 1;
 		if ( idx < 0 ) break;
 		ShadowRay shadowRay = shadowRays[idx];
-		float4 dir = shadowRay.L - shadowRay.I;
-		float4 norm = dir / shadowRay.dist;
+	/*	float4 dir = shadowRay.L - shadowRay.I;
+		float4 norm = dir / shadowRay.dist;*/
 
-		Ray ray = initRay( shadowRay.I + norm * EPSILON, norm );
+		Ray ray = initRay(shadowRay.I + shadowRay.L * EPSILON, shadowRay.L );
 		ray.t = shadowRay.dist - 2 * EPSILON;
 
 		int value = intersectTLAS( &ray, tlasNodes, blasNodes, bvhNodes, bvhIdxs, true );
@@ -180,15 +183,20 @@ __kernel void connect(
 		// calculate 
 		Primitive* prim = _primitives + shadowRay.lightIdx;
 		//printf( "Prim type: %i\n", prim->objType );
-		float4 NL = getNormal( prim, shadowRay.L );
-		float solidAngle = ( fabs( dot( NL, -norm ) ) * prim->area * ( 1 / ( shadowRay.dist * shadowRay.dist ) ) );
-		//printf( "Area: %f, Dist: %f, DOT: %f\n", prim->area, dist, dot( NL, -dir ) );
+		//float4 NL = getNormal(prim, shadowRay.L);
+		float solidAngle = dot(shadowRay.Nl, -shadowRay.L) * prim->area * (1 / (shadowRay.dist * shadowRay.dist));
+		//printf( "Area: %f, Dist: %f, DOT: %f\n", prim->area, shadowRay.dist, dot( shadowRay.Nl, -shadowRay.L ) );
 
 		float4 lightColor = _materials[prim->matIdx].emittance;
 		//printf( "matIdx: %i, lightColor: %f %f %f\n", prim->matIdx, lightColor.x, lightColor.y, lightColor.z );
 		//printf( "SA: %f, BRDF: %f %f %f, DOT: %f\n", solidAngle, shadowRay.BRDF.x, shadowRay.BRDF.y, shadowRay.BRDF.z, shadowRay.dotNL );
+		
 		float4 Ld = lightColor * solidAngle * shadowRay.BRDF * shadowRay.dotNL;
-		accum[shadowRay.pixelIdx] += Ld * shadowRay.intensity;
+		float4 color = Ld * shadowRay.intensity;
+#ifdef FILTER_FIREFLIES
+		if ( dot( color, color ) > 25 ) color = 5 * normalize( color );
+#endif
+		accum[shadowRay.pixelIdx] += color;
 	}
 }
 
