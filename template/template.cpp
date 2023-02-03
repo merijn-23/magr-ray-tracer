@@ -739,7 +739,7 @@ uint RandomUInt(uint& seed)
 	return seed;
 }
 float RandomFloat(uint& seed) { return RandomUInt(seed) * 2.3283064365387e-10f; }
-
+float3 RandomFloat3( uint& seed ) { return float3( RandomFloat( seed ), RandomFloat( seed ), RandomFloat( seed ) ); };
 std::random_device rd;
 std::mt19937 mt( rd() );
 

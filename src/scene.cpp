@@ -21,12 +21,12 @@ namespace Tmpl8
 		whiteglass.n1 = 1.f;
 		whiteglass.n2 = 1.1f;
 		whiteglass.specular = 0.03f;
-		whiteglass.absorption = float3( 0 );
+		whiteglass.absorption = float3( .1f );
 		// white light
 		auto& whiteLight = AddMaterial( "white-light" );
 		whiteLight.isLight = true;
-		whiteLight.color = float4( 1 );
-		whiteLight.emittance = float4( 50 );
+		whiteLight.color = float4( 1.f, .7f, 0.1f, 0 );
+		whiteLight.emittance = float4( .7f, .7f, 0.7f, 0 ) * 5;
 		//auto& greenLight = AddMaterial( "green-light" );
 		//greenLight.isLight = true;
 		//greenLight.color = float4( .1f, 1, .1f, 0 );
@@ -37,28 +37,41 @@ namespace Tmpl8
 		//blueLight.color = float4( .1f, .1f, 1, 0 );
 		//blueLight.emittance = float4( .1f, .1f, 1, 0 ) * 5;
 		//// yellow light
-		//auto& yellowLight = AddMaterial( "yellow-light" );
-		//yellowLight.isLight = true;
-		//yellowLight.color = float4( 1.f, .6f, 0, 0 );
-		//yellowLight.emittance = float4( 1.f, .6f, 0, 0 ) * 5;
+		auto& redLight = AddMaterial( "red-light" );
+		redLight.isLight = true;
+		redLight.color = float4( 1.f, .1f, .1f, 0 );
+		redLight.emittance = float4( 1.f, .1f, .1f, 0 ) * 10;
 
+#if 1
+		int startPrims = primitives.size( );
+		LoadModel( "assets/robo-orb/robo.obj", "white" );
+		//LoadModel( "assets/robo-orb/robo-lights.obj", "yellow-light" );
+		bvh2->BuildBLAS( true, startPrims );
+		
+		startPrims = primitives.size( );
 		LoadModel( "assets/terrarium_bot/bot.obj", "white" );
 		LoadModel( "assets/terrarium_bot/bot-glass.obj", "white-glass" );
+		bvh2->BuildBLAS( true, startPrims );
+		startPrims = primitives.size( );
+		LoadModel( "assets/hallway/hallway.obj", "white", {}, true );
+		LoadModel( "assets/hallway/hallway_lights_front.obj", "white-light" );
+		LoadModel( "assets/hallway/hallway_lights_back.obj", "red-light" );
+		bvh2->BuildBLAS( true, startPrims );
+#else
+		LoadModel( "assets/sponza/sponza.obj", "white" );
 		// start of separate prims
 		int startPrims = primitives.size( );
-		int hW = 10;
-		int H = 25;
-		AddQuad( float3( -hW, H, -hW ), float3(-hW, H, hW), float3(hW, H, hW), float3( hW, H, -hW ), "white-light", true );
+		AddQuad( float3( -2, 0, -7.5f ), float3( 2, 0, -7.5f ), float3( 2, 4, -7.5f ), float3( -2, 4, -7.5f ), 0, 0, 0, 0, "yellow-light" );
 		bvh2->BuildBLAS( true, startPrims );
-
+#endif
 		// bvh4 as last
 		bvh4 = new BVH4( *bvh2 );
-		Animate( 0 );
+		SetTime( 0 );
 	}
 	Scene::~Scene( )
 	{
 	}
-	void Scene::Animate( float t )
+	void Scene::SetTime( float t )
 	{
 		animTime = t * .1f;
 		mat4 T;
@@ -158,26 +171,6 @@ namespace Tmpl8
 		if ( materials[matMap_[material]].isLight )
 			lights.push_back( primitives.size( ) - 1 );
 	}
-	void Scene::AddTriangle( float3 v0, float3 v1, float3 v2, float3 N, float2 uv0, float2 uv1, float2 uv2, const std::string material, bool _flipNormal )
-	{
-		Primitive prim;
-		prim.objType = TRIANGLE;
-		prim.objData.triangle.v0 = v0;
-		prim.objData.triangle.v1 = v1;
-		prim.objData.triangle.v2 = v2;
-		prim.objData.triangle.uv0 = uv0;
-		prim.objData.triangle.uv1 = uv1;
-		prim.objData.triangle.uv2 = uv2;
-		prim.objData.triangle.N = N;
-		if ( _flipNormal ) prim.objData.triangle.N *= -1;
-		prim.objData.triangle.centroid = ( v0 + v1 + v2 ) * ( 1 / 3.f );
-		prim.matIdx = matMap_[material];
-		prim.area = TriangleArea( v0, v1, v2 );
-		primitives.push_back( prim );
-		if ( materials[matMap_[material]].isLight )
-			lights.push_back( primitives.size( ) - 1 );
-	}
-
 	//https://pastebin.com/PZYVnJCd
 	void Scene::LoadModel( std::string _filename, const std::string _defaultMat, float3 _pos, bool _forceDefaultMat )
 	{
@@ -197,8 +190,6 @@ namespace Tmpl8
 			if ( !mat.diffuse_texname.empty( ) )
 				LoadTexture( util::GetBaseDir( _filename ) + mat.diffuse_texname, mat.diffuse_texname );
 		}
-		// loop over shapes
-		int primIdx = primitives.size( );
 		for ( size_t s = 0; s < shapes.size( ); s++ ) {
 			// start primitive index for bvh
 			// loop over faces(polygon)
@@ -245,7 +236,6 @@ namespace Tmpl8
 			}
 			// build BLAS for this shape
 		}
-		bvh2->BuildBLAS( true, primIdx );
 		printf( "...Finished loading model\n" );
 	}
 	void Scene::LoadTexture( std::string filename, std::string name )

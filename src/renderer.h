@@ -22,7 +22,7 @@ typedef struct ImGuiData
 {
 	string shading_type = SHADING_NEE;
 	string bvh_type = USE_BVH2;
-	string sampling_type = SAMPLING_HEMISPHERE;
+	string sampling_type = SAMPLING_COSINE;
 	bool use_russian_roulette = true;
 
 	float vignet_strength = 0;
@@ -30,10 +30,10 @@ typedef struct ImGuiData
 	float gamma_strength = .9f;
 	float energy_total = 0;
 	bool print_performance = false;
-	bool show_energy_levels = true;
+	bool show_energy_levels = false;
 	bool reset_every_frame = false;
 	bool focus_mode = true;
-	bool filter_fireflies = false;
+	bool filter_fireflies = true;
 
 	int dummy_bvh_type = 1;
 	int dummy_shading_type = 1;

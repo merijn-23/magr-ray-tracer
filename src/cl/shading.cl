@@ -138,7 +138,6 @@ float4 neeShading(Ray* ray, Ray* extensionRay, ShadowRay* shadowRay, Settings* s
 					*shadowRay = sr;
 				}
 			}
-
 #ifdef RUSSIAN_ROULETTE
 			float rr_p = getSurvivalProb( albedo );
 			if ( rr_p < randomFloat( seed ) )
@@ -147,11 +146,21 @@ float4 neeShading(Ray* ray, Ray* extensionRay, ShadowRay* shadowRay, Settings* s
 				ray->intensity *= 1 / rr_p;
 #endif
 			// diffuse 
+#if defined(SAMPLING_HEMISPHERE)
+			float4 reflection = randomRayHemisphere( ray->N, seed );
+#elif defined(SAMPLING_COSINE)
+			float4 reflection = cosineWeightedRayHemisphere( ray->N, seed );
+#endif
+			float dotNR = dot( ray->N, reflection );
+#if defined(SAMPLING_HEMISPHERE)
 			float I_PDF = 2 * M_PI_F;
-			float4 diffuseReflection = randomRayHemisphere( ray->N, seed );
-			r = initRay( ray->I + EPSILON * diffuseReflection, diffuseReflection );
-			r.intensity = ray->intensity * BRDF * I_PDF * dot( diffuseReflection, ray->N );;
+#elif defined(SAMPLING_COSINE)
+			float I_PDF = dotNR * M_PI_F;
+#endif
+			r = initRay( ray->I + EPSILON * reflection, reflection );
+			r.intensity = ray->intensity * BRDF * I_PDF * dotNR;
 			r.bounces = ray->bounces + 1;
+			r.inside = ray->inside;
 		}
 	}
 	r.pixelIdx = ray->pixelIdx;

@@ -1,0 +1,11 @@
+Model Information:
+* title:	Robo-Orb
+* source:	https://sketchfab.com/3d-models/robo-orb-08af5b0c4b8545abbb1175d93725af16
+* author:	Smafams (https://sketchfab.com/smafams)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Robo-Orb" (https://sketchfab.com/3d-models/robo-orb-08af5b0c4b8545abbb1175d93725af16) by Smafams (https://sketchfab.com/smafams) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

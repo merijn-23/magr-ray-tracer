@@ -45,6 +45,7 @@ uint BVH2::Count( uint nodeIdx )
 #pragma region bvh2
 void BVH2::BuildBLAS( bool _statistics, int _startIdx )
 {
+	printf( "Building BLAS...\n" );
 	Timer t;
 	// add blas node
 	BVHInstance blas;
@@ -77,6 +78,7 @@ void BVH2::BuildBLAS( bool _statistics, int _startIdx )
 	}
 	bvhNodes.resize( nodesUsed_ );
 	rootNodeIdx_ = nodesUsed_;
+	printf( "...Finished building BLAS\n" );
 }
 void BVH2::UpdateNodeBounds( uint _nodeIdx, std::vector<BVHPrimData> _primData )
 {

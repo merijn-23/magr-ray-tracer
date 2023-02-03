@@ -354,7 +354,7 @@ void Renderer::Gui()
 	}
 	if ( ImGui::CollapsingHeader( "Camera" ) )
 	{
-		ImGui::SliderFloat( "Speed", &camera.speed, .01f, 1, "%.2f" );
+		ImGui::SliderFloat( "Speed", &camera.speed, .01f, 5, "%.2f" );
 		if ( ImGui::SliderFloat( "FOV", &camera.cam.fov, 30, 180, "%.2f" ) ) camera.moved = true;
 		if ( ImGui::SliderFloat( "Aperture", &camera.cam.aperture, 0, .2f, "%.2f" ) ) camera.moved = true;
 		if ( ImGui::SliderFloat( "Focal Length", &camera.cam.focalLength, .1f, 50, "%.2f" ) ) camera.moved = true;
@@ -370,29 +370,18 @@ void Renderer::Gui()
 		{
 			ImGui::Checkbox( "Russian Roulette", &(imgui.dummy_russian_roulette) );
 			ImGui::Checkbox( "Filter fireflies (don't use with kajiya)", &(imgui.filter_fireflies) );
-			if ( ImGui::TreeNodeEx( "Shading Type", ImGuiTreeNodeFlags_DefaultOpen ) )
-			{
-				ImGui::RadioButton( "Kajiya", &(imgui.dummy_shading_type), 0 );
-				ImGui::RadioButton( "NEE", &(imgui.dummy_shading_type), 1 );
-				if ( imgui.dummy_shading_type == 1 )
-				{
-					if ( ImGui::TreeNodeEx( "Sampling Type", ImGuiTreeNodeFlags_DefaultOpen ))
-					{
-						if(ImGui::RadioButton( "Hemisphere", &(imgui.dummy_sampling_type), 0))
-							imgui.sampling_type = SAMPLING_HEMISPHERE;
-						if ( ImGui::RadioButton( "Cosine-weighted", &(imgui.dummy_sampling_type), 1 ) )
-							imgui.sampling_type = SAMPLING_COSINE;
-						ImGui::TreePop();
-					} 
-				}
-				ImGui::TreePop();
+			if ( ImGui::TreeNodeEx( "Shading Type", ImGuiTreeNodeFlags_DefaultOpen ) ) {
+				ImGui::RadioButton( "Kajiya", &( imgui.dummy_shading_type ), 0 );
+				ImGui::RadioButton( "NEE", &( imgui.dummy_shading_type ), 1 );
+				ImGui::TreePop( );
 			}
-			//if ( ImGui::TreeNodeEx( "BVH Type" ) )
-			//{
-			//	ImGui::RadioButton( "Normal BVH", &(imgui.dummy_bvh_type), 0 );
-			//	ImGui::RadioButton( "Quad BVH", &(imgui.dummy_bvh_type), 1 );
-			//	ImGui::TreePop();
-			//}
+			if ( ImGui::TreeNodeEx( "Sampling Type", ImGuiTreeNodeFlags_DefaultOpen ) ) {
+				if ( ImGui::RadioButton( "Hemisphere", &( imgui.dummy_sampling_type ), 0 ) )
+					imgui.sampling_type = SAMPLING_HEMISPHERE;
+				if ( ImGui::RadioButton( "Cosine-weighted", &( imgui.dummy_sampling_type ), 1 ) )
+					imgui.sampling_type = SAMPLING_COSINE;
+				ImGui::TreePop( );
+			}
 			if ( ImGui::Button( "Recompile OpenCL" ) )
 			{
 				switch ( imgui.dummy_shading_type )

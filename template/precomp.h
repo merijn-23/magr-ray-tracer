@@ -463,6 +463,7 @@ float RandomFloat();
 float RandomFloat( uint& seed );
 float Rand( float range );
 int RandomRangeInt( int low, int high );
+float3 RandomFloat3( uint& seed );
 
 // Perlin noise
 float noise2D( const float x, const float y );
