@@ -16,21 +16,21 @@ Original template by bikker.j@gmail.com.
 - Texturing on all supported primitives.
 - A skydome, with a texture loaded from a HDR or JPG/PNG file format.
 
-### Controls
-- A ‘free camera’ with configurable position, orientation, FOV and aspect ratio.
-- A basic user interface, or keys / mouse input handling to control the camera position and orientation at run-time.
-
-### Camera
-- Anti-aliasing, gamma correction, vignetting and chromatic aberration.
-- Fish eye lens.
-- Depth of Field.
-
 ### Space-Partitioning
 - The BVH works for our Kajiya path tracer on the GPU, but is built on the CPU.
 - The BVH handles spheres, triangles and planes, as well as diffuse and specular materials.
 - We have separate functions for normal rays and occlusion rays. The occlusion rays only push nodes onto the stack if they are closer than the distance to the light, and it early-outs once it hits any object in between the origin and the light.
 - BVH can be upgraded to QBVH, where each node has not two but four children
 - BVH can be upgraded to SBVH using spatial splitting. This can be controlled with a variable $\alpha$, with the SBVH being a normal BVH at $\alpha = 1$, and a full SBVH when $\alpha = 0$.
+
+### Camera
+- Anti-aliasing, gamma correction, vignetting and chromatic aberration.
+- Fish eye lens.
+- Depth of Field.
+
+### Controls
+- A ‘free camera’ with configurable position, orientation, FOV and aspect ratio.
+- A basic user interface, or keys / mouse input handling to control the camera position and orientation at run-time.
 
 ## Sources
 - [BVH](https://jacco.ompf2.com/2022/04/13/how-to-build-a-bvh-part-1-basics/)
