@@ -1,3 +1,5 @@
+![futuristic](https://user-images.githubusercontent.com/22050862/227993934-1adf935c-0153-4995-8eac-296009f73cc1.png)
+
 ## About
 GPU-based ray tracer for the course Advanced Graphics (INFOMAGR) at Utrecht University. </br>
 By </br>
